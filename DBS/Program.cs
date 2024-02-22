@@ -21,6 +21,7 @@ builder.Services.AddBussinessService(builder.Configuration);
 builder.Services.ConfigureSwagger();
 builder.Services.ConfigHangFire(builder.Configuration);
 builder.Services.AddJWTAuthentication(builder.Configuration["Jwt:Key"], builder.Configuration["Jwt:Issuer"]);
+builder.Services.ConfigureFireBaseServices();
 
 builder.Services.AddCors(o => o.AddPolicy("CorsPolicy", builder =>
 {

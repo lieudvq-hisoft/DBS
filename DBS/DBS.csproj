@@ -32,6 +32,7 @@
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.7" />
     <PackageReference Include="Hangfire.PostgreSql.NetCore" Version="1.4.3" />
     <PackageReference Include="Hangfire.Dashboard.Basic.Authentication" Version="7.0.1" />
+    <PackageReference Include="FirebaseAdmin" Version="2.4.0" />
   </ItemGroup>
 
   <ItemGroup>
