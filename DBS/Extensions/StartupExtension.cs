@@ -17,6 +17,9 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Services.Hangfire;
 using System.Data;
+using FirebaseAdmin;
+using FirebaseAdmin.Auth;
+using Google.Apis.Auth.OAuth2;
 
 namespace DBS.Extensions;
 
@@ -226,5 +229,15 @@ public static class StartupExtension
         });
         services.AddHangfireServer(_ => _.WorkerCount = 2);
         //Hangfire's default worker count is 20, which opens 20 connections simultaneously.
+    }
+
+    public static void ConfigureFireBaseServices(this IServiceCollection services)
+    {
+
+        FirebaseApp.Create(new AppOptions
+        {
+            Credential = GoogleCredential.FromFile(Directory.GetCurrentDirectory() + "/" + "firebase-credential.json"),
+        });
+
     }
 }

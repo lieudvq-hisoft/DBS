@@ -2,6 +2,7 @@
 using Data.Common.PaginationModel;
 using Data.Enums;
 using Data.Model;
+using Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Core;
@@ -14,15 +15,26 @@ namespace UserController.Controllers;
 public class CustomerController : ControllerBase
 {
     private readonly IUserService _userService;
-    public CustomerController(IUserService userService)
+    private readonly IExternalAuthService _externalAuthService;
+
+    public CustomerController(IUserService userService, IExternalAuthService externalAuthService)
     {
         _userService = userService;
+        _externalAuthService = externalAuthService;
     }
 
     [HttpPost("Login")]
     public async Task<ActionResult> Login([FromBody] LoginModel model)
     {
         var result = await _userService.Login(model);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPost("ExternalLogin")]
+    public async Task<ActionResult> LoginGoogle([FromBody] ExternalAuthModel model)
+    {
+        var result = await _externalAuthService.ExternalLogin(model);
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
