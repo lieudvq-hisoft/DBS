@@ -11,10 +11,7 @@ using Data.Utils.Paging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+using Services.Utils;
 
 namespace Services.Core;
 
@@ -85,7 +82,7 @@ public class UserService : IUserService
                 var role = await _dbContext.Roles.FindAsync(userRole.RoleId);
                 if (role != null) roles.Add(role.Name);
             }
-            var token = await GetAccessToken(userByEmail, roles);
+            var token = await MyFunction.GetAccessToken(userByEmail, roles, _configuration);
             result.Succeed = true;
             result.Data = token;
         }
@@ -358,47 +355,4 @@ public class UserService : IUserService
         return result;
     }
 
-    private async Task<Token> GetAccessToken(User user, List<string> role)
-    {
-        List<Claim> claims = GetClaims(user, role);
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var token = new JwtSecurityToken(_configuration["Jwt:Issuer"],
-          _configuration["Jwt:Issuer"],
-          claims,
-          expires: DateTime.Now.AddHours(int.Parse(_configuration["Jwt:ExpireTimes"])),
-          //int.Parse(_configuration["Jwt:ExpireTimes"]) * 3600
-          signingCredentials: creds);
-
-        var serializedToken = new JwtSecurityTokenHandler().WriteToken(token);
-
-        return new Token
-        {
-            Access_token = serializedToken,
-            TokenType = "Bearer",
-            ExpiresIn = int.Parse(_configuration["Jwt:ExpireTimes"]!) * 3600,
-            UserID = user.Id.ToString(),
-            UserName = user.UserName!,
-            PhoneNumber = user.PhoneNumber!,
-            Avatar = user.Avatar!,
-            Name = user.Name!,
-            Roles = role
-        };
-    }
-
-    private List<Claim> GetClaims(User user, List<string> roles)
-    {
-        IdentityOptions _options = new IdentityOptions();
-        var claims = new List<Claim> {
-                new Claim("UserId", user.Id.ToString()),
-                new Claim("Email", user.Email),
-                new Claim("UserName", user.UserName)
-            };
-        foreach (var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
-        if (!string.IsNullOrEmpty(user.PhoneNumber)) claims.Add(new Claim("PhoneNumber", user.PhoneNumber));
-        return claims;
-    }
 }
