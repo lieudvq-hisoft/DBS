@@ -7,12 +7,8 @@ using Data.Models;
 using Data.Utils;
 using FirebaseAdmin;
 using FirebaseAdmin.Auth;
-using Google.Apis.Auth;
-using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting.Internal;
-using Newtonsoft.Json.Linq;
 using Services.Utils;
 
 namespace Services.Core;
@@ -61,22 +57,40 @@ public class ExternalAuthService : IExternalAuthService
             }
             var info = new UserLoginInfo(externalAuth.Provider, decodedToken.Subject, externalAuth.Provider);
             var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-            var email = decodedToken.Claims.First(x => x.Key == "email").Value.ToString();
-
             if (user == null)
             {
-                user = await _userManager.FindByEmailAsync(email);
-                if (user == null)
+                switch (info.LoginProvider)
                 {
-                    user = new User { Email = email, UserName = email };
-                    await _userManager.CreateAsync(user);
-                    await _userManager.AddToRoleAsync(user, RoleNormalizedName.Customer);
-                    await _userManager.AddLoginAsync(user, info);
+                    case "phone":
+                        var phone = decodedToken.Claims.FirstOrDefault(x => x.Key == "phone_number").Value.ToString();
+                        user = _dbContext.Users.FirstOrDefault(_ => _.PhoneNumber == phone);
+                        if (user == null)
+                        {
+                            user = new User { UserName = phone, PhoneNumber = phone, Email = "phone@gmail.com" };
+                            await _userManager.CreateAsync(user);
+                            await _userManager.AddToRoleAsync(user, RoleNormalizedName.Customer);
+                            await _userManager.AddLoginAsync(user, info);
+                        }
+                        else
+                        {
+                            await _userManager.AddLoginAsync(user, info);
+                        }
+                        break;
+                    default:
+                        var email = decodedToken.Claims.FirstOrDefault(x => x.Key == "email").Value;
+                        if (email != null)
+                        {
+                            user = await _userManager.FindByEmailAsync(email.ToString());
+                            if (user == null)
+                            {
+                                user = new User { Email = email.ToString(), UserName = email.ToString() };
+                                await _userManager.CreateAsync(user);
+                                await _userManager.AddToRoleAsync(user, RoleNormalizedName.Customer);
+                            }
+                        }
+                        break;
                 }
-                else
-                {
-                    await _userManager.AddLoginAsync(user, info);
-                }
+
 
             }
             var userRoles = _dbContext.UserRoles.Where(ur => ur.UserId == user.Id).ToList();
