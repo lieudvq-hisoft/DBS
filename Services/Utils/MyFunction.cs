@@ -63,14 +63,15 @@ namespace Services.Utils
             IdentityOptions _options = new IdentityOptions();
             var claims = new List<Claim> {
                 new Claim("UserId", user.Id.ToString()),
-                new Claim("Email", user.Email),
-                new Claim("UserName", user.UserName)
             };
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
             if (!string.IsNullOrEmpty(user.PhoneNumber)) claims.Add(new Claim("PhoneNumber", user.PhoneNumber));
+            if (!string.IsNullOrEmpty(user.Email)) claims.Add(new Claim("Email", user.Email));
+            if (!string.IsNullOrEmpty(user.UserName)) claims.Add(new Claim("UserName", user.UserName));
+
             return claims;
         }
 
