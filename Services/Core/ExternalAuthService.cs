@@ -86,6 +86,11 @@ public class ExternalAuthService : IExternalAuthService
                                 user = new User { Email = email.ToString(), UserName = email.ToString() };
                                 await _userManager.CreateAsync(user);
                                 await _userManager.AddToRoleAsync(user, RoleNormalizedName.Customer);
+                                await _userManager.AddLoginAsync(user, info);
+                            }
+                            else
+                            {
+                                await _userManager.AddLoginAsync(user, info);
                             }
                         }
                         break;
