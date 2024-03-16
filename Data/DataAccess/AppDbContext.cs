@@ -57,4 +57,5 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
     }
     public DbSet<User> Users { get; set; }
     public DbSet<UserRole> UserRole { get; set; }
+    public DbSet<SearchRequest> SearchRequests { get; set; }
 }

@@ -117,12 +117,11 @@ public enum ReceiptStatus
     Cancel = 3,
 }
 
-public enum OrderStatus
+public enum SearchRequestStatus
 {
-    Pending = 0,
-    Processing = 1,
-    Completed = 2,
-    Cancel = 3,
+    Processing = 0,
+    Completed = 1,
+    Cancel = 2,
 }
 
 public enum InventoryType
