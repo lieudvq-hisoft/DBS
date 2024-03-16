@@ -12,6 +12,9 @@ namespace Services.Mapping
             CreateMap<RegisterModel, User>();
             CreateMap<User, UserModel>();
             CreateMap<User, ProfileModel>();
+
+            CreateMap<SearchRequestCreateModel, SearchRequest>();
+            CreateMap<SearchRequest, SearchRequestModel>();
         }
     }
 }
