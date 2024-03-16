@@ -40,15 +40,6 @@ public class DriverController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
-    [HttpGet]
-    public async Task<ActionResult> GetCustomer([FromQuery] PagingParam<CustomerSortCriteria> paginationModel, [FromQuery] SearchModel searchModel)
-    {
-        var result = await _userService.GetCustomer(paginationModel, searchModel);
-        if (result.Succeed) return Ok(result.Data);
-        return BadRequest(result.ErrorMessage);
-    }
-
-    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("Profile")]
     public async Task<ActionResult> GetProfile()
     {
