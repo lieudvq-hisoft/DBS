@@ -66,7 +66,7 @@ public class ExternalAuthService : IExternalAuthService
                         user = _dbContext.Users.FirstOrDefault(_ => _.PhoneNumber == phone);
                         if (user == null)
                         {
-                            user = new User { UserName = phone, PhoneNumber = phone, Email = "phone@gmail.com" };
+                            user = new User { UserName = phone, PhoneNumber = phone, Email = phone + "@gmail.com" };
                             await _userManager.CreateAsync(user);
                             await _userManager.AddToRoleAsync(user, RoleNormalizedName.Customer);
                             //await _userManager.AddLoginAsync(user, info);

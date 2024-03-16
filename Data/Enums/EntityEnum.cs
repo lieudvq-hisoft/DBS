@@ -51,7 +51,7 @@ public enum ProductSortCriteria
 
 }
 
-public enum LocationSortCriteria
+public enum SortCriteria
 {
     DateCreated
 
