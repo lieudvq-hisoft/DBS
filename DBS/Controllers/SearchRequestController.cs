@@ -38,4 +38,19 @@ public class SearchRequestController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpPut("UpdateStatusToComplete/{SearchRequestId}")]
+    public async Task<ActionResult> UpdateStatusToComplete(string SearchRequestId)
+    {
+        var result = await _searchRequestService.UpdateStatusToComplete(Guid.Parse(SearchRequestId), Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPut("UpdateStatusToCancel/{SearchRequestId}")]
+    public async Task<ActionResult> UpdateStatusToCancel(string SearchRequestId)
+    {
+        var result = await _searchRequestService.UpdateStatusToCancel(Guid.Parse(SearchRequestId), Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
 }
