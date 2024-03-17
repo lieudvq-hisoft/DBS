@@ -19,6 +19,8 @@ public interface ISearchRequestService
 {
     Task<ResultModel> Add(SearchRequestCreateModel model, Guid customerId);
     Task<ResultModel> GetOfCustomer(PagingParam<SortCriteria> paginationModel, Guid customerId);
+    Task<ResultModel> UpdateStatusToComplete(Guid SearchRequestId, Guid customerId);
+    Task<ResultModel> UpdateStatusToCancel(Guid SearchRequestId, Guid customerId);
 
 }
 public class SearchRequestService : ISearchRequestService
@@ -104,6 +106,93 @@ public class SearchRequestService : ISearchRequestService
             paging.Data = viewModels;
             result.Data = paging;
             result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> UpdateStatusToComplete(Guid SearchRequestId, Guid customerId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var customer = _dbContext.Users.Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();
+            if (customer == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            var checkCustomer = await _userManager.IsInRoleAsync(customer, RoleNormalizedName.Customer);
+            if (!checkCustomer)
+            {
+                result.ErrorMessage = "The user must be a customer";
+                return result;
+            }
+            var data = _dbContext.SearchRequests.Where(_ => _.CustomerId == customerId && _.Id == SearchRequestId && _.Id == SearchRequestId && !_.IsDeleted).FirstOrDefault();
+            if (data == null)
+            {
+                result.ErrorMessage = "SearchRequest not exist";
+                return result;
+            }
+            if (data.Status != SearchRequestStatus.Processing)
+            {
+                result.ErrorMessage = "SearchRequest status not suitable";
+                return result;
+            }
+            data.Status = SearchRequestStatus.Completed;
+            data.DateUpdated = DateTime.Now;
+            await _dbContext.SaveChangesAsync();
+
+            result.Data = _mapper.Map<SearchRequestModel>(data);
+            result.Succeed = true;
+            return result;
+        } catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> UpdateStatusToCancel(Guid SearchRequestId, Guid customerId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var customer = _dbContext.Users.Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();
+            if (customer == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            var checkCustomer = await _userManager.IsInRoleAsync(customer, RoleNormalizedName.Customer);
+            if (!checkCustomer)
+            {
+                result.ErrorMessage = "The user must be a customer";
+                return result;
+            }
+            var data = _dbContext.SearchRequests.Where(_ => _.CustomerId == customerId && _.Id == SearchRequestId && !_.IsDeleted).FirstOrDefault();
+            if (data == null)
+            {
+                result.ErrorMessage = "SearchRequest not exist";
+                return result;
+            }
+            if (data.Status != SearchRequestStatus.Processing)
+            {
+                result.ErrorMessage = "SearchRequest status not suitable";
+                return result;
+            }
+            data.Status = SearchRequestStatus.Cancel;
+            data.DateUpdated = DateTime.Now;
+            await _dbContext.SaveChangesAsync();
+
+            result.Data = _mapper.Map<SearchRequestModel>(data);
+            result.Succeed = true;
+            return result;
         }
         catch (Exception ex)
         {
