@@ -1,8 +1,6 @@
-﻿using Confluent.Kafka;
-using Data.Common.PaginationModel;
+﻿using Data.Common.PaginationModel;
 using Data.Enums;
 using Data.Model;
-using Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Core;

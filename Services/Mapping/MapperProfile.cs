@@ -15,6 +15,11 @@ namespace Services.Mapping
 
             CreateMap<SearchRequestCreateModel, SearchRequest>();
             CreateMap<SearchRequest, SearchRequestModel>();
+
+            CreateMap<IdentityCardCreateModel, IdentityCard>();
+            CreateMap<IdentityCard, IdentityCardModel>();
+            CreateMap<IdentityCardImageCreateModel, IdentityCardImage>();
+            CreateMap<IdentityCardImage, IdentityCardImageModel>();
         }
     }
 }

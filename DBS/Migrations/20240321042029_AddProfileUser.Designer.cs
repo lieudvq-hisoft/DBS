@@ -3,6 +3,7 @@ using System;
 using Data.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DBS.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240321042029_AddProfileUser")]
+    partial class AddProfileUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,87 +24,6 @@ namespace DBS.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("Data.Entities.IdentityCard", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<DateOnly>("Dob")
-                        .HasColumnType("date");
-
-                    b.Property<DateOnly>("ExpiredDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Gender")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Nationality")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PersonalIdentification")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PlaceOrigin")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PlaceResidence")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("IdentityCards");
-                });
-
-            modelBuilder.Entity("Data.Entities.IdentityCardImage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<Guid>("IdentityCardId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ImageData")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsFront")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IdentityCardId");
-
-                    b.ToTable("IdentityCardImages");
-                });
 
             modelBuilder.Entity("Data.Entities.Role", b =>
                 {
@@ -222,9 +144,6 @@ namespace DBS.Migrations
                     b.Property<int?>("Gender")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("IdentityCardId")
-                        .HasColumnType("uuid");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -268,8 +187,6 @@ namespace DBS.Migrations
                         .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("IdentityCardId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -399,17 +316,6 @@ namespace DBS.Migrations
                     b.HasDiscriminator().HasValue("UserRole");
                 });
 
-            modelBuilder.Entity("Data.Entities.IdentityCardImage", b =>
-                {
-                    b.HasOne("Data.Entities.IdentityCard", "IdentityCard")
-                        .WithMany()
-                        .HasForeignKey("IdentityCardId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("IdentityCard");
-                });
-
             modelBuilder.Entity("Data.Entities.SearchRequest", b =>
                 {
                     b.HasOne("Data.Entities.User", "Customer")
@@ -419,15 +325,6 @@ namespace DBS.Migrations
                         .IsRequired();
 
                     b.Navigation("Customer");
-                });
-
-            modelBuilder.Entity("Data.Entities.User", b =>
-                {
-                    b.HasOne("Data.Entities.IdentityCard", "IdentityCard")
-                        .WithMany()
-                        .HasForeignKey("IdentityCardId");
-
-                    b.Navigation("IdentityCard");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
