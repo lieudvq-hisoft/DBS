@@ -62,6 +62,7 @@ public static class StartupExtension
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IExternalAuthService, ExternalAuthService>();
         services.AddScoped<ISearchRequestService, SearchRequestService>();
+        services.AddScoped<IIdentityCardService, IdentityCardService>();
         services.AddScoped<IMailService, MailService>();
         services.AddSingleton<IHangfireServices, HangfireServices>();
         services.AddHostedService<HangfireJob>();

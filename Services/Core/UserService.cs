@@ -263,6 +263,31 @@ public class UserService : IUserService
             {
                 data.Name = model.Name;
             }
+            if (model.Gender != null)
+            {
+                data.Gender = model.Gender;
+            }
+            if (model.Dob != null)
+            {
+                DateOnly currentDate = DateOnly.FromDateTime(DateTime.Today);
+                DateOnly dob = new DateOnly(model.Dob.Value.Year, model.Dob.Value.Month, model.Dob.Value.Day);
+
+                // Calculate the age difference
+                int ageDifferenceInYears = currentDate.Year - dob.Year;
+
+                // Check if the birthday for this year has occurred yet
+                if (dob > currentDate.AddYears(-ageDifferenceInYears))
+                {
+                    ageDifferenceInYears--;
+                }
+                if (ageDifferenceInYears < 18)
+                {
+                    result.ErrorMessage = "User must be at least 18 years old.";
+                    result.Succeed = false;
+                    return result;
+                }
+                data.Dob = model.Dob;
+            }
             data.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 

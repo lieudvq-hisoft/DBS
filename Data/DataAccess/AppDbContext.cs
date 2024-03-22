@@ -7,7 +7,7 @@ namespace Data.DataAccess;
 
 public class AppDbContext : IdentityDbContext<User, Role, Guid>
 {
-    public AppDbContext(DbContextOptions options) : base(options) 
+    public AppDbContext(DbContextOptions options) : base(options)
     {
 
     }
@@ -58,4 +58,6 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<User> Users { get; set; }
     public DbSet<UserRole> UserRole { get; set; }
     public DbSet<SearchRequest> SearchRequests { get; set; }
+    public DbSet<IdentityCard> IdentityCards { get; set; }
+    public DbSet<IdentityCardImage> IdentityCardImages { get; set; }
 }
