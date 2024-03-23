@@ -53,7 +53,7 @@ public class IdentityCardController : ControllerBase
     }
 
     [HttpPost("IdentityCardImage")]
-    public async Task<ActionResult> AddImage(IdentityCardImageCreateModel model)
+    public async Task<ActionResult> AddImage([FromForm] IdentityCardImageCreateModel model)
     {
         var result = await _identityCardService.AddImage(model);
         if (result.Succeed) return Ok(result.Data);

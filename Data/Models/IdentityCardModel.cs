@@ -1,4 +1,5 @@
 ﻿using Data.Enums;
+using Microsoft.AspNetCore.Http;
 
 namespace Data.Models
 {
@@ -41,7 +42,8 @@ namespace Data.Models
     public class IdentityCardImageCreateModel
     {
         public Guid IdentityCardId { get; set; }
-        public string ImageData { get; set; }
+        //public string ImageData { get; set; }
+        public IFormFile File { get; set; }
         public bool IsFront { get; set; }
     }
 
