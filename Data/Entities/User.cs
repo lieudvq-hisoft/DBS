@@ -20,4 +20,9 @@ public class User : IdentityUser<Guid>
     public virtual IdentityCard? IdentityCard { get; set; }
 
     public virtual ICollection<UserRole> UserRoles { get; set; }
+
+    //Driver
+    public virtual ICollection<DriverLocation> DriverLocations { get; set; }
+    public virtual ICollection<DriverStatus> DriverStatuses { get; set; }
+
 }

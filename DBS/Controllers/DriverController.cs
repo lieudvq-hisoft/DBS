@@ -16,11 +16,13 @@ public class DriverController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IExternalAuthService _externalAuthService;
+    private readonly IDriverService _driverService;
 
-    public DriverController(IUserService userService, IExternalAuthService externalAuthService)
+    public DriverController(IUserService userService, IExternalAuthService externalAuthService, IDriverService driverService)
     {
         _userService = userService;
         _externalAuthService = externalAuthService;
+        _driverService = driverService;
     }
 
     [HttpPost("Login")]
@@ -34,7 +36,43 @@ public class DriverController : ControllerBase
     [HttpPost("Register")]
     public async Task<ActionResult> Register([FromBody] RegisterModel model)
     {
-        var result = await _userService.RegisterDriver(model);
+        var result = await _driverService.RegisterDriver(model);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPut("Location")]
+    public async Task<ActionResult> UpdateLocation([FromBody] LocationModel model)
+    {
+        var result = await _driverService.UpdateLocation(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPut("Status/Online")]
+    public async Task<ActionResult> UpdateStatusOnline()
+    {
+        var result = await _driverService.UpdateStatusOnline(Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPut("Status/Offline")]
+    public async Task<ActionResult> UpdateStatusOffline()
+    {
+        var result = await _driverService.UpdateStatusOffline(Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpGet("Online")]
+    public async Task<ActionResult> GetDriverOnline([FromQuery] LocationCustomer locationCustomer)
+    {
+        var result = await _driverService.GetDriverOnline(locationCustomer);
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

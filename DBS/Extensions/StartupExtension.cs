@@ -60,6 +60,7 @@ public static class StartupExtension
     public static void AddBussinessService(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IDriverService, DriverService>();
         services.AddScoped<IExternalAuthService, ExternalAuthService>();
         services.AddScoped<ISearchRequestService, SearchRequestService>();
         services.AddScoped<IIdentityCardService, IdentityCardService>();

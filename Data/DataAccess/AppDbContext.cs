@@ -1,4 +1,5 @@
 ﻿using Data.Entities;
+using Data.Model;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -14,6 +15,7 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<DriverOnlineModel>().HasNoKey();
         modelBuilder.Entity<User>(b =>
         {
             // Each User can have many entries in the UserRole join table
@@ -60,4 +62,6 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<SearchRequest> SearchRequests { get; set; }
     public DbSet<IdentityCard> IdentityCards { get; set; }
     public DbSet<IdentityCardImage> IdentityCardImages { get; set; }
+    public DbSet<DriverLocation> DriverLocations { get; set; }
+    public DbSet<DriverStatus> DriverStatuses { get; set; }
 }

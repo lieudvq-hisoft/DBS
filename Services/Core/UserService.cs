@@ -18,7 +18,6 @@ namespace Services.Core;
 public interface IUserService
 {
     Task<ResultModel> RegisterCustomer(RegisterModel model);
-    Task<ResultModel> RegisterDriver(RegisterModel model);
     Task<ResultModel> Login(LoginModel model);
     Task<ResultModel> GetCustomer(PagingParam<CustomerSortCriteria> paginationModel, SearchModel searchModel);
     Task<ResultModel> UpdateProfile(ProfileUpdateModel model, Guid userId);
@@ -121,64 +120,6 @@ public class UserService : IUserService
             if (role == null)
             {
                 var newRole = new Role { Name = "Customer", NormalizedName = RoleNormalizedName.Customer };
-                _dbContext.Roles.Add(newRole);
-                userRole.RoleId = newRole.Id;
-            }
-            else
-            {
-                userRole.RoleId = role.Id;
-            }
-
-            var user = _mapper.Map<RegisterModel, User>(model);
-
-            var checkCreateSuccess = await _userManager.CreateAsync(user, model.Password);
-
-            if (!checkCreateSuccess.Succeeded)
-            {
-                result.ErrorMessage = checkCreateSuccess.ToString();
-                result.Succeed = false;
-                return result;
-            }
-            userRole.UserId = user.Id;
-            _dbContext.UserRoles.Add(userRole);
-            await _dbContext.SaveChangesAsync();
-            result.Succeed = true;
-            result.Data = user.Id;
-        }
-        catch (Exception ex)
-        {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-        }
-        return result;
-    }
-
-    public async Task<ResultModel> RegisterDriver(RegisterModel model)
-    {
-        var result = new ResultModel();
-        result.Succeed = false;
-        try
-        {
-            var checkEmailExisted = await _userManager.FindByEmailAsync(model.Email);
-            if (checkEmailExisted != null)
-            {
-                result.ErrorMessage = "Email already existed";
-                result.Succeed = false;
-                return result;
-            }
-            var checkUserNameExisted = await _userManager.FindByNameAsync(model.UserName);
-            if (checkUserNameExisted != null)
-            {
-                result.ErrorMessage = "UserName already existed";
-                result.Succeed = false;
-                return result;
-            }
-
-            var userRole = new UserRole { };
-
-            var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.NormalizedName == RoleNormalizedName.Driver);
-            if (role == null)
-            {
-                var newRole = new Role { Name = "Driver", NormalizedName = RoleNormalizedName.Driver };
                 _dbContext.Roles.Add(newRole);
                 userRole.RoleId = newRole.Id;
             }
