@@ -8,6 +8,7 @@ using Data.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Services.Utils;
 
 namespace Services.Core;
 
@@ -285,6 +286,8 @@ public class IdentityCardService : IIdentityCardService
                 return result;
             }
             var identityCardImage = _mapper.Map<IdentityCardImageCreateModel, IdentityCardImage>(model);
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Identity");
+            identityCardImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             _dbContext.IdentityCardImages.Add(identityCardImage);
             await _dbContext.SaveChangesAsync();
 
