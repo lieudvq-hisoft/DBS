@@ -202,7 +202,7 @@ public class DriverService : IDriverService
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == driverId && !_.IsDeleted).FirstOrDefault();
+            var driver = _dbContext.Users.Include(_ => _.DriverStatuses).Where(_ => _.Id == driverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
             {
                 result.ErrorMessage = "Driver not exists";
