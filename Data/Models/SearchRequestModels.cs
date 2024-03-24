@@ -8,6 +8,7 @@ namespace Data.Model
     {
         public double PickupLocation { get; set; }
         public double DropOffLocation { get; set; }
+        public long Price { get; set; }
     }
 
     public class SearchRequestModel
@@ -15,6 +16,7 @@ namespace Data.Model
         public Guid CustomerId { get; set; }
         public double PickupLocation { get; set; }
         public double DropOffLocation { get; set; }
+        public long Price { get; set; }
         public SearchRequestStatus Status { get; set; }
     }
 }

@@ -49,8 +49,7 @@ namespace Data.Models
 
     public class IdentityCardImageUpdateModel
     {
-        public string? ImageData { get; set; }
-        public bool? IsFront { get; set; }
+        public IFormFile File { get; set; }
     }
 
     public class IdentityCardImageModel

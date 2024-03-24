@@ -371,13 +371,10 @@ public class IdentityCardService : IIdentityCardService
                 result.ErrorMessage = "Identity Card Image not exist!";
                 return result;
             }
-            if (model.ImageData != null)
+            if (model.File != null)
             {
-                identityCardImage.ImageData = model.ImageData;
-            }
-            if (model.IsFront != null)
-            {
-                identityCardImage.IsFront = (bool)model.IsFront;
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "IdentityCardImage", identityCardImage.Id.ToString());
+                identityCardImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             }
             identityCardImage.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
