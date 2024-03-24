@@ -22,6 +22,7 @@ public interface IIdentityCardService
     Task<ResultModel> GetImagesByIdentityCardId(Guid IdentityCardId);
     Task<ResultModel> UpdateImage(IdentityCardImageUpdateModel model, Guid IdentityCardImageId);
     Task<ResultModel> DeleteImage(Guid IdentityCardImageId);
+    Task<ResultModel> DownloadImage(FileModel model);
 }
 
 public class IdentityCardService : IIdentityCardService
@@ -286,13 +287,44 @@ public class IdentityCardService : IIdentityCardService
                 return result;
             }
             var identityCardImage = _mapper.Map<IdentityCardImageCreateModel, IdentityCardImage>(model);
-            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Identity");
-            identityCardImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             _dbContext.IdentityCardImages.Add(identityCardImage);
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "IdentityCardImage", identityCardImage.Id.ToString());
+            identityCardImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
-            result.Data = identityCardImage.Id;
+            result.Data = _mapper.Map<IdentityCardImage, IdentityCardImageModel>(identityCardImage);
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> DownloadImage(FileModel model)
+    {
+        var result = new ResultModel();
+        try
+        {
+            var identityCardImage = _dbContext.IdentityCardImages.Where(_ => _.Id == model.Id && !_.IsDeleted).FirstOrDefault();
+            if (identityCardImage == null)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "IdentityCardImage not found";
+            }
+            else
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                if (identityCardImage.ImageData == null || !identityCardImage.ImageData.Contains(model.Path))
+                {
+                    result.ErrorMessage = "File does not exist";
+                    result.Succeed = false;
+                    return result;
+                }
+                result.Data = await MyFunction.DownloadFile(dirPath + model.Path);
+                result.Succeed = true;
+            }
         }
         catch (Exception ex)
         {

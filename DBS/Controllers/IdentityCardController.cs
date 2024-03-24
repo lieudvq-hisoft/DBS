@@ -60,6 +60,15 @@ public class IdentityCardController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpPost("Image/Download")]
+    public async Task<ActionResult> DownloadImage([FromBody] FileModel model)
+    {
+        var result = await _identityCardService.DownloadImage(model);
+        FileEModel file = (FileEModel)result.Data;
+        if (result.Succeed) return File(file.Content, "application/octet-stream", "IdentityCardImage" + file.Extension);
+        return BadRequest(result.ErrorMessage);
+    }
+
     [HttpGet("IdentityCardImage")]
     public async Task<ActionResult> GetImageByIdentityCardId(Guid IdentityCardId)
     {
