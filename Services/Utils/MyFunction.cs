@@ -135,7 +135,6 @@ namespace Services.Utils
             {
                 await file.CopyToAsync(fileStream);
             }
-            splitString = "/Users/dangvoquanglieu/Documents/Capstone Support/DbsTeam/DBS/DBS/Storage";
             var test = filePath.Split(splitString);
 
             return test[1];
