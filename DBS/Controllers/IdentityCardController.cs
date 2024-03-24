@@ -78,7 +78,7 @@ public class IdentityCardController : ControllerBase
     }
 
     [HttpPut("IdentityCardImage/{IdentityCardImage}")]
-    public async Task<ActionResult> GetImageByIdentityCardId(IdentityCardImageUpdateModel model, Guid IdentityCardImage)
+    public async Task<ActionResult> UpdateImage([FromForm] IdentityCardImageUpdateModel model, Guid IdentityCardImage)
     {
         var result = await _identityCardService.UpdateImage(model, IdentityCardImage);
         if (result.Succeed) return Ok(result.Data);
@@ -86,7 +86,7 @@ public class IdentityCardController : ControllerBase
     }
 
     [HttpDelete("IdentityCardImage/{IdentityCardImage}")]
-    public async Task<ActionResult> DeleteImageByIdentityCardId(Guid IdentityCardImage)
+    public async Task<ActionResult> DeleteImage(Guid IdentityCardImage)
     {
         var result = await _identityCardService.DeleteImage(IdentityCardImage);
         if (result.Succeed) return Ok(result.Data);

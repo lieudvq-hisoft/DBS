@@ -10,5 +10,6 @@ public class SearchRequest : BaseEntity
     public virtual User? Customer { get; set; }
     public double PickupLocation { get; set; }
     public double DropOffLocation { get; set; }
+    public long Price { get; set; }
     public SearchRequestStatus Status { get; set; } = SearchRequestStatus.Processing;
 }
