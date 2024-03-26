@@ -28,7 +28,7 @@ public class IdentityCardController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpGet("/{IdentityCardId}")]
+    [HttpGet("{IdentityCardId}")]
     public async Task<ActionResult> Get(Guid IdentityCardId)
     {
         var result = await _identityCardService.Get(IdentityCardId, Guid.Parse(User.GetId()));
@@ -36,7 +36,7 @@ public class IdentityCardController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpPut("/{IdentityCardId}")]
+    [HttpPut("{IdentityCardId}")]
     public async Task<ActionResult> UpdateIdenttiyCard([FromBody] IdentityCardUpdateModel model, Guid IdentityCardId)
     {
         var result = await _identityCardService.Update(model, IdentityCardId, Guid.Parse(User.GetId()));
@@ -44,7 +44,7 @@ public class IdentityCardController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpDelete("/IdentityCardId")]
+    [HttpDelete("{IdentityCardId}")]
     public async Task<ActionResult> DeleteIdentityCard(Guid IdentityCardId)
     {
         var result = await _identityCardService.Delete(IdentityCardId, Guid.Parse(User.GetId()));
@@ -69,7 +69,7 @@ public class IdentityCardController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpGet("IdentityCardImage")]
+    [HttpGet("IdentityCardImage/{IdentityCardId}")]
     public async Task<ActionResult> GetImageByIdentityCardId(Guid IdentityCardId)
     {
         var result = await _identityCardService.GetImagesByIdentityCardId(IdentityCardId);

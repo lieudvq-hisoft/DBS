@@ -3,6 +3,7 @@ using System;
 using Data.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DBS.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240324091603_DrivingLicense")]
+    partial class DrivingLicense
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -321,19 +324,13 @@ namespace DBS.Migrations
                     b.Property<DateTime>("DateUpdated")
                         .HasColumnType("timestamp without time zone");
 
-                    b.Property<double>("DropOffLatitude")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("DropOffLongitude")
+                    b.Property<double>("DropOffLocation")
                         .HasColumnType("double precision");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<double>("PickupLatitude")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("PickupLongitude")
+                    b.Property<double>("PickupLocation")
                         .HasColumnType("double precision");
 
                     b.Property<long>("Price")

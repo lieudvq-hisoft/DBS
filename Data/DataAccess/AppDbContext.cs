@@ -65,4 +65,6 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<DriverLocation> DriverLocations { get; set; }
     public DbSet<DriverStatus> DriverStatuses { get; set; }
     public DbSet<Booking> Bookings { get; set; }
+    public DbSet<DrivingLicense> DrivingLicenses { get; set; }
+    public DbSet<DrivingLicenseImage> DrivingLicenseImages { get; set; }
 }

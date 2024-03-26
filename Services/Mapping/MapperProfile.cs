@@ -20,8 +20,15 @@ namespace Services.Mapping
             CreateMap<IdentityCard, IdentityCardModel>();
             CreateMap<IdentityCardImageCreateModel, IdentityCardImage>();
             CreateMap<IdentityCardImage, IdentityCardImageModel>();
+
             CreateMap<BookingCreateModel, Booking>();
             CreateMap<Booking, BookingModel>();
+
+            CreateMap<DrivingLicenseCreateModel, DrivingLicense>();
+            CreateMap<DrivingLicense, DrivingLicenseModel>();
+            CreateMap<DrivingLicenseImageCreateModel, DrivingLicenseImage>();
+            CreateMap<DrivingLicenseImage, DrivingLicenseImageModel>();
+
 
             CreateMap<LocationModel, DriverLocation>();
         }

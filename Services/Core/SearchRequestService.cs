@@ -51,14 +51,14 @@ public class SearchRequestService : ISearchRequestService
         try
         {
             var customer = _dbContext.Users.Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();
-            if(customer == null)
+            if (customer == null)
             {
                 result.ErrorMessage = "User not exists";
                 result.Succeed = false;
                 return result;
             }
             var checkCustomer = await _userManager.IsInRoleAsync(customer, RoleNormalizedName.Customer);
-            if(!checkCustomer)
+            if (!checkCustomer)
             {
                 result.ErrorMessage = "The user must be a customer";
                 result.Succeed = false;
@@ -150,7 +150,8 @@ public class SearchRequestService : ISearchRequestService
             result.Data = _mapper.Map<SearchRequestModel>(data);
             result.Succeed = true;
             return result;
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
         }

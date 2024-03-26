@@ -349,7 +349,7 @@ public class IdentityCardService : IIdentityCardService
                 return result;
             }
 
-            result.Data = _mapper.Map<List<IdentityCardImage>>(identityCardImages);
+            result.Data = _mapper.Map<List<IdentityCardImageModel>>(identityCardImages);
             result.Succeed = true;
         }
         catch (Exception ex)
@@ -380,7 +380,7 @@ public class IdentityCardService : IIdentityCardService
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
-            result.Data = _mapper.Map<IdentityCardImage>(identityCardImage);
+            result.Data = _mapper.Map<IdentityCardImageModel>(identityCardImage);
         }
         catch (Exception ex)
         {
