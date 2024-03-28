@@ -85,6 +85,7 @@ public class BookingService : IBookingService
         {
             var booking = _dbContext.Bookings
                 .Include(_ => _.SearchRequest)
+                    .ThenInclude(_ => _.Customer)
                 .Include(_ => _.Driver)
                 .Where(_ => _.Id == BookingId && !_.IsDeleted).FirstOrDefault();
             if (booking == null)
@@ -93,7 +94,7 @@ public class BookingService : IBookingService
                 return result;
             }
 
-            result.Data = _mapper.Map<Booking>(booking);
+            result.Data = _mapper.Map<BookingModel>(booking);
             result.Succeed = true;
         }
         catch (Exception ex)

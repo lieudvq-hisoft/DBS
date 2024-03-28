@@ -1,4 +1,6 @@
 ﻿
+using Data.Entities;
+
 namespace Data.Models
 {
     public class BookingCreateModel
@@ -10,5 +12,7 @@ namespace Data.Models
     {
         public Guid SearchRequestId { get; set; }
         public Guid DriverId { get; set; }
+        public SearchRequest SearchRequest { get; set; }
+        public User Driver { get; set; }
     }
 }
