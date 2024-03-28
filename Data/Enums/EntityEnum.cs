@@ -137,3 +137,12 @@ public enum Gender
     Other = 2,
 }
 
+public enum BookingStatus
+{
+    Pending = 0,
+    Accept = 1,
+    Running = 2,
+    Complete = 3,
+    Cancel = 4
+}
+
