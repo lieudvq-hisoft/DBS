@@ -10,12 +10,6 @@ using Data.Utils.Paging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Services.Core;
 public interface IBookingService
@@ -24,6 +18,7 @@ public interface IBookingService
     Task<ResultModel> GetBooking(Guid BookingId);
     Task<ResultModel> GetBookingForCustomer(PagingParam<SortCriteria> paginationModel, Guid CustomerId);
     Task<ResultModel> GetBookingForDriver(PagingParam<SortCriteria> paginationModel, Guid DriverId);
+    Task<ResultModel> ChangeBookingStatus(ChangeBookingStatusModel model);
 
 }
 public class BookingService : IBookingService
@@ -126,6 +121,10 @@ public class BookingService : IBookingService
             var bookings = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
             bookings = bookings.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
             var viewModels = _mapper.ProjectTo<BookingModel>(bookings);
+            foreach (var item in viewModels)
+            {
+                item.Customer = _mapper.Map<UserModel>(customer); ;
+            }
             paging.Data = viewModels;
             result.Data = paging;
             result.Succeed = true;
@@ -152,13 +151,61 @@ public class BookingService : IBookingService
             var data = _dbContext.Bookings
                 .Include(_ => _.Driver)
                 .Include(_ => _.SearchRequest)
+                 .ThenInclude(sr => sr.Customer)
                 .Where(_ => _.DriverId == DriverId && !_.IsDeleted);
+
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var bookings = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
             bookings = bookings.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
-            var viewModels = _mapper.ProjectTo<BookingModel>(bookings);
+            var viewModels = _mapper.Map<List<BookingModel>>(bookings);
+            foreach (var item in viewModels)
+            {
+                foreach (var booking in bookings)
+                {
+                    var itemId = item.Id;
+                    var bookingId = booking.Id;
+                    if (itemId == bookingId)
+                    {
+                        var customer = booking.SearchRequest.Customer;
+                        item.Customer = _mapper.Map<UserModel>(customer);
+                    }
+                }
+            }
+
             paging.Data = viewModels;
             result.Data = paging;
+            result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> ChangeBookingStatus(ChangeBookingStatusModel model)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var booking = _dbContext.Bookings
+                .Include(_ => _.Driver)
+                .Include(_ => _.SearchRequest)
+                 .ThenInclude(sr => sr.Customer)
+                .Where(_ => _.Id == model.BookingId && !_.IsDeleted).FirstOrDefault();
+            if (booking == null)
+            {
+                result.ErrorMessage = "Booking not exist";
+                return result;
+            }
+            booking.Status = model.BookingStatus;
+            booking.DateUpdated = DateTime.Now;
+            await _dbContext.SaveChangesAsync();
+
+            var data = _mapper.Map<BookingModel>(booking);
+            data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
+            result.Data = data;
             result.Succeed = true;
         }
         catch (Exception ex)
