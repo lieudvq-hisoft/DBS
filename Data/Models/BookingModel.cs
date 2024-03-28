@@ -1,5 +1,6 @@
 ﻿
 using Data.Entities;
+using Data.Model;
 
 namespace Data.Models
 {
@@ -13,6 +14,6 @@ namespace Data.Models
         public Guid SearchRequestId { get; set; }
         public Guid DriverId { get; set; }
         public SearchRequest SearchRequest { get; set; }
-        public User Driver { get; set; }
+        public UserModel Driver { get; set; }
     }
 }
