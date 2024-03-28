@@ -13,7 +13,8 @@ namespace Data.Models
     {
         public Guid SearchRequestId { get; set; }
         public Guid DriverId { get; set; }
-        public SearchRequest SearchRequest { get; set; }
+        public SearchRequestModel SearchRequest { get; set; }
         public UserModel Driver { get; set; }
+        public UserModel Customer { get; set; }
     }
 }

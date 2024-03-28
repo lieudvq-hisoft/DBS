@@ -93,8 +93,9 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Booking not exist";
                 return result;
             }
-
-            result.Data = _mapper.Map<BookingModel>(booking);
+            var data = _mapper.Map<BookingModel>(booking);
+            data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
+            result.Data = data;
             result.Succeed = true;
         }
         catch (Exception ex)
