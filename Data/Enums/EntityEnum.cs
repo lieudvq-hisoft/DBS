@@ -141,7 +141,7 @@ public enum BookingStatus
 {
     Pending = 0,
     Accept = 1,
-    Running = 2,
+    OnGoing = 2,
     Complete = 3,
     Cancel = 4
 }
