@@ -19,6 +19,7 @@ public interface IBookingService
     Task<ResultModel> GetBookingForCustomer(PagingParam<SortCriteria> paginationModel, Guid CustomerId);
     Task<ResultModel> GetBookingForDriver(PagingParam<SortCriteria> paginationModel, Guid DriverId);
     Task<ResultModel> ChangeBookingStatus(ChangeBookingStatusModel model);
+    Task<ResultModel> ResetBooking();
 
 }
 public class BookingService : IBookingService
@@ -205,6 +206,40 @@ public class BookingService : IBookingService
 
             var data = _mapper.Map<BookingModel>(booking);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
+            result.Data = data;
+            result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> ResetBooking()
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var bookings = _dbContext.Bookings
+                .Include(_ => _.Driver)
+                .Include(_ => _.SearchRequest)
+                 .ThenInclude(sr => sr.Customer)
+                .Where(_ => !_.IsDeleted);
+            if (bookings == null || !bookings.Any())
+            {
+                result.ErrorMessage = "Booking not exist";
+                return result;
+            }
+            foreach (var booking in bookings)
+            {
+                booking.Status = BookingStatus.Pending;
+
+            }
+            await _dbContext.SaveChangesAsync();
+
+            var data = _mapper.Map<List<BookingModel>>(bookings);
             result.Data = data;
             result.Succeed = true;
         }
