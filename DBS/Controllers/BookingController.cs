@@ -62,4 +62,12 @@ public class BookingController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpPut("ResetBooking")]
+    public async Task<ActionResult> ResetBooking()
+    {
+        var result = await _bookingService.ResetBooking();
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
 }
