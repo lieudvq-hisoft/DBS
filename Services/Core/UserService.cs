@@ -232,6 +232,9 @@ public class UserService : IUserService
             data.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(_mapper.Map<UserModel>(data));
+            await _producer.ProduceAsync("dbs-user-update", new Message<Null, string> { Value = json });
+            _producer.Flush();
             result.Succeed = true;
             result.Data = _mapper.Map<UserModel>(data);
         }
