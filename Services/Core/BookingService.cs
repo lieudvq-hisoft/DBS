@@ -63,6 +63,11 @@ public class BookingService : IBookingService
             _dbContext.Bookings.Add(booking);
             await _dbContext.SaveChangesAsync();
 
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = _mapper.Map<Booking, BookingModel>(booking!) };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            await _producer.ProduceAsync("dbs-booking-create", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
             result.Succeed = true;
             result.Data = booking.Id;
         }
