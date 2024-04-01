@@ -54,10 +54,10 @@ public class BookingController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpPut("ChangeStatus")]
-    public async Task<ActionResult> ChangeBookingStatus([FromBody] ChangeBookingStatusModel model)
+    [HttpPut("ChangeStatusToAccept")]
+    public async Task<ActionResult> ChangeStatusToAccept([FromBody] ChangeBookingStatusModel model)
     {
-        var result = await _bookingService.ChangeBookingStatus(model);
+        var result = await _bookingService.ChangeStatusToAccept(model, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

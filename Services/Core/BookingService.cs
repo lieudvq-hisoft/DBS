@@ -6,6 +6,7 @@ using Data.Entities;
 using Data.Enums;
 using Data.Model;
 using Data.Models;
+using Data.Utils;
 using Data.Utils.Paging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,7 @@ public interface IBookingService
     Task<ResultModel> GetBooking(Guid BookingId);
     Task<ResultModel> GetBookingForCustomer(PagingParam<SortCriteria> paginationModel, Guid CustomerId);
     Task<ResultModel> GetBookingForDriver(PagingParam<SortCriteria> paginationModel, Guid DriverId);
-    Task<ResultModel> ChangeBookingStatus(ChangeBookingStatusModel model);
+    Task<ResultModel> ChangeStatusToAccept(ChangeBookingStatusModel model, Guid DriverId);
     Task<ResultModel> ResetBooking();
 
 }
@@ -189,12 +190,24 @@ public class BookingService : IBookingService
         return result;
     }
 
-    public async Task<ResultModel> ChangeBookingStatus(ChangeBookingStatusModel model)
+    public async Task<ResultModel> ChangeStatusToAccept(ChangeBookingStatusModel model, Guid DriverId)
     {
         var result = new ResultModel();
         result.Succeed = false;
         try
         {
+            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
+            if (driver == null)
+            {
+                result.ErrorMessage = "Driver not found";
+                return result;
+            }
+            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
+            if (!checkDriver)
+            {
+                result.ErrorMessage = "User must be a Driver";
+                return result;
+            }
             var booking = _dbContext.Bookings
                 .Include(_ => _.Driver)
                 .Include(_ => _.SearchRequest)
@@ -205,12 +218,27 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Booking not exist";
                 return result;
             }
-            booking.Status = model.BookingStatus;
+            //if (booking.Status != BookingStatus.Pending)
+            //{
+            //    result.ErrorMessage = "Booking Status must be Pending";
+            //    return result;
+            //}
+            //if (booking.DriverId != DriverId)
+            //{
+            //    result.ErrorMessage = "Driver don't have permission";
+            //    return result;
+            //}
+            booking.Status = BookingStatus.Accept;
             booking.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
-
             var data = _mapper.Map<BookingModel>(booking);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
+
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = data };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            await _producer.ProduceAsync("dbs-booking-status-accept", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
             result.Data = data;
             result.Succeed = true;
         }
