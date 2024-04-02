@@ -54,6 +54,14 @@ public class BookingController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpPut("ResetBooking")]
+    public async Task<ActionResult> ResetBooking()
+    {
+        var result = await _bookingService.ResetBooking();
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
     [HttpPut("ChangeStatusToAccept")]
     public async Task<ActionResult> ChangeStatusToAccept([FromBody] ChangeBookingStatusModel model)
     {
@@ -62,10 +70,42 @@ public class BookingController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpPut("ResetBooking")]
-    public async Task<ActionResult> ResetBooking()
+    [HttpPut("ChangeStatusToArrived")]
+    public async Task<ActionResult> ChangeStatusToArrived([FromBody] ChangeBookingStatusModel model)
     {
-        var result = await _bookingService.ResetBooking();
+        var result = await _bookingService.ChangeStatusToArrived(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPut("ChangeStatusToOnGoing")]
+    public async Task<ActionResult> ChangeStatusToOnGoing([FromBody] ChangeBookingStatusModel model)
+    {
+        var result = await _bookingService.ChangeStatusToOnGoing(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPut("ChangeStatusToComplete")]
+    public async Task<ActionResult> ChangeStatusToComplete([FromBody] ChangeBookingStatusModel model)
+    {
+        var result = await _bookingService.ChangeStatusToComplete(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPut("DriverCancelBooking")]
+    public async Task<ActionResult> DriverCancelBooking([FromBody] ChangeBookingStatusModel model)
+    {
+        var result = await _bookingService.DriverCancelBooking(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPut("CustomerCancelBooking")]
+    public async Task<ActionResult> CustomerCancelBooking([FromBody] ChangeBookingStatusModel model)
+    {
+        var result = await _bookingService.CustomerCancelBooking(model, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
