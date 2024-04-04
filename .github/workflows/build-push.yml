@@ -18,12 +18,20 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
-          registry: https://harbor.hisoft.vn
-          username: ${{ secrets.HARBOR_USERNAME }}
-          password: ${{ secrets.HARBOR_TOKEN }}
+          #registry: https://harbor.hisoft.vn
+          #username: ${{ secrets.HARBOR_USERNAME }}
+          #password: ${{ secrets.HARBOR_TOKEN }}
+          username: ${{ secrets.SOLOCODE_USERNAME }}
+          password: ${{ secrets.SOLOCODE_TOKEN }}
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
           context: .
           push: true
-          tags: harbor.hisoft.vn/ims-backend/backend:latest
+          #tags: harbor.hisoft.vn/ims-backend/backend:latest
+          tags: ${{ secrets.SOLOCODE_USERNAME }}/dbs-backend:latest
+      -
+        name: Create trigger 
+        run: |
+          curl -k "https://lieudang:114ebda9ed9e05fc9199a1c9696e3a4c92@k8s.hisoft.vn/job/ims-backend/build?token=buildtoken"
+

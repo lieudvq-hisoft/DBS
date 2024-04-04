@@ -46,5 +46,9 @@
   <ItemGroup>
     <Folder Include="wwwroot\" />
     <Folder Include="Storage\" />
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Migrations\" />
   </ItemGroup>
 </Project>
