@@ -10,6 +10,8 @@ namespace Data.Model
         public double PickupLatitude { get; set; }
         public double DropOffLongitude { get; set; }
         public double DropOffLatitude { get; set; }
+        public string DropOffAddress { get; set; }
+        public string PickupAddress { get; set; }
         public long Price { get; set; }
     }
 
@@ -21,6 +23,8 @@ namespace Data.Model
         public double PickupLatitude { get; set; }
         public double DropOffLongitude { get; set; }
         public double DropOffLatitude { get; set; }
+        public string DropOffAddress { get; set; }
+        public string PickupAddress { get; set; }
         public long Price { get; set; }
         public SearchRequestStatus Status { get; set; }
     }
