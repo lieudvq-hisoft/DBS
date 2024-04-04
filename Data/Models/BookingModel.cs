@@ -8,7 +8,6 @@ namespace Data.Models
     public class ChangeBookingStatusModel
     {
         public Guid BookingId { get; set; }
-        public BookingStatus BookingStatus { get; set; }
     }
 
     public class BookingCreateModel
