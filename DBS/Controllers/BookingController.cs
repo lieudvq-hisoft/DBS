@@ -110,4 +110,12 @@ public class BookingController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpPut("ChangeDriverBooking")]
+    public async Task<ActionResult> ChangeDriverBooking([FromBody] ChangeDriverBookingModel model)
+    {
+        var result = await _bookingService.ChangeDriverBooking(model);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
 }
