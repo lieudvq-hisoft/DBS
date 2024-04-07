@@ -16,12 +16,6 @@ namespace Data.Models
         public Guid DriverId { get; set; }
     }
 
-    public class ChangeDriverBookingModel
-    {
-        public Guid BookingId { get; set; }
-        public Guid DriverId { get; set; }
-    }
-
     public class BookingModel
     {
         public Guid Id { get; set; }

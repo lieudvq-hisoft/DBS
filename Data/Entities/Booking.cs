@@ -12,6 +12,6 @@ public class Booking : BaseEntity
     [ForeignKey("DriverId")]
     public virtual User? Driver { get; set; }
 
-    public BookingStatus Status { get; set; } = BookingStatus.Pending;
+    public BookingStatus Status { get; set; } = BookingStatus.Accept;
 
 }

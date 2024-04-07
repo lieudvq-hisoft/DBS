@@ -51,4 +51,12 @@ public class SearchRequestController : ControllerBase
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
+
+    [HttpPut("NewDriver")]
+    public async Task<ActionResult> NewDriver([FromBody] NewDriverModel model)
+    {
+        var result = await _searchRequestService.NewDriver(model);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
 }

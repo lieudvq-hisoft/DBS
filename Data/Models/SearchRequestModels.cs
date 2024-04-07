@@ -6,6 +6,7 @@ namespace Data.Model
 {
     public class SearchRequestCreateModel
     {
+        public Guid DriverId { get; set; }
         public double PickupLongitude { get; set; }
         public double PickupLatitude { get; set; }
         public double DropOffLongitude { get; set; }
@@ -17,8 +18,9 @@ namespace Data.Model
 
     public class SearchRequestModel
     {
-        public Guid CustomerId { get; set; }
         public Guid Id { get; set; }
+        public Guid CustomerId { get; set; }
+        public UserModel Customer { get; set; }
         public double PickupLongitude { get; set; }
         public double PickupLatitude { get; set; }
         public double DropOffLongitude { get; set; }
@@ -27,5 +29,11 @@ namespace Data.Model
         public string PickupAddress { get; set; }
         public long Price { get; set; }
         public SearchRequestStatus Status { get; set; }
+    }
+
+    public class NewDriverModel
+    {
+        public Guid SearchRequestId { get; set; }
+        public Guid DriverId { get; set; }
     }
 }

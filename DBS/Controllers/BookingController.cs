@@ -62,14 +62,6 @@ public class BookingController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpPut("ChangeStatusToAccept")]
-    public async Task<ActionResult> ChangeStatusToAccept([FromBody] ChangeBookingStatusModel model)
-    {
-        var result = await _bookingService.ChangeStatusToAccept(model, Guid.Parse(User.GetId()));
-        if (result.Succeed) return Ok(result.Data);
-        return BadRequest(result.ErrorMessage);
-    }
-
     [HttpPut("ChangeStatusToArrived")]
     public async Task<ActionResult> ChangeStatusToArrived([FromBody] ChangeBookingStatusModel model)
     {
@@ -106,14 +98,6 @@ public class BookingController : ControllerBase
     public async Task<ActionResult> CustomerCancelBooking([FromBody] ChangeBookingStatusModel model)
     {
         var result = await _bookingService.CustomerCancelBooking(model, Guid.Parse(User.GetId()));
-        if (result.Succeed) return Ok(result.Data);
-        return BadRequest(result.ErrorMessage);
-    }
-
-    [HttpPut("ChangeDriverBooking")]
-    public async Task<ActionResult> ChangeDriverBooking([FromBody] ChangeDriverBookingModel model)
-    {
-        var result = await _bookingService.ChangeDriverBooking(model);
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

@@ -19,13 +19,11 @@ public interface IBookingService
     Task<ResultModel> GetBooking(Guid BookingId);
     Task<ResultModel> GetBookingForCustomer(PagingParam<SortCriteria> paginationModel, Guid CustomerId);
     Task<ResultModel> GetBookingForDriver(PagingParam<SortCriteria> paginationModel, Guid DriverId);
-    Task<ResultModel> ChangeStatusToAccept(ChangeBookingStatusModel model, Guid DriverId);
     Task<ResultModel> ChangeStatusToArrived(ChangeBookingStatusModel model, Guid DriverId);
     Task<ResultModel> ChangeStatusToOnGoing(ChangeBookingStatusModel model, Guid DriverId);
     Task<ResultModel> ChangeStatusToComplete(ChangeBookingStatusModel model, Guid DriverId);
     Task<ResultModel> DriverCancelBooking(ChangeBookingStatusModel model, Guid DriverId);
     Task<ResultModel> CustomerCancelBooking(ChangeBookingStatusModel model, Guid CustomerId);
-    Task<ResultModel> ChangeDriverBooking(ChangeDriverBookingModel model);
     Task<ResultModel> ResetBooking();
 
 }
@@ -60,19 +58,25 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Search Request not exist";
                 return result;
             }
-            var driver = _dbContext.Users.Where(_ => _.Id == model.DriverId && !_.IsDeleted).FirstOrDefault();
+            var driver = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == model.DriverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
             {
-                result.ErrorMessage = "Driver not exist";
+                result.ErrorMessage = "Driver not found";
                 return result;
             }
             var booking = _mapper.Map<BookingCreateModel, Booking>(model);
             _dbContext.Bookings.Add(booking);
             await _dbContext.SaveChangesAsync();
-            var data = _mapper.Map<BookingModel>(booking);
-            data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 
-            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = data };
+            var data = _mapper.Map<BookingModel>(booking);
+            var driverLocation = driver.DriverLocations.FirstOrDefault();
+            if (driverLocation != null)
+            {
+                var location = _mapper.Map<LocationModel>(driverLocation);
+                data.DriverLocation = location;
+            }
+
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { searchRequest.CustomerId }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
             await _producer.ProduceAsync("dbs-booking-create", new Message<Null, string> { Value = json });
             _producer.Flush();
@@ -197,6 +201,7 @@ public class BookingService : IBookingService
         }
         return result;
     }
+
     public async Task<ResultModel> ResetBooking()
     {
         var result = new ResultModel();
@@ -215,77 +220,12 @@ public class BookingService : IBookingService
             }
             foreach (var booking in bookings)
             {
-                booking.Status = BookingStatus.Pending;
+                booking.Status = BookingStatus.Accept;
 
             }
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<List<BookingModel>>(bookings);
-            result.Data = data;
-            result.Succeed = true;
-        }
-        catch (Exception ex)
-        {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-        }
-        return result;
-    }
-
-    public async Task<ResultModel> ChangeStatusToAccept(ChangeBookingStatusModel model, Guid DriverId)
-    {
-        var result = new ResultModel();
-        result.Succeed = false;
-        try
-        {
-            var driver = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
-            if (driver == null)
-            {
-                result.ErrorMessage = "Driver not found";
-                return result;
-            }
-            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
-            if (!checkDriver)
-            {
-                result.ErrorMessage = "User must be a Driver";
-                return result;
-            }
-            var booking = _dbContext.Bookings
-                .Include(_ => _.Driver)
-                .Include(_ => _.SearchRequest)
-                 .ThenInclude(sr => sr.Customer)
-                .Where(_ => _.Id == model.BookingId && !_.IsDeleted).FirstOrDefault();
-            if (booking == null)
-            {
-                result.ErrorMessage = "Booking not exist";
-                return result;
-            }
-            //if (booking.Status != BookingStatus.Pending)
-            //{
-            //    result.ErrorMessage = "Booking Status must be Pending";
-            //    return result;
-            //}
-            //if (booking.DriverId != DriverId)
-            //{
-            //    result.ErrorMessage = "Driver don't have permission";
-            //    return result;
-            //}
-            booking.Status = BookingStatus.Accept;
-            booking.DateUpdated = DateTime.Now;
-            await _dbContext.SaveChangesAsync();
-            var data = _mapper.Map<BookingModel>(booking);
-            data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
-            var driverLocation = driver.DriverLocations.FirstOrDefault();
-            if (driverLocation != null)
-            {
-                var location = _mapper.Map<LocationModel>(driverLocation);
-                data.DriverLocation = location;
-            }
-
-            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = data };
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
-            await _producer.ProduceAsync("dbs-booking-status-accept", new Message<Null, string> { Value = json });
-            _producer.Flush();
-
             result.Data = data;
             result.Succeed = true;
         }
@@ -590,52 +530,5 @@ public class BookingService : IBookingService
         }
         return result;
     }
-    public async Task<ResultModel> ChangeDriverBooking(ChangeDriverBookingModel model)
-    {
-        var result = new ResultModel();
-        result.Succeed = false;
-        try
-        {
-            var driver = _dbContext.Users.Where(_ => _.Id == model.DriverId && !_.IsDeleted).FirstOrDefault();
-            if (driver == null)
-            {
-                result.ErrorMessage = "Driver not found";
-                return result;
-            }
-            var booking = _dbContext.Bookings
-                .Include(_ => _.Driver)
-                .Include(_ => _.SearchRequest)
-                 .ThenInclude(sr => sr.Customer)
-                .Where(_ => _.Id == model.BookingId && !_.IsDeleted).FirstOrDefault();
-            if (booking == null)
-            {
-                result.ErrorMessage = "Booking not exist";
-                return result;
-            }
-            if (booking.Status != BookingStatus.Pending)
-            {
-                result.ErrorMessage = "Booking Status must be Pending";
-                return result;
-            }
 
-            booking.DriverId = driver.Id;
-            booking.DateUpdated = DateTime.Now;
-            await _dbContext.SaveChangesAsync();
-            var data = _mapper.Map<BookingModel>(booking);
-            data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
-
-            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.DriverId }, Payload = data };
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
-            await _producer.ProduceAsync("dbs-booking-change-driver", new Message<Null, string> { Value = json });
-            _producer.Flush();
-
-            result.Data = data;
-            result.Succeed = true;
-        }
-        catch (Exception ex)
-        {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-        }
-        return result;
-    }
 }
