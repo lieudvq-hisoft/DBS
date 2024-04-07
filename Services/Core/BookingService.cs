@@ -236,7 +236,7 @@ public class BookingService : IBookingService
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
+            var driver = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
             {
                 result.ErrorMessage = "Driver not found";
@@ -273,6 +273,12 @@ public class BookingService : IBookingService
             await _dbContext.SaveChangesAsync();
             var data = _mapper.Map<BookingModel>(booking);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
+            var driverLocation = driver.DriverLocations.FirstOrDefault();
+            if (driverLocation != null)
+            {
+                var location = _mapper.Map<LocationModel>(driverLocation);
+                data.DriverLocation = location;
+            }
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
