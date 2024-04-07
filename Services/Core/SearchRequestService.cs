@@ -21,6 +21,7 @@ public interface ISearchRequestService
     Task<ResultModel> GetOfCustomer(PagingParam<SortCriteria> paginationModel, Guid customerId);
     Task<ResultModel> UpdateStatusToComplete(Guid SearchRequestId, Guid customerId);
     Task<ResultModel> UpdateStatusToCancel(Guid SearchRequestId, Guid customerId);
+    Task<ResultModel> NewDriver(NewDriverModel model);
 
 }
 public class SearchRequestService : ISearchRequestService
@@ -64,10 +65,33 @@ public class SearchRequestService : ISearchRequestService
                 result.Succeed = false;
                 return result;
             }
+            var driver = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == model.DriverId && !_.IsDeleted).FirstOrDefault();
+            if (driver == null)
+            {
+                result.ErrorMessage = "User not exists";
+                result.Succeed = false;
+                return result;
+            }
+            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
+            if (!checkDriver)
+            {
+                result.ErrorMessage = "The user must be a driver";
+                result.Succeed = false;
+                return result;
+            }
             var searchRequest = _mapper.Map<SearchRequestCreateModel, SearchRequest>(model);
             searchRequest.CustomerId = customer.Id;
             _dbContext.SearchRequests.Add(searchRequest);
             await _dbContext.SaveChangesAsync();
+
+            var data = _mapper.Map<SearchRequestModel>(searchRequest);
+            data.Customer = _mapper.Map<UserModel>(customer);
+
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = data };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            await _producer.ProduceAsync("dbs-search-request-create", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
             result.Succeed = true;
             result.Data = searchRequest.Id;
         }
@@ -194,6 +218,50 @@ public class SearchRequestService : ISearchRequestService
             result.Data = _mapper.Map<SearchRequestModel>(data);
             result.Succeed = true;
             return result;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> NewDriver(NewDriverModel model)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var driver = _dbContext.Users.Where(_ => _.Id == model.DriverId && !_.IsDeleted).FirstOrDefault();
+            if (driver == null)
+            {
+                result.ErrorMessage = "Driver not found";
+                return result;
+            }
+            var searchRequest = _dbContext.SearchRequests
+                .Include(_ => _.Customer)
+                .Where(_ => _.Id == model.SearchRequestId && !_.IsDeleted).FirstOrDefault();
+            if (searchRequest == null)
+            {
+                result.ErrorMessage = "SearchRequest not exist";
+                return result;
+            }
+            if (searchRequest.Status != SearchRequestStatus.Processing)
+            {
+                result.ErrorMessage = "SearchRequest status not suitable";
+                return result;
+            }
+
+            var data = _mapper.Map<SearchRequestModel>(searchRequest);
+            data.Customer = _mapper.Map<UserModel>(searchRequest.Customer);
+
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { model.DriverId }, Payload = data };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            await _producer.ProduceAsync("dbs-booking-new-driver", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
+            result.Data = data;
+            result.Succeed = true;
         }
         catch (Exception ex)
         {
