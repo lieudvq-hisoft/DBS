@@ -24,5 +24,7 @@ namespace Data.Models
         public SearchRequestModel SearchRequest { get; set; }
         public UserModel Driver { get; set; }
         public UserModel Customer { get; set; }
+        public LocationModel DriverLocation { get; set; }
     }
+
 }
