@@ -16,8 +16,9 @@ public interface IDrivingLicenseService
 {
     Task<ResultModel> Add(DrivingLicenseCreateModel model, Guid DriverId);
     Task<ResultModel> Get(Guid DriverId);
-    Task<ResultModel> Update(DrivingLicenseUpdateModel model, Guid DriverId);
-    Task<ResultModel> Delete(Guid DriverId);
+    Task<ResultModel> GetByID(Guid DrivingLicenseId, Guid DriverId);
+    Task<ResultModel> Update(DrivingLicenseUpdateModel model, Guid DrivingLicenseId, Guid DriverId);
+    Task<ResultModel> Delete(Guid DrivingLicenseId, Guid DriverId);
     Task<ResultModel> AddImage(DrivingLicenseImageCreateModel model);
     Task<ResultModel> GetImagesByDrivingLicenseId(Guid DrivingLicenseId);
     Task<ResultModel> UpdateImage(DrivingLicenseImageUpdateModel model, Guid DrivingLicenseImageId);
@@ -66,12 +67,7 @@ public class DrivingLicenseService : IDrivingLicenseService
                 result.ErrorMessage = "Driver has been deactivated";
                 return result;
             }
-            var checkExist = _dbContext.DrivingLicenses.Where(_ => _.DriverId == DriverId && !_.IsDeleted).FirstOrDefault();
-            if (checkExist != null)
-            {
-                result.ErrorMessage = "Driver has already added Driving License";
-                return result;
-            }
+
             var drivingLicense = _mapper.Map<DrivingLicenseCreateModel, DrivingLicense>(model);
             drivingLicense.DriverId = driver.Id;
             _dbContext.DrivingLicenses.Add(drivingLicense);
@@ -115,7 +111,7 @@ public class DrivingLicenseService : IDrivingLicenseService
         return result;
     }
 
-    public async Task<ResultModel> Delete(Guid DriverId)
+    public async Task<ResultModel> Delete(Guid DrivingLicenseId, Guid DriverId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -138,7 +134,7 @@ public class DrivingLicenseService : IDrivingLicenseService
                 result.ErrorMessage = "Driver has been deactivated";
                 return result;
             }
-            var drivingLicense = _dbContext.DrivingLicenses.Where(_ => _.DriverId == DriverId && !_.IsDeleted).FirstOrDefault();
+            var drivingLicense = _dbContext.DrivingLicenses.Where(_ => _.Id == DrivingLicenseId && _.DriverId == DriverId && !_.IsDeleted).FirstOrDefault();
             if (drivingLicense == null)
             {
                 result.ErrorMessage = "Driving License not exist!";
@@ -242,7 +238,48 @@ public class DrivingLicenseService : IDrivingLicenseService
             }
             var drivingLicense = _dbContext.DrivingLicenses
                 .Include(_ => _.Driver)
-                .Where(_ => _.DriverId == DriverId && !_.IsDeleted).FirstOrDefault();
+                .Where(_ => _.DriverId == DriverId && !_.IsDeleted).ToList();
+            if (drivingLicense == null)
+            {
+                result.ErrorMessage = "Driving License not exist!";
+                return result;
+            }
+            result.Succeed = true;
+            result.Data = _mapper.Map<List<DrivingLicenseModel>>(drivingLicense);
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> GetByID(Guid DrivingLicenseId, Guid DriverId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
+            if (driver == null)
+            {
+                result.ErrorMessage = "Driver not exist!";
+                return result;
+            }
+            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
+            if (!checkDriver)
+            {
+                result.ErrorMessage = "The user must be a driver";
+                return result;
+            }
+            if (!driver.IsActive)
+            {
+                result.ErrorMessage = "Driver has been deactivated";
+                return result;
+            }
+            var drivingLicense = _dbContext.DrivingLicenses
+                .Include(_ => _.Driver)
+                .Where(_ => _.Id == DrivingLicenseId && _.DriverId == DriverId && !_.IsDeleted).FirstOrDefault();
             if (drivingLicense == null)
             {
                 result.ErrorMessage = "Driving License not exist!";
@@ -284,7 +321,7 @@ public class DrivingLicenseService : IDrivingLicenseService
         return result;
     }
 
-    public async Task<ResultModel> Update(DrivingLicenseUpdateModel model, Guid DriverId)
+    public async Task<ResultModel> Update(DrivingLicenseUpdateModel model, Guid DrivingLicenseId, Guid DriverId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -309,7 +346,7 @@ public class DrivingLicenseService : IDrivingLicenseService
             }
             var drivingLicense = _dbContext.DrivingLicenses
                  .Include(_ => _.Driver)
-                .Where(_ => _.DriverId == DriverId && !_.IsDeleted).FirstOrDefault();
+                .Where(_ => _.Id == DrivingLicenseId && _.DriverId == DriverId && !_.IsDeleted).FirstOrDefault();
             if (drivingLicense == null)
             {
                 result.ErrorMessage = "Driving License not exist!";

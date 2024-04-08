@@ -92,4 +92,12 @@ public class IdentityCardController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpGet("CheckExist")]
+    public async Task<ActionResult> CheckExistIdentityCard()
+    {
+        var result = await _identityCardService.CheckExistIdentityCard(Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
 }

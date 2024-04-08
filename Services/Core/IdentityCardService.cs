@@ -23,6 +23,7 @@ public interface IIdentityCardService
     Task<ResultModel> UpdateImage(IdentityCardImageUpdateModel model, Guid IdentityCardImageId);
     Task<ResultModel> DeleteImage(Guid IdentityCardImageId);
     Task<ResultModel> DownloadImage(FileModel model);
+    Task<ResultModel> CheckExistIdentityCard(Guid UserId);
 }
 
 public class IdentityCardService : IIdentityCardService
@@ -391,4 +392,33 @@ public class IdentityCardService : IIdentityCardService
         }
         return result;
     }
+
+    public async Task<ResultModel> CheckExistIdentityCard(Guid UserId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
+            {
+                result.ErrorMessage = "Driver not exist!";
+                return result;
+            }
+            if (!user.IsActive)
+            {
+                result.ErrorMessage = "User has been deactivated";
+                return result;
+            }
+            var checkExist = _dbContext.IdentityCards.Where(_ => _.UserId == UserId && !_.IsDeleted).FirstOrDefault();
+            result.Succeed = true;
+            result.Data = checkExist != null ? true : false;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
 }

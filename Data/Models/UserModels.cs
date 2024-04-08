@@ -1,4 +1,5 @@
 ﻿using Data.Enums;
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
 namespace Data.Model
@@ -17,8 +18,9 @@ namespace Data.Model
         public string UserName { get; set; }
         public string Email { get; set; }
         public string? Address { get; set; }
+        public string? Avatar { get; set; }
         public Gender? Gender { get; set; }
-        public DateOnly? Dob {  get; set; }
+        public DateOnly? Dob { get; set; }
     }
 
     public class RegisterModel
@@ -34,7 +36,7 @@ namespace Data.Model
         public string? Address { get; set; }
         public string? PhoneNumber { get; set; }
         public Gender? Gender { get; set; }
-        public DateOnly? Dob {  get; set; }
+        public DateOnly? Dob { get; set; }
     }
 
     public class ChangePasswordModel
@@ -68,6 +70,11 @@ namespace Data.Model
         public string? SearchValue { get; set; } = "";
     }
 
+    public class UpLoadAvatarModel
+    {
+        public IFormFile File { get; set; }
+    }
+
     public class ProfileModel
     {
         public Guid Id { get; set; }
@@ -76,6 +83,7 @@ namespace Data.Model
         public string? Name { get; set; }
         public string Email { get; set; }
         public string? Address { get; set; }
+        public string? Avatar { get; set; }
         public Gender? Gender { get; set; }
         public DateOnly? Dob { get; set; }
     }

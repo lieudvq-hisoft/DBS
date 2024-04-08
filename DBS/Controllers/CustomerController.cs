@@ -75,6 +75,24 @@ public class CustomerController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPut("Avatar")]
+    public async Task<ActionResult> UploadAvatar([FromForm] UpLoadAvatarModel model)
+    {
+        var result = await _userService.UploadAvatar(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpDelete("Avatar")]
+    public async Task<ActionResult> DeleteImage()
+    {
+        var result = await _userService.DeleteImage(Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPut("ChangePassword")]
     public async Task<ActionResult> ChangePassword(ChangePasswordModel model)
     {

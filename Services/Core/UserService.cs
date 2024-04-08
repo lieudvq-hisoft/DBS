@@ -21,6 +21,8 @@ public interface IUserService
     Task<ResultModel> Login(LoginModel model);
     Task<ResultModel> GetCustomer(PagingParam<CustomerSortCriteria> paginationModel, SearchModel searchModel);
     Task<ResultModel> UpdateProfile(ProfileUpdateModel model, Guid userId);
+    Task<ResultModel> UploadAvatar(UpLoadAvatarModel model, Guid userId);
+    Task<ResultModel> DeleteImage(Guid userId);
     Task<ResultModel> GetProfile(Guid id);
     Task<ResultModel> ChangePassword(ChangePasswordModel model, Guid userId);
     Task<ResultModel> ResetPassword(ResetPasswordModel model);
@@ -241,6 +243,67 @@ public class UserService : IUserService
         catch (Exception e)
         {
             result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> UploadAvatar(UpLoadAvatarModel model, Guid userId)
+    {
+        ResultModel result = new ResultModel();
+        try
+        {
+            var data = _dbContext.Users.Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
+            if (data == null)
+            {
+                result.ErrorMessage = "User not exists";
+                result.Succeed = false;
+                return result;
+            }
+            if (!data.IsActive)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "User has been deactivated";
+                return result;
+            }
+
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Avatar", data.Id.ToString());
+            data.Avatar = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            data.DateUpdated = DateTime.Now;
+            await _dbContext.SaveChangesAsync();
+
+            result.Succeed = true;
+            result.Data = _mapper.Map<UserModel>(data);
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+        return result;
+    }
+    public async Task<ResultModel> DeleteImage(Guid userId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var user = _dbContext.Users.Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
+            {
+                result.ErrorMessage = "User not exist!";
+                return result;
+            }
+            string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+            MyFunction.DeleteFile(dirPathDelete + user.Avatar);
+
+            user.Avatar = null;
+            await _dbContext.SaveChangesAsync();
+
+            result.Succeed = true;
+            result.Data = "Delete User Avatar successful";
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
         }
         return result;
     }
