@@ -14,10 +14,10 @@ namespace Services.Core;
 
 public interface IIdentityCardService
 {
-    Task<ResultModel> Add(IdentityCardCreateModel model, Guid DriverId);
-    Task<ResultModel> Get(Guid IdentityCardId, Guid DriverId);
-    Task<ResultModel> Update(IdentityCardUpdateModel model, Guid IdentityCardId, Guid DriverId);
-    Task<ResultModel> Delete(Guid IdentityCardId, Guid DriverId);
+    Task<ResultModel> Add(IdentityCardCreateModel model, Guid UserId);
+    Task<ResultModel> Get(Guid UserId);
+    Task<ResultModel> Update(IdentityCardUpdateModel model, Guid UserId);
+    Task<ResultModel> Delete(Guid UserId);
     Task<ResultModel> AddImage(IdentityCardImageCreateModel model);
     Task<ResultModel> GetImagesByIdentityCardId(Guid IdentityCardId);
     Task<ResultModel> UpdateImage(IdentityCardImageUpdateModel model, Guid IdentityCardImageId);
@@ -44,27 +44,21 @@ public class IdentityCardService : IIdentityCardService
         _userManager = userManager;
     }
 
-    public async Task<ResultModel> Add(IdentityCardCreateModel model, Guid DriverId)
+    public async Task<ResultModel> Add(IdentityCardCreateModel model, Guid UserId)
     {
         var result = new ResultModel();
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
-            if (driver == null)
+            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
             {
                 result.ErrorMessage = "Driver not exist!";
                 return result;
             }
-            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
-            if (!checkDriver)
+            if (!user.IsActive)
             {
-                result.ErrorMessage = "The user must be a driver";
-                return result;
-            }
-            if (!driver.IsActive)
-            {
-                result.ErrorMessage = "Driver has been deactivated";
+                result.ErrorMessage = "User has been deactivated";
                 return result;
             }
             if (model.Dob != null)
@@ -72,10 +66,8 @@ public class IdentityCardService : IIdentityCardService
                 DateOnly currentDate = DateOnly.FromDateTime(DateTime.Today);
                 DateOnly dob = new DateOnly(model.Dob.Year, model.Dob.Month, model.Dob.Day);
 
-                // Calculate the age difference
                 int ageDifferenceInYears = currentDate.Year - dob.Year;
 
-                // Check if the birthday for this year has occurred yet
                 if (dob > currentDate.AddYears(-ageDifferenceInYears))
                 {
                     ageDifferenceInYears--;
@@ -87,9 +79,15 @@ public class IdentityCardService : IIdentityCardService
                     return result;
                 }
             }
+            var checkExist = _dbContext.IdentityCards.Where(_ => _.UserId == UserId && !_.IsDeleted).FirstOrDefault();
+            if (checkExist != null)
+            {
+                result.ErrorMessage = "User has already added ID Card";
+                return result;
+            }
             var identityCard = _mapper.Map<IdentityCardCreateModel, IdentityCard>(model);
+            identityCard.UserId = user.Id;
             _dbContext.IdentityCards.Add(identityCard);
-            driver.IdentityCardId = identityCard.Id;
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
@@ -102,30 +100,24 @@ public class IdentityCardService : IIdentityCardService
         return result;
     }
 
-    public async Task<ResultModel> Delete(Guid IdentityCardId, Guid DriverId)
+    public async Task<ResultModel> Delete(Guid UserId)
     {
         var result = new ResultModel();
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
-            if (driver == null)
+            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
             {
                 result.ErrorMessage = "Driver not exist!";
                 return result;
             }
-            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
-            if (!checkDriver)
-            {
-                result.ErrorMessage = "The user must be a driver";
-                return result;
-            }
-            if (!driver.IsActive)
+            if (!user.IsActive)
             {
                 result.ErrorMessage = "Driver has been deactivated";
                 return result;
             }
-            var identityCard = _dbContext.IdentityCards.Where(_ => _.Id == IdentityCardId && !_.IsDeleted).FirstOrDefault();
+            var identityCard = _dbContext.IdentityCards.Where(_ => _.UserId == UserId && !_.IsDeleted).FirstOrDefault();
             if (identityCard == null)
             {
                 result.ErrorMessage = "Identity Card not exist!";
@@ -144,30 +136,24 @@ public class IdentityCardService : IIdentityCardService
         return result;
     }
 
-    public async Task<ResultModel> Get(Guid IdentityCardId, Guid DriverId)
+    public async Task<ResultModel> Get(Guid UserId)
     {
         var result = new ResultModel();
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
-            if (driver == null)
+            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
             {
                 result.ErrorMessage = "Driver not exist!";
                 return result;
             }
-            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
-            if (!checkDriver)
-            {
-                result.ErrorMessage = "The user must be a driver";
-                return result;
-            }
-            if (!driver.IsActive)
+            if (!user.IsActive)
             {
                 result.ErrorMessage = "Driver has been deactivated";
                 return result;
             }
-            var identityCard = _dbContext.IdentityCards.Where(_ => _.Id == IdentityCardId && !_.IsDeleted).FirstOrDefault();
+            var identityCard = _dbContext.IdentityCards.Where(_ => _.UserId == UserId && !_.IsDeleted).FirstOrDefault();
             if (identityCard == null)
             {
                 result.ErrorMessage = "Identity Card not exist!";
@@ -183,30 +169,24 @@ public class IdentityCardService : IIdentityCardService
         return result;
     }
 
-    public async Task<ResultModel> Update(IdentityCardUpdateModel model, Guid IdentityCardId, Guid DriverId)
+    public async Task<ResultModel> Update(IdentityCardUpdateModel model, Guid UserId)
     {
         var result = new ResultModel();
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
-            if (driver == null)
+            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
             {
                 result.ErrorMessage = "Driver not exist!";
                 return result;
             }
-            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
-            if (!checkDriver)
-            {
-                result.ErrorMessage = "The user must be a driver";
-                return result;
-            }
-            if (!driver.IsActive)
+            if (!user.IsActive)
             {
                 result.ErrorMessage = "Driver has been deactivated";
                 return result;
             }
-            var identityCard = _dbContext.IdentityCards.Where(_ => _.Id == IdentityCardId && !_.IsDeleted).FirstOrDefault();
+            var identityCard = _dbContext.IdentityCards.Where(_ => _.UserId == UserId && !_.IsDeleted).FirstOrDefault();
             if (identityCard == null)
             {
                 result.ErrorMessage = "Identity Card not exist!";
@@ -221,10 +201,8 @@ public class IdentityCardService : IIdentityCardService
                 DateOnly currentDate = DateOnly.FromDateTime(DateTime.Today);
                 DateOnly dob = new DateOnly(model.Dob.Value.Year, model.Dob.Value.Month, model.Dob.Value.Day);
 
-                // Calculate the age difference
                 int ageDifferenceInYears = currentDate.Year - dob.Year;
 
-                // Check if the birthday for this year has occurred yet
                 if (dob > currentDate.AddYears(-ageDifferenceInYears))
                 {
                     ageDifferenceInYears--;

@@ -1,5 +1,6 @@
 ﻿using Data.Entities;
 using Data.Enums;
+using Data.Models;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Data.Model
@@ -13,10 +14,7 @@ namespace Data.Model
         public double DropOffLatitude { get; set; }
         public string DropOffAddress { get; set; }
         public string PickupAddress { get; set; }
-        public string LicensePlate { get; set; }
-        public string Brand { get; set; }
-        public string Model { get; set; }
-        public string Color { get; set; }
+        public BookingVehicleModel BookingVehicle { get; set; }
         public long Price { get; set; }
     }
 
@@ -24,6 +22,7 @@ namespace Data.Model
     {
         public Guid Id { get; set; }
         public Guid CustomerId { get; set; }
+        public Guid DriverId { get; set; }
         public UserModel Customer { get; set; }
         public double PickupLongitude { get; set; }
         public double PickupLatitude { get; set; }
@@ -31,10 +30,7 @@ namespace Data.Model
         public double DropOffLatitude { get; set; }
         public string DropOffAddress { get; set; }
         public string PickupAddress { get; set; }
-        public string LicensePlate { get; set; }
-        public string Brand { get; set; }
-        public string Model { get; set; }
-        public string Color { get; set; }
+        public BookingVehicleModel BookingVehicle { get; set; }
         public long Price { get; set; }
         public SearchRequestStatus Status { get; set; }
     }

@@ -15,9 +15,6 @@ public class User : IdentityUser<Guid>
     public bool IsActive { get; set; } = true;
     public DateTime DateCreated { get; set; } = DateTime.Now;
     public DateTime DateUpdated { get; set; } = DateTime.Now;
-    public Guid? IdentityCardId { get; set; }
-    [ForeignKey("IdentityCardId")]
-    public virtual IdentityCard? IdentityCard { get; set; }
     public virtual ICollection<UserRole> UserRoles { get; set; }
     //Driver
     public virtual ICollection<DriverLocation> DriverLocations { get; set; }

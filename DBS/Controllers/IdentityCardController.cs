@@ -27,26 +27,26 @@ public class IdentityCardController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpGet("{IdentityCardId}")]
-    public async Task<ActionResult> Get(Guid IdentityCardId)
+    [HttpGet()]
+    public async Task<ActionResult> Get()
     {
-        var result = await _identityCardService.Get(IdentityCardId, Guid.Parse(User.GetId()));
+        var result = await _identityCardService.Get(Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpPut("{IdentityCardId}")]
-    public async Task<ActionResult> UpdateIdenttiyCard([FromBody] IdentityCardUpdateModel model, Guid IdentityCardId)
+    [HttpPut()]
+    public async Task<ActionResult> UpdateIdenttiyCard([FromBody] IdentityCardUpdateModel model)
     {
-        var result = await _identityCardService.Update(model, IdentityCardId, Guid.Parse(User.GetId()));
+        var result = await _identityCardService.Update(model, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpDelete("{IdentityCardId}")]
-    public async Task<ActionResult> DeleteIdentityCard(Guid IdentityCardId)
+    [HttpDelete()]
+    public async Task<ActionResult> DeleteIdentityCard()
     {
-        var result = await _identityCardService.Delete(IdentityCardId, Guid.Parse(User.GetId()));
+        var result = await _identityCardService.Delete(Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

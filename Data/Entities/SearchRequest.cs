@@ -14,10 +14,7 @@ public class SearchRequest : BaseEntity
     public double DropOffLatitude { get; set; }
     public string DropOffAddress { get; set; }
     public string PickupAddress { get; set; }
-    public string LicensePlate { get; set; }
-    public string Brand { get; set; }
-    public string Model { get; set; }
-    public string Color { get; set; }
+    public virtual BookingVehicle? BookingVehicle { get; set; }
     public long Price { get; set; }
     public SearchRequestStatus Status { get; set; } = SearchRequestStatus.Processing;
 }

@@ -27,26 +27,26 @@ public class DrivingLicenseController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpGet("{DrivingLicenseId}")]
-    public async Task<ActionResult> Get(Guid DrivingLicenseId)
+    [HttpGet()]
+    public async Task<ActionResult> Get()
     {
-        var result = await _drivingLicenseService.Get(DrivingLicenseId, Guid.Parse(User.GetId()));
+        var result = await _drivingLicenseService.Get(Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpPut("{DrivingLicenseId}")]
-    public async Task<ActionResult> UpdateIdenttiyCard([FromBody] DrivingLicenseUpdateModel model, Guid DrivingLicenseId)
+    [HttpPut()]
+    public async Task<ActionResult> UpdateIdenttiyCard([FromBody] DrivingLicenseUpdateModel model)
     {
-        var result = await _drivingLicenseService.Update(model, DrivingLicenseId, Guid.Parse(User.GetId()));
+        var result = await _drivingLicenseService.Update(model, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpDelete("{DrivingLicenseId}")]
-    public async Task<ActionResult> DeleteDrivingLicense(Guid DrivingLicenseId)
+    [HttpDelete()]
+    public async Task<ActionResult> DeleteDrivingLicense()
     {
-        var result = await _drivingLicenseService.Delete(DrivingLicenseId, Guid.Parse(User.GetId()));
+        var result = await _drivingLicenseService.Delete(Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

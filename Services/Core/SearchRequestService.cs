@@ -81,11 +81,18 @@ public class SearchRequestService : ISearchRequestService
             }
             var searchRequest = _mapper.Map<SearchRequestCreateModel, SearchRequest>(model);
             searchRequest.CustomerId = customer.Id;
+
+            var bookingVehicle = _mapper.Map<BookingVehicleModel, BookingVehicle>(model.BookingVehicle);
+            _dbContext.BookingVehicles.Add(bookingVehicle);
+            searchRequest.BookingVehicle = bookingVehicle;
+
             _dbContext.SearchRequests.Add(searchRequest);
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<SearchRequestModel>(searchRequest);
             data.Customer = _mapper.Map<UserModel>(customer);
+            data.BookingVehicle = _mapper.Map<BookingVehicleModel>(bookingVehicle);
+            data.DriverId = driver.Id;
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
@@ -240,6 +247,7 @@ public class SearchRequestService : ISearchRequestService
             }
             var searchRequest = _dbContext.SearchRequests
                 .Include(_ => _.Customer)
+                .Include(_ => _.BookingVehicle)
                 .Where(_ => _.Id == model.SearchRequestId && !_.IsDeleted).FirstOrDefault();
             if (searchRequest == null)
             {
@@ -254,6 +262,8 @@ public class SearchRequestService : ISearchRequestService
 
             var data = _mapper.Map<SearchRequestModel>(searchRequest);
             data.Customer = _mapper.Map<UserModel>(searchRequest.Customer);
+            data.BookingVehicle = _mapper.Map<BookingVehicleModel>(searchRequest.BookingVehicle);
+            data.DriverId = driver.Id;
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { model.DriverId }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
