@@ -66,6 +66,10 @@ public class BookingService : IBookingService
             }
             var booking = _mapper.Map<BookingCreateModel, Booking>(model);
             _dbContext.Bookings.Add(booking);
+
+            searchRequest.Status = SearchRequestStatus.Completed;
+            searchRequest.DateUpdated = DateTime.Now;
+
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
@@ -277,6 +281,7 @@ public class BookingService : IBookingService
             booking.Status = BookingStatus.Arrived;
             booking.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
+
             var data = _mapper.Map<BookingModel>(booking);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 

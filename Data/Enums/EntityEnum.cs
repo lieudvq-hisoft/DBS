@@ -146,3 +146,11 @@ public enum BookingStatus
     Cancel = 4
 }
 
+public enum VehicleImageType
+{
+    Front = 0,
+    Behind = 1,
+    Left = 2,
+    Right = 3,
+}
+

@@ -18,9 +18,7 @@ public class User : IdentityUser<Guid>
     public Guid? IdentityCardId { get; set; }
     [ForeignKey("IdentityCardId")]
     public virtual IdentityCard? IdentityCard { get; set; }
-
     public virtual ICollection<UserRole> UserRoles { get; set; }
-
     //Driver
     public virtual ICollection<DriverLocation> DriverLocations { get; set; }
     public virtual ICollection<DriverStatus> DriverStatuses { get; set; }
