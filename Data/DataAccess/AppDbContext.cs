@@ -71,4 +71,5 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<VehicleImage> VehicleImages { get; set; }
     public DbSet<BookingVehicle> BookingVehicles { get; set; }
     public DbSet<Rating> Ratings { get; set; }
+    public DbSet<BookingPayment> BookingPayments { get; set; }
 }
