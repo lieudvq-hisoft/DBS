@@ -86,7 +86,7 @@ public class BookingService : IBookingService
             _producer.Flush();
 
             result.Succeed = true;
-            result.Data = booking.Id;
+            result.Data = data;
         }
         catch (Exception ex)
         {
