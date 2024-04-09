@@ -66,6 +66,7 @@ public static class StartupExtension
         services.AddScoped<IIdentityCardService, IdentityCardService>();
         services.AddScoped<IVehicleService, VehicleService>();
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IRatingService, RatingService>();
         services.AddScoped<IDrivingLicenseService, DrivingLicenseService>();
         services.AddScoped<IMailService, MailService>();
         services.AddSingleton<IHangfireServices, HangfireServices>();

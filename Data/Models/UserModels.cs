@@ -18,6 +18,7 @@ namespace Data.Model
         public string UserName { get; set; }
         public string Email { get; set; }
         public string? Address { get; set; }
+        public float? Star { get; set; }
         public string? Avatar { get; set; }
         public Gender? Gender { get; set; }
         public DateOnly? Dob { get; set; }
@@ -84,6 +85,7 @@ namespace Data.Model
         public string Email { get; set; }
         public string? Address { get; set; }
         public string? Avatar { get; set; }
+        public float? Star { get; set; }
         public Gender? Gender { get; set; }
         public DateOnly? Dob { get; set; }
     }

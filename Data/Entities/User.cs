@@ -11,6 +11,7 @@ public class User : IdentityUser<Guid>
     public string? Avatar { get; set; }
     public Gender? Gender { get; set; }
     public DateOnly? Dob { get; set; }
+    public float? Star { get; set; }
     public bool IsDeleted { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime DateCreated { get; set; } = DateTime.Now;
