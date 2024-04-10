@@ -4,7 +4,6 @@ using Data.DataAccess;
 using Data.Entities;
 using Data.Model;
 using Data.Models;
-using Data.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -271,8 +270,14 @@ public class IdentityCardService : IIdentityCardService
             identityCardImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             await _dbContext.SaveChangesAsync();
 
+            var data = _mapper.Map<IdentityCardImageModel>(identityCardImage);
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+            string stringPath = path + data.ImageData;
+            byte[] imageBytes = File.ReadAllBytes(stringPath);
+            data.ImageData = Convert.ToBase64String(imageBytes);
+
             result.Succeed = true;
-            result.Data = _mapper.Map<IdentityCardImage, IdentityCardImageModel>(identityCardImage);
+            result.Data = data;
         }
         catch (Exception ex)
         {
@@ -327,6 +332,13 @@ public class IdentityCardService : IIdentityCardService
                 result.ErrorMessage = "Identity Card Image not exist!";
                 return result;
             }
+            foreach (var item in identityCardImages)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + item.ImageData;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                item.ImageData = Convert.ToBase64String(imageBytes);
+            }
 
             result.Data = _mapper.Map<List<IdentityCardImageModel>>(identityCardImages);
             result.Succeed = true;
@@ -358,8 +370,14 @@ public class IdentityCardService : IIdentityCardService
             identityCardImage.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
+            var data = _mapper.Map<IdentityCardImageModel>(identityCardImage);
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+            string stringPath = path + data.ImageData;
+            byte[] imageBytes = File.ReadAllBytes(stringPath);
+            data.ImageData = Convert.ToBase64String(imageBytes);
+
             result.Succeed = true;
-            result.Data = _mapper.Map<IdentityCardImageModel>(identityCardImage);
+            result.Data = data;
         }
         catch (Exception ex)
         {

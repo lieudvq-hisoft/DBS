@@ -155,3 +155,11 @@ public enum VehicleImageType
     Right = 3,
 }
 
+public enum BookingImageType
+{
+    Front = 0,
+    Behind = 1,
+    Left = 2,
+    Right = 3,
+}
+

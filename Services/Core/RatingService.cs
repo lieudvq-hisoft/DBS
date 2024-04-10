@@ -108,7 +108,7 @@ public class RatingService : IRatingService
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
-            result.Data = rating;
+            result.Data = _mapper.Map<RatingModel>(rating);
         }
         catch (Exception ex)
         {
@@ -264,7 +264,7 @@ public class RatingService : IRatingService
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
-            result.Data = rating;
+            result.Data = _mapper.Map<RatingModel>(rating);
         }
         catch (Exception ex)
         {

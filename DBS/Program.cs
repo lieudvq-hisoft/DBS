@@ -35,7 +35,7 @@ builder.Services.AddCors(o => o.AddPolicy("CorsPolicy", builder =>
 
 builder.Services.AddSignalR();
 
-    var app = builder.Build();
+var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
@@ -58,11 +58,6 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(Directory.GetCurrentDirectory() + "/" + "wwwroot")
-});
 
 app.MapControllers();
 
