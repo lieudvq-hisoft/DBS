@@ -345,6 +345,7 @@ public class IdentityCardService : IIdentityCardService
                 result.ErrorMessage = "Identity Card Image not exist!";
                 return result;
             }
+            var data = _mapper.Map<List<IdentityCardImageModel>>(identityCardImages);
             foreach (var item in identityCardImages)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
@@ -353,7 +354,7 @@ public class IdentityCardService : IIdentityCardService
                 item.ImageData = Convert.ToBase64String(imageBytes);
             }
 
-            result.Data = _mapper.Map<List<IdentityCardImageModel>>(identityCardImages);
+            result.Data = data;
             result.Succeed = true;
         }
         catch (Exception ex)

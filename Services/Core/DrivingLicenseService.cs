@@ -311,6 +311,7 @@ public class DrivingLicenseService : IDrivingLicenseService
                 result.ErrorMessage = "Driving License Image not exist!";
                 return result;
             }
+            var data = _mapper.Map<List<DrivingLicenseImageModel>>(drivingLicenseImages);
             foreach (var item in drivingLicenseImages)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
@@ -319,7 +320,7 @@ public class DrivingLicenseService : IDrivingLicenseService
                 item.ImageData = Convert.ToBase64String(imageBytes);
             }
 
-            result.Data = _mapper.Map<List<DrivingLicenseImageModel>>(drivingLicenseImages);
+            result.Data = data;
             result.Succeed = true;
         }
         catch (Exception ex)
