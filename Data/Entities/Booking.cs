@@ -11,7 +11,8 @@ public class Booking : BaseEntity
     public Guid DriverId { get; set; }
     [ForeignKey("DriverId")]
     public virtual User? Driver { get; set; }
-
+    public DateTime? PickUpTime { get; set; }
+    public DateTime? DropOffTime { get; set; }
     public BookingStatus Status { get; set; } = BookingStatus.Accept;
 
 }
