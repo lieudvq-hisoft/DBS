@@ -327,14 +327,16 @@ public class UserService : IUserService
                 result.ErrorMessage = "User has been deactivated";
                 return result;
             }
-            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-            string stringPath = dirPath + data.Avatar;
-            byte[] imageBytes = File.ReadAllBytes(stringPath);
-            data.Avatar = Convert.ToBase64String(imageBytes);
 
-            result.Succeed = true;
             var dataView = _mapper.Map<ProfileModel>(data);
+
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+            string stringPath = dirPath + dataView.Avatar;
+            byte[] imageBytes = File.ReadAllBytes(stringPath);
+            dataView.Avatar = Convert.ToBase64String(imageBytes);
+
             dataView.Name = data.Name;
+            result.Succeed = true;
             result.Data = dataView;
         }
         catch (Exception e)

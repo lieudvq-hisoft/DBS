@@ -148,6 +148,7 @@ public class BookingImageService : IBookingImageService
                 result.ErrorMessage = "Booking Image not exist!";
                 return result;
             }
+            var data = _mapper.Map<List<BookingImageModel>>(bookingImages);
             foreach (var item in bookingImages)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
@@ -156,7 +157,7 @@ public class BookingImageService : IBookingImageService
                 item.ImageData = Convert.ToBase64String(imageBytes);
             }
 
-            result.Data = _mapper.Map<List<BookingImageModel>>(bookingImages);
+            result.Data = data;
             result.Succeed = true;
         }
         catch (Exception ex)
