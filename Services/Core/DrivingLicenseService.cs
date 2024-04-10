@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Services.Utils;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Services.Core;
 
@@ -101,8 +102,14 @@ public class DrivingLicenseService : IDrivingLicenseService
             drivingLicenseImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             await _dbContext.SaveChangesAsync();
 
+            var data = _mapper.Map<DrivingLicenseImageModel>(drivingLicenseImage);
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+            string stringPath = path + data.ImageData;
+            byte[] imageBytes = File.ReadAllBytes(stringPath);
+            data.ImageData = Convert.ToBase64String(imageBytes);
+
             result.Succeed = true;
-            result.Data = _mapper.Map<DrivingLicenseImage, DrivingLicenseImageModel>(drivingLicenseImage);
+            result.Data = data;
         }
         catch (Exception ex)
         {
@@ -310,6 +317,13 @@ public class DrivingLicenseService : IDrivingLicenseService
                 result.ErrorMessage = "Driving License Image not exist!";
                 return result;
             }
+            foreach (var item in drivingLicenseImages)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + item.ImageData;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                item.ImageData = Convert.ToBase64String(imageBytes);
+            }
 
             result.Data = _mapper.Map<List<DrivingLicenseImageModel>>(drivingLicenseImages);
             result.Succeed = true;
@@ -401,8 +415,14 @@ public class DrivingLicenseService : IDrivingLicenseService
             drivingLicenseImage.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
+            var data = _mapper.Map<DrivingLicenseImageModel>(drivingLicenseImage);
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+            string stringPath = path + data.ImageData;
+            byte[] imageBytes = File.ReadAllBytes(stringPath);
+            data.ImageData = Convert.ToBase64String(imageBytes);
+
             result.Succeed = true;
-            result.Data = _mapper.Map<DrivingLicenseImageModel>(drivingLicenseImage);
+            result.Data = data;
         }
         catch (Exception ex)
         {

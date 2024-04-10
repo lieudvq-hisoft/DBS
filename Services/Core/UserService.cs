@@ -252,27 +252,33 @@ public class UserService : IUserService
         ResultModel result = new ResultModel();
         try
         {
-            var data = _dbContext.Users.Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
-            if (data == null)
+            var user = _dbContext.Users.Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
             {
                 result.ErrorMessage = "User not exists";
                 result.Succeed = false;
                 return result;
             }
-            if (!data.IsActive)
+            if (!user.IsActive)
             {
                 result.Succeed = false;
                 result.ErrorMessage = "User has been deactivated";
                 return result;
             }
 
-            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Avatar", data.Id.ToString());
-            data.Avatar = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
-            data.DateUpdated = DateTime.Now;
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Avatar", user.Id.ToString());
+            user.Avatar = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            user.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
+            var data = _mapper.Map<UserModel>(user);
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+            string stringPath = path + data.Avatar;
+            byte[] imageBytes = File.ReadAllBytes(stringPath);
+            data.Avatar = Convert.ToBase64String(imageBytes);
+
             result.Succeed = true;
-            result.Data = _mapper.Map<UserModel>(data);
+            result.Data = data;
         }
         catch (Exception e)
         {
@@ -280,6 +286,7 @@ public class UserService : IUserService
         }
         return result;
     }
+
     public async Task<ResultModel> DeleteImage(Guid userId)
     {
         var result = new ResultModel();
@@ -326,6 +333,11 @@ public class UserService : IUserService
                 result.ErrorMessage = "User has been deactivated";
                 return result;
             }
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+            string stringPath = dirPath + data.Avatar;
+            byte[] imageBytes = File.ReadAllBytes(stringPath);
+            data.Avatar = Convert.ToBase64String(imageBytes);
+
             result.Succeed = true;
             var dataView = _mapper.Map<ProfileModel>(data);
             dataView.Name = data.Name;

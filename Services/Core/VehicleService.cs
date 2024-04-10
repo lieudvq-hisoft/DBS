@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Services.Utils;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Services.Core;
 
@@ -311,6 +312,13 @@ public class VehicleService : IVehicleService
             {
                 result.ErrorMessage = "Vehicle Image not exist!";
                 return result;
+            }
+            foreach (var item in vehicleImages)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + item.ImageData;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                item.ImageData = Convert.ToBase64String(imageBytes);
             }
 
             result.Data = _mapper.Map<List<VehicleImageModel>>(vehicleImages);

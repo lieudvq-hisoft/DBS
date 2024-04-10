@@ -101,7 +101,7 @@ namespace Services.Utils
         {
 
             if (!Directory.Exists(path))
-            { 
+            {
                 Directory.CreateDirectory(path);
             }
             var extension = Path.GetExtension(file.FileName);
@@ -114,7 +114,7 @@ namespace Services.Utils
             {
                 await file.CopyToAsync(fileStream);
             }
-            
+
             return filePath.Split("/app/wwwroot")[1];
         }
 
@@ -135,6 +135,7 @@ namespace Services.Utils
             {
                 await file.CopyToAsync(fileStream);
             }
+            splitString = "Storage";
             var test = filePath.Split(splitString);
 
             return test[1];
