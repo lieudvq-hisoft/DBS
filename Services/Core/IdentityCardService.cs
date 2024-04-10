@@ -85,6 +85,12 @@ public class IdentityCardService : IIdentityCardService
                 result.ErrorMessage = "User has already added ID Card";
                 return result;
             }
+            var checkExistCardNumber = _dbContext.IdentityCards.Where(_ => _.IdentityCardNumber == model.IdentityCardNumber && !_.IsDeleted).FirstOrDefault();
+            if (checkExistCardNumber != null)
+            {
+                result.ErrorMessage = "Identity Card Number has been existed";
+                return result;
+            }
             var identityCard = _mapper.Map<IdentityCardCreateModel, IdentityCard>(model);
             identityCard.UserId = user.Id;
             _dbContext.IdentityCards.Add(identityCard);
@@ -239,6 +245,19 @@ public class IdentityCardService : IIdentityCardService
             {
                 identityCard.ExpiredDate = (DateOnly)model.ExpiredDate;
             }
+            if (model.IdentityCardNumber != null)
+            {
+                var checkExist = _dbContext.IdentityCards.Where(_ => _.IdentityCardNumber == model.IdentityCardNumber && !_.IsDeleted).FirstOrDefault();
+                if (checkExist != null)
+                {
+                    result.ErrorMessage = "Identity Card Number has been existed";
+                    return result;
+                }
+                else
+                {
+                    identityCard.IdentityCardNumber = model.IdentityCardNumber;
+                }
+            }
             identityCard.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
@@ -270,14 +289,8 @@ public class IdentityCardService : IIdentityCardService
             identityCardImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             await _dbContext.SaveChangesAsync();
 
-            var data = _mapper.Map<IdentityCardImageModel>(identityCardImage);
-            string path = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-            string stringPath = path + data.ImageData;
-            byte[] imageBytes = File.ReadAllBytes(stringPath);
-            data.ImageData = Convert.ToBase64String(imageBytes);
-
             result.Succeed = true;
-            result.Data = data;
+            result.Data = _mapper.Map<IdentityCardImageModel>(identityCardImage);
         }
         catch (Exception ex)
         {
@@ -370,14 +383,8 @@ public class IdentityCardService : IIdentityCardService
             identityCardImage.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
-            var data = _mapper.Map<IdentityCardImageModel>(identityCardImage);
-            string path = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-            string stringPath = path + data.ImageData;
-            byte[] imageBytes = File.ReadAllBytes(stringPath);
-            data.ImageData = Convert.ToBase64String(imageBytes);
-
             result.Succeed = true;
-            result.Data = data;
+            result.Data = _mapper.Map<IdentityCardImageModel>(identityCardImage);
         }
         catch (Exception ex)
         {

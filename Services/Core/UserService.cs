@@ -271,14 +271,8 @@ public class UserService : IUserService
             user.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
-            var data = _mapper.Map<UserModel>(user);
-            string path = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-            string stringPath = path + data.Avatar;
-            byte[] imageBytes = File.ReadAllBytes(stringPath);
-            data.Avatar = Convert.ToBase64String(imageBytes);
-
             result.Succeed = true;
-            result.Data = data;
+            result.Data = _mapper.Map<UserModel>(user);
         }
         catch (Exception e)
         {

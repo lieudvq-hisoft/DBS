@@ -13,6 +13,7 @@ namespace Data.Models
         public string PlaceOrigin { get; set; }
         public string PlaceResidence { get; set; }
         public string PersonalIdentification { get; set; }
+        public string IdentityCardNumber { get; set; }
         public DateOnly ExpiredDate { get; set; }
     }
 
@@ -25,6 +26,7 @@ namespace Data.Models
         public string? PlaceOrigin { get; set; }
         public string? PlaceResidence { get; set; }
         public string? PersonalIdentification { get; set; }
+        public string IdentityCardNumber { get; set; }
         public DateOnly? ExpiredDate { get; set; }
     }
 
@@ -39,6 +41,7 @@ namespace Data.Models
         public string PlaceOrigin { get; set; }
         public string PlaceResidence { get; set; }
         public string PersonalIdentification { get; set; }
+        public string IdentityCardNumber { get; set; }
         public DateOnly ExpiredDate { get; set; }
     }
 
