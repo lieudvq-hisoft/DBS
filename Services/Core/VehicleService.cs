@@ -247,7 +247,19 @@ public class VehicleService : IVehicleService
                 result.ErrorMessage = "Vehicle not exist!";
                 return result;
             }
-            result.Data = _mapper.Map<List<VehicleModel>>(vehicles);
+            var data = _mapper.Map<List<VehicleModel>>(vehicles);
+            foreach (var item in data)
+            {
+                var vehicleImage = _dbContext.VehicleImages.Where(_ => _.VehicleId == item.Id && !_.IsDeleted).FirstOrDefault();
+                if (vehicleImage != null)
+                {
+                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                    string stringPath = dirPath + vehicleImage.ImageData;
+                    byte[] imageBytes = File.ReadAllBytes(stringPath);
+                    item.ImageData = Convert.ToBase64String(imageBytes);
+                }
+            }
+            result.Data = data;
             result.Succeed = true;
         }
         catch (Exception ex)
