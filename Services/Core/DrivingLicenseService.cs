@@ -102,14 +102,8 @@ public class DrivingLicenseService : IDrivingLicenseService
             drivingLicenseImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             await _dbContext.SaveChangesAsync();
 
-            var data = _mapper.Map<DrivingLicenseImageModel>(drivingLicenseImage);
-            string path = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-            string stringPath = path + data.ImageData;
-            byte[] imageBytes = File.ReadAllBytes(stringPath);
-            data.ImageData = Convert.ToBase64String(imageBytes);
-
             result.Succeed = true;
-            result.Data = data;
+            result.Data = _mapper.Map<DrivingLicenseImageModel>(drivingLicenseImage);
         }
         catch (Exception ex)
         {
@@ -415,14 +409,8 @@ public class DrivingLicenseService : IDrivingLicenseService
             drivingLicenseImage.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
-            var data = _mapper.Map<DrivingLicenseImageModel>(drivingLicenseImage);
-            string path = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-            string stringPath = path + data.ImageData;
-            byte[] imageBytes = File.ReadAllBytes(stringPath);
-            data.ImageData = Convert.ToBase64String(imageBytes);
-
             result.Succeed = true;
-            result.Data = data;
+            result.Data = _mapper.Map<DrivingLicenseImageModel>(drivingLicenseImage);
         }
         catch (Exception ex)
         {

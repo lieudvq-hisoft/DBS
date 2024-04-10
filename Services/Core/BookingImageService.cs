@@ -63,14 +63,8 @@ public class BookingImageService : IBookingImageService
             bookingImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             await _dbContext.SaveChangesAsync();
 
-            var data = _mapper.Map<BookingImageModel>(bookingImage);
-            string path = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-            string stringPath = path + data.ImageData;
-            byte[] imageBytes = File.ReadAllBytes(stringPath);
-            data.ImageData = Convert.ToBase64String(imageBytes);
-
             result.Succeed = true;
-            result.Data = data;
+            result.Data = _mapper.Map<BookingImageModel>(bookingImage);
         }
         catch (Exception ex)
         {
@@ -195,11 +189,6 @@ public class BookingImageService : IBookingImageService
             }
             bookingImage.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
-
-            string path = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-            string stringPath = path + bookingImage.ImageData;
-            byte[] imageBytes = File.ReadAllBytes(stringPath);
-            bookingImage.ImageData = Convert.ToBase64String(imageBytes);
 
             result.Succeed = true;
             result.Data = _mapper.Map<BookingImageModel>(bookingImage);
