@@ -268,16 +268,16 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Booking not exist";
                 return result;
             }
-            //if (booking.Status != BookingStatus.Pending)
-            //{
-            //    result.ErrorMessage = "Booking Status must be Pending";
-            //    return result;
-            //}
-            //if (booking.DriverId != DriverId)
-            //{
-            //    result.ErrorMessage = "Driver don't have permission";
-            //    return result;
-            //}
+            if (booking.Status != BookingStatus.Accept)
+            {
+                result.ErrorMessage = "Booking Status must be Accept";
+                return result;
+            }
+            if (booking.DriverId != DriverId)
+            {
+                result.ErrorMessage = "Driver don't have permission";
+                return result;
+            }
             booking.Status = BookingStatus.Arrived;
             booking.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
@@ -328,18 +328,19 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Booking not exist";
                 return result;
             }
-            //if (booking.Status != BookingStatus.Pending)
-            //{
-            //    result.ErrorMessage = "Booking Status must be Pending";
-            //    return result;
-            //}
-            //if (booking.DriverId != DriverId)
-            //{
-            //    result.ErrorMessage = "Driver don't have permission";
-            //    return result;
-            //}
+            if (booking.Status != BookingStatus.Arrived)
+            {
+                result.ErrorMessage = "Booking Status must be Arrived";
+                return result;
+            }
+            if (booking.DriverId != DriverId)
+            {
+                result.ErrorMessage = "Driver don't have permission";
+                return result;
+            }
             booking.Status = BookingStatus.OnGoing;
             booking.DateUpdated = DateTime.Now;
+            booking.PickUpTime = DateTime.Now;
             await _dbContext.SaveChangesAsync();
             var data = _mapper.Map<BookingModel>(booking);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
@@ -387,18 +388,19 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Booking not exist";
                 return result;
             }
-            //if (booking.Status != BookingStatus.Pending)
-            //{
-            //    result.ErrorMessage = "Booking Status must be Pending";
-            //    return result;
-            //}
-            //if (booking.DriverId != DriverId)
-            //{
-            //    result.ErrorMessage = "Driver don't have permission";
-            //    return result;
-            //}
+            if (booking.Status != BookingStatus.OnGoing)
+            {
+                result.ErrorMessage = "Booking Status must be OnGoing";
+                return result;
+            }
+            if (booking.DriverId != DriverId)
+            {
+                result.ErrorMessage = "Driver don't have permission";
+                return result;
+            }
             booking.Status = BookingStatus.Complete;
             booking.DateUpdated = DateTime.Now;
+            booking.DropOffTime = DateTime.Now;
             await _dbContext.SaveChangesAsync();
             var data = _mapper.Map<BookingModel>(booking);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
@@ -446,16 +448,16 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Booking not exist";
                 return result;
             }
-            //if (booking.Status != BookingStatus.Pending)
-            //{
-            //    result.ErrorMessage = "Booking Status must be Pending";
-            //    return result;
-            //}
-            //if (booking.DriverId != DriverId)
-            //{
-            //    result.ErrorMessage = "Driver don't have permission";
-            //    return result;
-            //}
+            if (booking.Status == BookingStatus.OnGoing || booking.Status == BookingStatus.Complete)
+            {
+                result.ErrorMessage = "Booking Status not suitable for Cancel";
+                return result;
+            }
+            if (booking.DriverId != DriverId)
+            {
+                result.ErrorMessage = "Driver don't have permission";
+                return result;
+            }
             booking.Status = BookingStatus.Cancel;
             booking.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
@@ -505,16 +507,16 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Booking not exist";
                 return result;
             }
-            //if (booking.Status != BookingStatus.Pending)
-            //{
-            //    result.ErrorMessage = "Booking Status must be Pending";
-            //    return result;
-            //}
-            //if (booking.DriverId != DriverId)
-            //{
-            //    result.ErrorMessage = "Driver don't have permission";
-            //    return result;
-            //}
+            if (booking.Status == BookingStatus.OnGoing || booking.Status == BookingStatus.Complete)
+            {
+                result.ErrorMessage = "Booking Status not suitable for Cancel";
+                return result;
+            }
+            if (booking.SearchRequest.CustomerId != CustomerId)
+            {
+                result.ErrorMessage = "Customer don't have permission";
+                return result;
+            }
             booking.Status = BookingStatus.Cancel;
             booking.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();

@@ -20,7 +20,7 @@ public interface ISearchRequestService
     Task<ResultModel> Add(SearchRequestCreateModel model, Guid customerId);
     Task<ResultModel> GetOfCustomer(PagingParam<SortCriteria> paginationModel, Guid customerId);
     Task<ResultModel> UpdateStatusToComplete(Guid SearchRequestId, Guid customerId);
-    Task<ResultModel> UpdateStatusToCancel(Guid SearchRequestId, Guid customerId);
+    Task<ResultModel> UpdateStatusToCancel(Guid SearchRequestId, Guid customerId, Guid DriverId);
     Task<ResultModel> NewDriver(NewDriverModel model);
 
 }
@@ -189,7 +189,7 @@ public class SearchRequestService : ISearchRequestService
         return result;
     }
 
-    public async Task<ResultModel> UpdateStatusToCancel(Guid SearchRequestId, Guid customerId)
+    public async Task<ResultModel> UpdateStatusToCancel(Guid SearchRequestId, Guid customerId, Guid DriverId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -207,22 +207,43 @@ public class SearchRequestService : ISearchRequestService
                 result.ErrorMessage = "The user must be a customer";
                 return result;
             }
-            var data = _dbContext.SearchRequests.Where(_ => _.CustomerId == customerId && _.Id == SearchRequestId && !_.IsDeleted).FirstOrDefault();
-            if (data == null)
+            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
+            if (driver == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
+            if (!checkDriver)
+            {
+                result.ErrorMessage = "The user must be a driver";
+                return result;
+            }
+            var searchRequest = _dbContext.SearchRequests.Where(_ => _.CustomerId == customerId && _.Id == SearchRequestId && !_.IsDeleted).FirstOrDefault();
+            if (searchRequest == null)
             {
                 result.ErrorMessage = "SearchRequest not exist";
                 return result;
             }
-            if (data.Status != SearchRequestStatus.Processing)
+            if (searchRequest.Status != SearchRequestStatus.Processing)
             {
                 result.ErrorMessage = "SearchRequest status not suitable";
                 return result;
             }
-            data.Status = SearchRequestStatus.Cancel;
-            data.DateUpdated = DateTime.Now;
+            searchRequest.Status = SearchRequestStatus.Cancel;
+            searchRequest.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
-            result.Data = _mapper.Map<SearchRequestModel>(data);
+            var data = _mapper.Map<SearchRequestModel>(searchRequest);
+            if (driver != null)
+            {
+                var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { DriverId }, Payload = data };
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+                await _producer.ProduceAsync("dbs-searchrequest-customer-cancel", new Message<Null, string> { Value = json });
+                _producer.Flush();
+            }
+
+            result.Data = data;
             result.Succeed = true;
             return result;
         }
@@ -239,10 +260,16 @@ public class SearchRequestService : ISearchRequestService
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Where(_ => _.Id == model.DriverId && !_.IsDeleted).FirstOrDefault();
-            if (driver == null)
+            var oldDriver = _dbContext.Users.Where(_ => _.Id == model.OldDriverId && !_.IsDeleted).FirstOrDefault();
+            if (oldDriver == null)
             {
-                result.ErrorMessage = "Driver not found";
+                result.ErrorMessage = "Old Driver not found";
+                return result;
+            }
+            var newDriver = _dbContext.Users.Where(_ => _.Id == model.NewDriverId && !_.IsDeleted).FirstOrDefault();
+            if (newDriver == null)
+            {
+                result.ErrorMessage = "New Driver not found";
                 return result;
             }
             var searchRequest = _dbContext.SearchRequests
@@ -260,12 +287,25 @@ public class SearchRequestService : ISearchRequestService
                 return result;
             }
 
+            // Send to Old Driver
+            var oldData = _mapper.Map<SearchRequestModel>(searchRequest);
+            oldData.Status = SearchRequestStatus.Cancel;
+            oldData.Customer = _mapper.Map<UserModel>(searchRequest.Customer);
+            oldData.BookingVehicle = _mapper.Map<BookingVehicleModel>(searchRequest.BookingVehicle);
+            oldData.DriverId = oldDriver.Id;
+
+            var oldKafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { model.OldDriverId }, Payload = oldData };
+            var oldJson = Newtonsoft.Json.JsonConvert.SerializeObject(oldKafkaModel);
+            await _producer.ProduceAsync("dbs-booking-old-driver", new Message<Null, string> { Value = oldJson });
+            _producer.Flush();
+
+            // Send to New Driver
             var data = _mapper.Map<SearchRequestModel>(searchRequest);
             data.Customer = _mapper.Map<UserModel>(searchRequest.Customer);
             data.BookingVehicle = _mapper.Map<BookingVehicleModel>(searchRequest.BookingVehicle);
-            data.DriverId = driver.Id;
+            data.DriverId = newDriver.Id;
 
-            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { model.DriverId }, Payload = data };
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { model.NewDriverId }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
             await _producer.ProduceAsync("dbs-booking-new-driver", new Message<Null, string> { Value = json });
             _producer.Flush();

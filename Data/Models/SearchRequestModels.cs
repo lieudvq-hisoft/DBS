@@ -38,6 +38,7 @@ namespace Data.Model
     public class NewDriverModel
     {
         public Guid SearchRequestId { get; set; }
-        public Guid DriverId { get; set; }
+        public Guid OldDriverId { get; set; }
+        public Guid NewDriverId { get; set; }
     }
 }

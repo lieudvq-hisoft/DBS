@@ -45,9 +45,9 @@ public class SearchRequestController : ControllerBase
     }
 
     [HttpPut("UpdateStatusToCancel/{SearchRequestId}")]
-    public async Task<ActionResult> UpdateStatusToCancel(string SearchRequestId)
+    public async Task<ActionResult> UpdateStatusToCancel(string SearchRequestId, [FromQuery] Guid? DriverId = null)
     {
-        var result = await _searchRequestService.UpdateStatusToCancel(Guid.Parse(SearchRequestId), Guid.Parse(User.GetId()));
+        var result = await _searchRequestService.UpdateStatusToCancel(Guid.Parse(SearchRequestId), Guid.Parse(User.GetId()), DriverId.HasValue ? DriverId.Value : Guid.Empty);
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
