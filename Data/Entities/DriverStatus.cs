@@ -9,4 +9,5 @@ public class DriverStatus : BaseEntity
     [ForeignKey("DriverId")]
     public virtual User? Driver { get; set; }
     public bool IsOnline { get; set; }
+    public bool IsFree { get; set; } = true;
 }

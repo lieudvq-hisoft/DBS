@@ -242,7 +242,7 @@ public class VehicleService : IVehicleService
                 .Include(_ => _.Customer)
                 .Where(_ => _.CustomerId == customerId && !_.IsDeleted)
                 .ToList();
-            if (vehicles == null || vehicles.Count == 0)
+            if (vehicles == null)
             {
                 result.ErrorMessage = "Vehicle not exist!";
                 return result;
