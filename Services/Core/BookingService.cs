@@ -17,8 +17,9 @@ public interface IBookingService
 {
     Task<ResultModel> CreateBooking(BookingCreateModel model);
     Task<ResultModel> GetBooking(Guid BookingId);
-    Task<ResultModel> GetBookingForCustomer(PagingParam<SortCriteria> paginationModel, Guid CustomerId);
-    Task<ResultModel> GetBookingForDriver(PagingParam<SortCriteria> paginationModel, Guid DriverId);
+    Task<ResultModel> GetBookingsForAdmin(PagingParam<SortBookingCriteria> paginationModel, Guid UserId);
+    Task<ResultModel> GetBookingForCustomer(PagingParam<SortBookingCriteria> paginationModel, Guid CustomerId);
+    Task<ResultModel> GetBookingForDriver(PagingParam<SortBookingCriteria> paginationModel, Guid DriverId);
     Task<ResultModel> ChangeStatusToArrived(ChangeBookingStatusModel model, Guid DriverId);
     Task<ResultModel> ChangeStatusToOnGoing(ChangeBookingStatusModel model, Guid DriverId);
     Task<ResultModel> ChangeStatusToComplete(ChangeBookingStatusModel model, Guid DriverId);
@@ -132,7 +133,43 @@ public class BookingService : IBookingService
         return result;
     }
 
-    public async Task<ResultModel> GetBookingForCustomer(PagingParam<SortCriteria> paginationModel, Guid CustomerId)
+    public async Task<ResultModel> GetBookingsForAdmin(PagingParam<SortBookingCriteria> paginationModel, Guid UserId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            var checkAdmin = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Admin);
+            if (!checkAdmin)
+            {
+                result.ErrorMessage = "The user must be Admin";
+                return result;
+            }
+            var data = _dbContext.Bookings
+                .Where(_ => !_.IsDeleted);
+            var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
+            var bookings = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
+            bookings = bookings.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
+            var viewModels = _mapper.ProjectTo<SupportModel>(bookings);
+
+            paging.Data = viewModels;
+            result.Data = paging;
+            result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> GetBookingForCustomer(PagingParam<SortBookingCriteria> paginationModel, Guid CustomerId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -168,7 +205,7 @@ public class BookingService : IBookingService
         return result;
     }
 
-    public async Task<ResultModel> GetBookingForDriver(PagingParam<SortCriteria> paginationModel, Guid DriverId)
+    public async Task<ResultModel> GetBookingForDriver(PagingParam<SortBookingCriteria> paginationModel, Guid DriverId)
     {
         var result = new ResultModel();
         result.Succeed = false;

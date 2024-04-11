@@ -57,6 +57,18 @@ public enum SortCriteria
 
 }
 
+public enum SortSupportCriteria
+{
+    DateCreated,
+    SupportStatus,
+}
+
+public enum SortBookingCriteria
+{
+    DateCreated,
+    Status,
+}
+
 public enum RackSortCriteria
 {
     DateCreated
@@ -163,3 +175,16 @@ public enum BookingImageType
     Right = 3,
 }
 
+public enum SupportType
+{
+    Recruitment = 0,
+    SupportIssue = 1,
+}
+
+public enum SupportStatus
+{
+    New = 0,
+    InProcess = 1,
+    Solved = 2,
+    CantSolved = 3,
+}
