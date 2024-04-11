@@ -55,6 +55,13 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
                 Name = "Staff",
                 NormalizedName = "STAFF",
             });
+        modelBuilder.Entity<Role>().HasData(
+            new Entities.Role()
+            {
+                Id = Guid.Parse("ef343efc-8904-4d12-b340-36c41d338306"),
+                Name = "Admin",
+                NormalizedName = "ADMIN",
+            });
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
     }
     public DbSet<User> Users { get; set; }
@@ -73,4 +80,5 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<Rating> Ratings { get; set; }
     public DbSet<BookingPayment> BookingPayments { get; set; }
     public DbSet<BookingImage> BookingImages { get; set; }
+    public DbSet<Support> Supports { get; set; }
 }

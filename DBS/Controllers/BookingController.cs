@@ -38,8 +38,16 @@ public class BookingController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpGet("ForAdmin")]
+    public async Task<ActionResult> GetBookingsForAdmin([FromQuery] PagingParam<SortBookingCriteria> paginationModel)
+    {
+        var result = await _bookingService.GetBookingsForAdmin(paginationModel, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
     [HttpGet("ForCustomer")]
-    public async Task<ActionResult> GetBookingsForCustomer([FromQuery] PagingParam<SortCriteria> paginationModel)
+    public async Task<ActionResult> GetBookingsForCustomer([FromQuery] PagingParam<SortBookingCriteria> paginationModel)
     {
         var result = await _bookingService.GetBookingForCustomer(paginationModel, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
@@ -47,7 +55,7 @@ public class BookingController : ControllerBase
     }
 
     [HttpGet("ForDriver")]
-    public async Task<ActionResult> GetBookingsForDriver([FromQuery] PagingParam<SortCriteria> paginationModel)
+    public async Task<ActionResult> GetBookingsForDriver([FromQuery] PagingParam<SortBookingCriteria> paginationModel)
     {
         var result = await _bookingService.GetBookingForDriver(paginationModel, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
