@@ -58,7 +58,10 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Search Request not exist";
                 return result;
             }
-            var driver = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == model.DriverId && !_.IsDeleted).FirstOrDefault();
+            var driver = _dbContext.Users
+                .Include(_ => _.DriverLocations)
+                .Include(_ => _.DriverStatuses)
+                .Where(_ => _.Id == model.DriverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
             {
                 result.ErrorMessage = "Driver not found";
@@ -73,6 +76,12 @@ public class BookingService : IBookingService
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
+
+            var driverStatus = driver.DriverStatuses.FirstOrDefault();
+            driverStatus.IsFree = false;
+            driverStatus.DateUpdated = DateTime.Now;
+            _dbContext.DriverStatuses.Update(driverStatus);
+
             var driverLocation = driver.DriverLocations.FirstOrDefault();
             if (driverLocation != null)
             {
@@ -366,7 +375,9 @@ public class BookingService : IBookingService
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
+            var driver = _dbContext.Users
+                .Include(_ => _.DriverStatuses)
+                .Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
             {
                 result.ErrorMessage = "Driver not found";
@@ -398,10 +409,16 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Driver don't have permission";
                 return result;
             }
+            var driverStatus = driver.DriverStatuses.FirstOrDefault();
+            driverStatus.IsFree = true;
+            driverStatus.DateUpdated = DateTime.Now;
+            _dbContext.DriverStatuses.Update(driverStatus);
+
             booking.Status = BookingStatus.Complete;
             booking.DateUpdated = DateTime.Now;
             booking.DropOffTime = DateTime.Now;
             await _dbContext.SaveChangesAsync();
+
             var data = _mapper.Map<BookingModel>(booking);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 
@@ -426,7 +443,9 @@ public class BookingService : IBookingService
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
+            var driver = _dbContext.Users
+                .Include(_ => _.DriverStatuses)
+                .Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
             {
                 result.ErrorMessage = "Driver not found";
@@ -458,9 +477,15 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Driver don't have permission";
                 return result;
             }
+            var driverStatus = driver.DriverStatuses.FirstOrDefault();
+            driverStatus.IsFree = true;
+            driverStatus.DateUpdated = DateTime.Now;
+            _dbContext.DriverStatuses.Update(driverStatus);
+
             booking.Status = BookingStatus.Cancel;
             booking.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
+
             var data = _mapper.Map<BookingModel>(booking);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 
@@ -517,9 +542,18 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Customer don't have permission";
                 return result;
             }
+            var driver = _dbContext.Users.Where(_ => _.Id == booking.DriverId)
+                .Include(_ => _.DriverStatuses)
+                .FirstOrDefault();
+            var driverStatus = driver.DriverStatuses.FirstOrDefault();
+            driverStatus.IsFree = true;
+            driverStatus.DateUpdated = DateTime.Now;
+            _dbContext.DriverStatuses.Update(driverStatus);
+
             booking.Status = BookingStatus.Cancel;
             booking.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
+
             var data = _mapper.Map<BookingModel>(booking);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 

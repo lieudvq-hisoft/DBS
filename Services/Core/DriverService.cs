@@ -255,6 +255,7 @@ public class DriverService : IDriverService
                 join ""DriverLocations"" dl on anu.""Id"" = dl.""DriverId"" 
                 join ""DriverStatuses"" ds on ds.""DriverId"" = anu.""Id"" 
                 where ds.""IsOnline"" = true 	
+                    AND ds.""IsFree"" = true
 	                AND (
                     6371 * acos(
                         cos(radians({locationCustomer.Latitude}))
