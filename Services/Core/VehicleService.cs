@@ -325,7 +325,8 @@ public class VehicleService : IVehicleService
                 result.ErrorMessage = "Vehicle Image not exist!";
                 return result;
             }
-            foreach (var item in vehicleImages)
+            var data = _mapper.Map<List<VehicleImageModel>>(vehicleImages);
+            foreach (var item in data)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
                 string stringPath = dirPath + item.ImageData;
@@ -333,7 +334,7 @@ public class VehicleService : IVehicleService
                 item.ImageData = Convert.ToBase64String(imageBytes);
             }
 
-            result.Data = _mapper.Map<List<VehicleImageModel>>(vehicleImages);
+            result.Data = data;
             result.Succeed = true;
         }
         catch (Exception ex)

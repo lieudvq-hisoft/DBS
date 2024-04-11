@@ -330,10 +330,13 @@ public class UserService : IUserService
 
             var dataView = _mapper.Map<ProfileModel>(data);
 
-            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-            string stringPath = dirPath + dataView.Avatar;
-            byte[] imageBytes = File.ReadAllBytes(stringPath);
-            dataView.Avatar = Convert.ToBase64String(imageBytes);
+            if (dataView.Avatar != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + dataView.Avatar;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                dataView.Avatar = Convert.ToBase64String(imageBytes);
+            }
 
             dataView.Name = data.Name;
             result.Succeed = true;
