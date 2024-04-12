@@ -66,6 +66,11 @@ namespace Data.Model
         public string Email { get; set; }
     }
 
+    public class CheckExistPhoneNumberModel
+    {
+        public string PhoneNumber { get; set; }
+    }
+
     public class SearchModel
     {
         public string? SearchValue { get; set; } = "";
