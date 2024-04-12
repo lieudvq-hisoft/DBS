@@ -493,7 +493,7 @@ public class UserService : IUserService
         try
         {
             var checkExist = _dbContext.Users
-                .Where(_ => _.Email == model.e && !_.IsDeleted && _.IsActive).FirstOrDefault();
+                .Where(_ => _.Email == model.Email && !_.IsDeleted && _.IsActive).FirstOrDefault();
             if (checkExist != null)
             {
                 result.Succeed = true;
