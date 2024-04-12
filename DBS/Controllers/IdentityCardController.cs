@@ -100,4 +100,76 @@ public class IdentityCardController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpPost("ByAdmin/{DriverId}")]
+    public async Task<ActionResult> AddByAdmin([FromBody] IdentityCardCreateModel model, Guid DriverId)
+    {
+        var result = await _identityCardService.AddByAdmin(model, DriverId, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpGet("ByAdmin/{DriverId}")]
+    public async Task<ActionResult> GetByAdmin(Guid DriverId)
+    {
+        var result = await _identityCardService.GetByAdmin(DriverId, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPut("ByAdmin/{DriverId}")]
+    public async Task<ActionResult> UpdateByAdmin([FromBody] IdentityCardUpdateModel model, Guid DriverId)
+    {
+        var result = await _identityCardService.UpdateByAdmin(model, DriverId, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpDelete("ByAdmin/{DriverId}")]
+    public async Task<ActionResult> DeleteByAdmin(Guid DriverId)
+    {
+        var result = await _identityCardService.DeleteByAdmin(DriverId, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPost("IdentityCardImage/ByAdmin")]
+    public async Task<ActionResult> AddImageByAdmin([FromForm] IdentityCardImageCreateModel model)
+    {
+        var result = await _identityCardService.AddImageByAdmin(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPost("ByAdmin/Image/Download")]
+    public async Task<ActionResult> DownloadImageByAdmin([FromBody] FileModel model)
+    {
+        var result = await _identityCardService.DownloadImageByAdmin(model, Guid.Parse(User.GetId()));
+        FileEModel file = (FileEModel)result.Data;
+        if (result.Succeed) return File(file.Content, "application/octet-stream", "IdentityCardImage" + file.Extension);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpGet("IdentityCardImage/ByAdmin/{IdentityCardId}")]
+    public async Task<ActionResult> GetImagesByIdentityCardIdByAdmin(Guid IdentityCardId)
+    {
+        var result = await _identityCardService.GetImagesByIdentityCardIdByAdmin(IdentityCardId, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPut("IdentityCardImage/ByAdmin/{IdentityCardImage}")]
+    public async Task<ActionResult> UpdateImageByAdmin([FromForm] IdentityCardImageUpdateModel model, Guid IdentityCardImage)
+    {
+        var result = await _identityCardService.UpdateImageByAdmin(model, IdentityCardImage, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpDelete("IdentityCardImage/ByAdmin/{IdentityCardImage}")]
+    public async Task<ActionResult> DeleteImageByAdmin(Guid IdentityCardImage)
+    {
+        var result = await _identityCardService.DeleteImageByAdmin(IdentityCardImage, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
 }
