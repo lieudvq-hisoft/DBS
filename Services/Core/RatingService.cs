@@ -75,11 +75,16 @@ public class RatingService : IRatingService
                 result.ErrorMessage = "Booking has been rated";
                 return result;
             }
+
             var rating = _mapper.Map<RatingCreateModel, Rating>(model);
             rating.BookingId = booking.Id;
             _dbContext.Ratings.Add(rating);
-            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "RatingImage", rating.Id.ToString());
-            rating.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+
+            if (rating.ImageData != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "RatingImage", rating.Id.ToString());
+                rating.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            }
 
             var driver = _dbContext.Users.Where(_ => _.Id == booking.DriverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
