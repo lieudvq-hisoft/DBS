@@ -162,7 +162,8 @@ public enum BookingStatus
     Arrived = 2,
     OnGoing = 3,
     Complete = 4,
-    Cancel = 5
+    Cancel = 5,
+    PayBooking = 6
 }
 
 public enum VehicleImageType

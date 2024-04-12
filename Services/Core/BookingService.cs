@@ -461,13 +461,17 @@ public class BookingService : IBookingService
             var data = _mapper.Map<BookingModel>(booking);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 
+            data.Status = BookingStatus.PayBooking;
+            var kafkaModelDriver = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = data };
+            var jsonDriver = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelDriver);
+            await _producer.ProduceAsync("dbs-booking-status-complete", new Message<Null, string> { Value = jsonDriver });
+
+            data.Status = BookingStatus.Complete;
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
             await _producer.ProduceAsync("dbs-booking-status-complete", new Message<Null, string> { Value = json });
 
-            var kafkaModelDriver = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = data };
-            var jsonDriver = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelDriver);
-            await _producer.ProduceAsync("dbs-booking-status-complete", new Message<Null, string> { Value = jsonDriver });
+
             _producer.Flush();
 
             result.Data = data;
