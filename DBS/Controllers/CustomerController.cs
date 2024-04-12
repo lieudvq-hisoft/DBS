@@ -47,6 +47,14 @@ public class CustomerController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpPost("CheckExistUserWithPhoneNumber")]
+    public async Task<ActionResult> CheckExistUserWithPhoneNumber([FromBody] CheckExistPhoneNumberModel model)
+    {
+        var result = await _userService.CheckExistUserWithPhoneNumber(model);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
     [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet]
     public async Task<ActionResult> GetCustomer([FromQuery] PagingParam<CustomerSortCriteria> paginationModel, [FromQuery] SearchModel searchModel)
