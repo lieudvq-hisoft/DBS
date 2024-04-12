@@ -7,12 +7,14 @@ using System.Threading.Tasks;
 
 namespace Data.Entities;
 
-public class Rating : BaseEntity
+public class RevenueDetail : BaseEntity
 {
+    public Guid DriverRevenueId { get; set; }
+    [ForeignKey("DriverRevenueId")]
+    public virtual DriverRevenue? DriverRevenue { get; set; }
     public Guid BookingId { get; set; }
     [ForeignKey("BookingId")]
     public virtual Booking? Booking { get; set; }
-    public int Star { get; set; }
-    public string? Comment { get; set; }
-    public string? ImageData { get; set; }
+    public long DriverIncome { get; set; }
+    public long SystemIncome { get; set; }
 }

@@ -12,15 +12,15 @@ public class RatingCreateModel
 {
     public Guid BookingId { get; set; }
     public int Star { get; set; }
-    public string Comment { get; set; }
-    public IFormFile File { get; set; }
+    public string? Comment { get; set; }
+    public IFormFile? File { get; set; }
 }
 
 public class RatingUpdateModel
 {
     public int Star { get; set; }
-    public string Comment { get; set; }
-    public IFormFile File { get; set; }
+    public string? Comment { get; set; }
+    public IFormFile? File { get; set; }
 }
 
 public class RatingModel
