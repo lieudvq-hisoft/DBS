@@ -176,12 +176,13 @@ public class DriverService : IDriverService
 
             if (driverStatus == null)
             {
-                driverStatus = new DriverStatus { DriverId = driver.Id, IsOnline = true };
+                driverStatus = new DriverStatus { DriverId = driver.Id, IsOnline = true, IsFree = true };
                 _dbContext.DriverStatuses.Add(driverStatus);
             }
             else
             {
                 driverStatus.IsOnline = true;
+                driverStatus.IsFree = true;
                 driverStatus.DateUpdated = DateTime.Now;
                 _dbContext.DriverStatuses.Update(driverStatus);
             }
@@ -221,12 +222,13 @@ public class DriverService : IDriverService
 
             if (driverStatus == null)
             {
-                driverStatus = new DriverStatus { DriverId = driver.Id, IsOnline = false };
+                driverStatus = new DriverStatus { DriverId = driver.Id, IsOnline = false, IsFree = false };
                 _dbContext.DriverStatuses.Add(driverStatus);
             }
             else
             {
                 driverStatus.IsOnline = false;
+                driverStatus.IsFree = false;
                 driverStatus.DateUpdated = DateTime.Now;
                 _dbContext.DriverStatuses.Update(driverStatus);
             }
