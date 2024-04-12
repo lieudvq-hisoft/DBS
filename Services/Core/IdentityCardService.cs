@@ -85,11 +85,14 @@ public class IdentityCardService : IIdentityCardService
                 result.ErrorMessage = "User has already added ID Card";
                 return result;
             }
-            var checkExistCardNumber = _dbContext.IdentityCards.Where(_ => _.IdentityCardNumber == model.IdentityCardNumber && !_.IsDeleted).FirstOrDefault();
-            if (checkExistCardNumber != null)
+            if (model.IdentityCardNumber != null)
             {
-                result.ErrorMessage = "Identity Card Number has been existed";
-                return result;
+                var checkExistCardNumber = _dbContext.IdentityCards.Where(_ => _.IdentityCardNumber == model.IdentityCardNumber && !_.IsDeleted).FirstOrDefault();
+                if (checkExistCardNumber != null)
+                {
+                    result.ErrorMessage = "Identity Card Number has been existed";
+                    return result;
+                }
             }
             var identityCard = _mapper.Map<IdentityCardCreateModel, IdentityCard>(model);
             identityCard.UserId = user.Id;
