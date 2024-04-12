@@ -64,7 +64,7 @@ public class IdentityCardService : IIdentityCardService
             if (model.Dob != null)
             {
                 DateOnly currentDate = DateOnly.FromDateTime(DateTime.Today);
-                DateOnly dob = new DateOnly(model.Dob.Year, model.Dob.Month, model.Dob.Day);
+                DateOnly dob = new DateOnly(model.Dob.Value.Year, model.Dob.Value.Month, model.Dob.Value.Day);
 
                 int ageDifferenceInYears = currentDate.Year - dob.Year;
 
