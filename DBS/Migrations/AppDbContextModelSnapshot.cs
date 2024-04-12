@@ -58,7 +58,7 @@ namespace DBS.Migrations
 
                     b.HasIndex("SearchRequestId");
 
-                    b.ToTable("Bookings");
+                    b.ToTable("Bookings", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.BookingImage", b =>
@@ -90,7 +90,7 @@ namespace DBS.Migrations
 
                     b.HasIndex("BookingId");
 
-                    b.ToTable("BookingImages");
+                    b.ToTable("BookingImages", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.BookingPayment", b =>
@@ -121,7 +121,7 @@ namespace DBS.Migrations
 
                     b.HasIndex("BookingId");
 
-                    b.ToTable("BookingPayments");
+                    b.ToTable("BookingPayments", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.BookingVehicle", b =>
@@ -157,7 +157,7 @@ namespace DBS.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BookingVehicles");
+                    b.ToTable("BookingVehicles", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.DriverLocation", b =>
@@ -188,7 +188,7 @@ namespace DBS.Migrations
 
                     b.HasIndex("DriverId");
 
-                    b.ToTable("DriverLocations");
+                    b.ToTable("DriverLocations", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.DriverStatus", b =>
@@ -219,7 +219,7 @@ namespace DBS.Migrations
 
                     b.HasIndex("DriverId");
 
-                    b.ToTable("DriverStatuses");
+                    b.ToTable("DriverStatuses", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.DrivingLicense", b =>
@@ -254,7 +254,7 @@ namespace DBS.Migrations
 
                     b.HasIndex("DriverId");
 
-                    b.ToTable("DrivingLicenses");
+                    b.ToTable("DrivingLicenses", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.DrivingLicenseImage", b =>
@@ -286,7 +286,7 @@ namespace DBS.Migrations
 
                     b.HasIndex("DrivingLicenseId");
 
-                    b.ToTable("DrivingLicenseImages");
+                    b.ToTable("DrivingLicenseImages", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.IdentityCard", b =>
@@ -338,7 +338,7 @@ namespace DBS.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("IdentityCards");
+                    b.ToTable("IdentityCards", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.IdentityCardImage", b =>
@@ -370,7 +370,7 @@ namespace DBS.Migrations
 
                     b.HasIndex("IdentityCardId");
 
-                    b.ToTable("IdentityCardImages");
+                    b.ToTable("IdentityCardImages", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.Rating", b =>
@@ -383,6 +383,7 @@ namespace DBS.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Comment")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("DateCreated")
@@ -392,6 +393,7 @@ namespace DBS.Migrations
                         .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("ImageData")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsDeleted")
@@ -404,7 +406,7 @@ namespace DBS.Migrations
 
                     b.HasIndex("BookingId");
 
-                    b.ToTable("Ratings");
+                    b.ToTable("Ratings", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.Role", b =>
@@ -513,7 +515,7 @@ namespace DBS.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("SearchRequests");
+                    b.ToTable("SearchRequests", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.Support", b =>
@@ -566,7 +568,7 @@ namespace DBS.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Supports");
+                    b.ToTable("Supports", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.User", b =>
@@ -702,7 +704,7 @@ namespace DBS.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("Vehicles");
+                    b.ToTable("Vehicles", (string)null);
                 });
 
             modelBuilder.Entity("Data.Entities.VehicleImage", b =>
@@ -734,7 +736,7 @@ namespace DBS.Migrations
 
                     b.HasIndex("VehicleId");
 
-                    b.ToTable("VehicleImages");
+                    b.ToTable("VehicleImages", (string)null);
                 });
 
             modelBuilder.Entity("Data.Model.DriverOnlineModel", b =>
@@ -755,7 +757,7 @@ namespace DBS.Migrations
                     b.Property<double>("Longitude")
                         .HasColumnType("double precision");
 
-                    b.ToTable("DriverOnlineModel");
+                    b.ToTable("DriverOnlineModel", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
