@@ -19,6 +19,7 @@ public interface IUserService
 {
     Task<ResultModel> RegisterCustomer(RegisterModel model);
     Task<ResultModel> CheckExistUserWithPhoneNumber(CheckExistPhoneNumberModel model);
+    Task<ResultModel> CheckExistUserWithEmail(ForgotPasswordModel model);
     Task<ResultModel> Login(LoginModel model);
     Task<ResultModel> GetCustomer(PagingParam<CustomerSortCriteria> paginationModel, SearchModel searchModel);
     Task<ResultModel> UpdateProfile(ProfileUpdateModel model, Guid userId);
@@ -466,6 +467,33 @@ public class UserService : IUserService
         {
             var checkExist = _dbContext.Users
                 .Where(_ => _.PhoneNumber == model.PhoneNumber && !_.IsDeleted && _.IsActive).FirstOrDefault();
+            if (checkExist != null)
+            {
+                result.Succeed = true;
+                result.Data = true;
+            }
+            else
+            {
+                result.Succeed = true;
+                result.Data = false;
+            }
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+
+        return result;
+    }
+
+    public async Task<ResultModel> CheckExistUserWithEmail(ForgotPasswordModel model)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var checkExist = _dbContext.Users
+                .Where(_ => _.Email == model.e && !_.IsDeleted && _.IsActive).FirstOrDefault();
             if (checkExist != null)
             {
                 result.Succeed = true;

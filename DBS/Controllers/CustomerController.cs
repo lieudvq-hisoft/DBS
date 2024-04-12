@@ -55,6 +55,14 @@ public class CustomerController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpPost("CheckExistUserWithEmail")]
+    public async Task<ActionResult> CheckExistUserWithEmail([FromBody] ForgotPasswordModel model)
+    {
+        var result = await _userService.CheckExistUserWithEmail(model);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
     [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet]
     public async Task<ActionResult> GetCustomer([FromQuery] PagingParam<CustomerSortCriteria> paginationModel, [FromQuery] SearchModel searchModel)
