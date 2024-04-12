@@ -28,6 +28,12 @@ public enum CustomerSortCriteria
     Email
 }
 
+public enum UserSortByAdminCriteria
+{
+    DateCreated,
+    Email
+}
+
 public enum SupplierSortCriteria
 {
     DateCreated

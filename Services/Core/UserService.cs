@@ -22,6 +22,7 @@ public interface IUserService
     Task<ResultModel> CheckExistUserWithEmail(ForgotPasswordModel model);
     Task<ResultModel> Login(LoginModel model);
     Task<ResultModel> GetCustomer(PagingParam<CustomerSortCriteria> paginationModel, SearchModel searchModel);
+    Task<ResultModel> GetUserByAdmin(PagingParam<UserSortByAdminCriteria> paginationModel, SearchModel searchModel, Guid AdminId);
     Task<ResultModel> UpdateProfile(ProfileUpdateModel model, Guid userId);
     Task<ResultModel> UploadAvatar(UpLoadAvatarModel model, Guid userId);
     Task<ResultModel> DeleteImage(Guid userId);
@@ -162,6 +163,42 @@ public class UserService : IUserService
         {
             var data = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
                     .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Customer) && !_.IsDeleted).AsQueryable();
+            var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
+            var uses = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
+            uses = uses.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
+            var viewModels = _mapper.ProjectTo<UserModel>(uses);
+            paging.Data = viewModels;
+            result.Data = paging;
+            result.Succeed = true;
+
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> GetUserByAdmin(PagingParam<UserSortByAdminCriteria> paginationModel, SearchModel searchModel, Guid AdminId)
+    {
+        ResultModel result = new ResultModel();
+        try
+        {
+            var admin = _dbContext.Users.Where(_ => _.Id == AdminId && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not found";
+                return result;
+            }
+            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
+            if (!checkAdmin)
+            {
+                result.ErrorMessage = "The user must be Admin";
+                return result;
+            }
+            var data = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
+                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName != RoleNormalizedName.Admin) && !_.IsDeleted).AsQueryable();
+
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var uses = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
             uses = uses.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);

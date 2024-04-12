@@ -5,19 +5,17 @@ using Data.DataAccess;
 using Data.Entities;
 using Data.Enums;
 using Data.Model;
-using Data.Models;
 using Data.Utils;
-using Data.Utils.Paging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Services.Core;
 
 public interface IDriverService
 {
     Task<ResultModel> RegisterDriver(RegisterModel model);
+    Task<ResultModel> RegisterDriverByAdmin(RegisterDriverByAdminModel model, Guid UserId);
     Task<ResultModel> UpdateLocation(LocationModel model, Guid driverId);
     Task<ResultModel> UpdateStatusOffline(Guid driverId);
     Task<ResultModel> UpdateStatusOnline(Guid driverId);
@@ -96,6 +94,69 @@ public class DriverService : IDriverService
             await _dbContext.SaveChangesAsync();
             result.Succeed = true;
             result.Data = user.Id;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> RegisterDriverByAdmin(RegisterDriverByAdminModel model, Guid UserId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var admin = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not found";
+                return result;
+            }
+            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
+            if (!checkAdmin)
+            {
+                result.ErrorMessage = "The user must be Admin";
+                return result;
+            }
+
+            var checkEmailExisted = await _userManager.FindByEmailAsync(model.Email);
+            if (checkEmailExisted != null)
+            {
+                result.ErrorMessage = "Email already existed";
+                result.Succeed = false;
+                return result;
+            }
+            var userRole = new UserRole { };
+
+            var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.NormalizedName == RoleNormalizedName.Driver);
+            if (role == null)
+            {
+                var newRole = new Role { Name = "Driver", NormalizedName = RoleNormalizedName.Driver };
+                _dbContext.Roles.Add(newRole);
+                userRole.RoleId = newRole.Id;
+            }
+            else
+            {
+                userRole.RoleId = role.Id;
+            }
+
+            var user = _mapper.Map<RegisterDriverByAdminModel, User>(model);
+
+            var checkCreateSuccess = await _userManager.CreateAsync(user, model.PhoneNumber);
+
+            if (!checkCreateSuccess.Succeeded)
+            {
+                result.ErrorMessage = checkCreateSuccess.ToString();
+                result.Succeed = false;
+                return result;
+            }
+            userRole.UserId = user.Id;
+            _dbContext.UserRoles.Add(userRole);
+            await _dbContext.SaveChangesAsync();
+            result.Succeed = true;
+            result.Data = _mapper.Map<UserModel>(user);
         }
         catch (Exception ex)
         {
