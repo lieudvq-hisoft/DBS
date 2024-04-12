@@ -80,6 +80,7 @@ public class BookingService : IBookingService
 
             var driverStatus = driver.DriverStatuses.FirstOrDefault();
             driverStatus.IsFree = false;
+            driverStatus.IsOnline = true;
             driverStatus.DateUpdated = DateTime.Now;
             _dbContext.DriverStatuses.Update(driverStatus);
 
@@ -448,6 +449,7 @@ public class BookingService : IBookingService
             }
             var driverStatus = driver.DriverStatuses.FirstOrDefault();
             driverStatus.IsFree = true;
+            driverStatus.IsOnline = true;
             driverStatus.DateUpdated = DateTime.Now;
             _dbContext.DriverStatuses.Update(driverStatus);
 
