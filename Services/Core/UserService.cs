@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Services.Utils;
+using System.Data;
 
 namespace Services.Core;
 
@@ -197,13 +198,39 @@ public class UserService : IUserService
                 return result;
             }
             var data = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
-                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName != RoleNormalizedName.Admin) && !_.IsDeleted).AsQueryable();
+                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName != RoleNormalizedName.Admin) && !_.IsDeleted)
+                    .Select(user => new UserModelByAdmin
+                    {
+                        Id = user.Id,
+                        Name = user.Name,
+                        PhoneNumber = user.PhoneNumber,
+                        UserName = user.UserName,
+                        Email = user.Email,
+                        Address = user.Address,
+                        Star = user.Star,
+                        Avatar = user.Avatar,
+                        Gender = user.Gender,
+                        Dob = user.Dob,
+                        DateCreated = user.DateCreated,
+                        Role = user.UserRoles.FirstOrDefault().Role.Name
+                    })
+                    .AsQueryable();
 
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var uses = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
             uses = uses.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
-            var viewModels = _mapper.ProjectTo<UserModelByAdmin>(uses);
-            paging.Data = viewModels;
+            var viewData = uses.ToList();
+            foreach (var item in viewData)
+            {
+                if (item.Avatar != null)
+                {
+                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                    string stringPath = dirPath + item.Avatar;
+                    byte[] imageBytes = File.ReadAllBytes(stringPath);
+                    item.Avatar = Convert.ToBase64String(imageBytes);
+                }
+            }
+            paging.Data = viewData;
             result.Data = paging;
             result.Succeed = true;
 

@@ -41,6 +41,7 @@ namespace Data.Model
         public string? Address { get; set; }
         public Gender? Gender { get; set; }
         public DateOnly? Dob { get; set; }
+        public IFormFile File { get; set; }
     }
 
     public class UserModelByAdmin
@@ -56,6 +57,7 @@ namespace Data.Model
         public Gender? Gender { get; set; }
         public DateOnly? Dob { get; set; }
         public string Role { get; set; }
+        public DateTime? DateCreated { get; set; }
     }
 
     public class ProfileUpdateModel
