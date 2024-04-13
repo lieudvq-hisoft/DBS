@@ -9,6 +9,7 @@ using Data.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Services.Utils;
 
 namespace Services.Core;
 
@@ -151,6 +152,11 @@ public class DriverService : IDriverService
                 result.ErrorMessage = checkCreateSuccess.ToString();
                 result.Succeed = false;
                 return result;
+            }
+            if (model.File != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Avatar", user.Id.ToString());
+                user.Avatar = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             }
             userRole.UserId = user.Id;
             _dbContext.UserRoles.Add(userRole);
