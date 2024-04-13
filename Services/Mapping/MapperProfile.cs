@@ -10,7 +10,9 @@ namespace Services.Mapping
         public MapperProfile()
         {
             CreateMap<RegisterModel, User>();
+            CreateMap<RegisterDriverByAdminModel, User>();
             CreateMap<User, UserModel>();
+            CreateMap<User, UserModelByAdmin>();
             CreateMap<User, ProfileModel>();
 
             CreateMap<SearchRequestCreateModel, SearchRequest>();
