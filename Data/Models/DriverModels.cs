@@ -12,6 +12,7 @@ namespace Data.Model
     public class LocationCustomer : LocationModel
     {
         public double Radius { get; set; }
+        public bool IsFemaleDriver { get; set; } = false;
     }
 
     public class DriverOnlineModel

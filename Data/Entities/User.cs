@@ -10,6 +10,7 @@ public class User : IdentityUser<Guid>
     public string? Address { get; set; }
     public string? Avatar { get; set; }
     public Gender? Gender { get; set; }
+    public bool IsPublicGender { get; set; } = false;
     public DateOnly? Dob { get; set; }
     public float? Star { get; set; }
     public bool IsDeleted { get; set; }

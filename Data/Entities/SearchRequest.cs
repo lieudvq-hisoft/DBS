@@ -16,5 +16,6 @@ public class SearchRequest : BaseEntity
     public string PickupAddress { get; set; }
     public virtual BookingVehicle? BookingVehicle { get; set; }
     public long Price { get; set; }
+    public string? Note { get; set; }
     public SearchRequestStatus Status { get; set; } = SearchRequestStatus.Processing;
 }

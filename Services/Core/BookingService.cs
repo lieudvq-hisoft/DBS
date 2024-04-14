@@ -21,7 +21,9 @@ public interface IBookingService
     Task<ResultModel> GetBookingForCustomer(PagingParam<SortBookingCriteria> paginationModel, Guid CustomerId);
     Task<ResultModel> GetBookingForDriver(PagingParam<SortBookingCriteria> paginationModel, Guid DriverId);
     Task<ResultModel> ChangeStatusToArrived(ChangeBookingStatusModel model, Guid DriverId);
+    Task<ResultModel> ChangeStatusToCheckIn(ChangeBookingStatusModel model, Guid DriverId);
     Task<ResultModel> ChangeStatusToOnGoing(ChangeBookingStatusModel model, Guid DriverId);
+    Task<ResultModel> ChangeStatusToCheckOut(ChangeBookingStatusModel model, Guid DriverId);
     Task<ResultModel> ChangeStatusToComplete(ChangeBookingStatusModel model, Guid DriverId);
     Task<ResultModel> DriverCancelBooking(ChangeBookingStatusModel model, Guid DriverId);
     Task<ResultModel> CustomerCancelBooking(ChangeBookingStatusModel model, Guid CustomerId);
@@ -347,7 +349,7 @@ public class BookingService : IBookingService
         return result;
     }
 
-    public async Task<ResultModel> ChangeStatusToOnGoing(ChangeBookingStatusModel model, Guid DriverId)
+    public async Task<ResultModel> ChangeStatusToCheckIn(ChangeBookingStatusModel model, Guid DriverId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -385,6 +387,61 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Driver don't have permission";
                 return result;
             }
+            booking.Status = BookingStatus.CheckIn;
+            booking.DateUpdated = DateTime.Now;
+            await _dbContext.SaveChangesAsync();
+
+            var data = _mapper.Map<BookingModel>(booking);
+            data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
+
+            result.Data = data;
+            result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> ChangeStatusToOnGoing(ChangeBookingStatusModel model, Guid DriverId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
+            if (driver == null)
+            {
+                result.ErrorMessage = "Driver not found";
+                return result;
+            }
+            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
+            if (!checkDriver)
+            {
+                result.ErrorMessage = "User must be a Driver";
+                return result;
+            }
+            var booking = _dbContext.Bookings
+                .Include(_ => _.Driver)
+                .Include(_ => _.SearchRequest)
+                 .ThenInclude(sr => sr.Customer)
+                .Where(_ => _.Id == model.BookingId && !_.IsDeleted).FirstOrDefault();
+            if (booking == null)
+            {
+                result.ErrorMessage = "Booking not exist";
+                return result;
+            }
+            if (booking.Status != BookingStatus.CheckIn)
+            {
+                result.ErrorMessage = "Booking Status must be CheckIn";
+                return result;
+            }
+            if (booking.DriverId != DriverId)
+            {
+                result.ErrorMessage = "Driver don't have permission";
+                return result;
+            }
             booking.Status = BookingStatus.OnGoing;
             booking.DateUpdated = DateTime.Now;
             booking.PickUpTime = DateTime.Now;
@@ -396,6 +453,61 @@ public class BookingService : IBookingService
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
             await _producer.ProduceAsync("dbs-booking-status-ongoing", new Message<Null, string> { Value = json });
             _producer.Flush();
+
+            result.Data = data;
+            result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> ChangeStatusToCheckOut(ChangeBookingStatusModel model, Guid DriverId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
+            if (driver == null)
+            {
+                result.ErrorMessage = "Driver not found";
+                return result;
+            }
+            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
+            if (!checkDriver)
+            {
+                result.ErrorMessage = "User must be a Driver";
+                return result;
+            }
+            var booking = _dbContext.Bookings
+                .Include(_ => _.Driver)
+                .Include(_ => _.SearchRequest)
+                 .ThenInclude(sr => sr.Customer)
+                .Where(_ => _.Id == model.BookingId && !_.IsDeleted).FirstOrDefault();
+            if (booking == null)
+            {
+                result.ErrorMessage = "Booking not exist";
+                return result;
+            }
+            if (booking.Status != BookingStatus.OnGoing)
+            {
+                result.ErrorMessage = "Booking Status must be OnGoing";
+                return result;
+            }
+            if (booking.DriverId != DriverId)
+            {
+                result.ErrorMessage = "Driver don't have permission";
+                return result;
+            }
+            booking.Status = BookingStatus.CheckOut;
+            booking.DateUpdated = DateTime.Now;
+            await _dbContext.SaveChangesAsync();
+
+            var data = _mapper.Map<BookingModel>(booking);
+            data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 
             result.Data = data;
             result.Succeed = true;
@@ -437,9 +549,9 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Booking not exist";
                 return result;
             }
-            if (booking.Status != BookingStatus.OnGoing)
+            if (booking.Status != BookingStatus.CheckOut)
             {
-                result.ErrorMessage = "Booking Status must be OnGoing";
+                result.ErrorMessage = "Booking Status must be CheckOut";
                 return result;
             }
             if (booking.DriverId != DriverId)

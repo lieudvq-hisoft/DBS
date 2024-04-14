@@ -11,4 +11,5 @@ public class BookingImage : BaseEntity
     public virtual Booking? Booking { get; set; }
     public string ImageData { get; set; }
     public BookingImageType BookingImageType { get; set; }
+    public BookingImageTime BookingImageTime { get; set; }
 }

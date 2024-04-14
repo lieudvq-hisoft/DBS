@@ -22,4 +22,5 @@ public class BookingImageModel
     public BookingModel Booking { get; set; }
     public string ImageData { get; set; }
     public BookingImageType BookingImageType { get; set; }
+    public BookingImageTime BookingImageTime { get; set; }
 }
