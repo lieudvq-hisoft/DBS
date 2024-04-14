@@ -81,4 +81,5 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<BookingPayment> BookingPayments { get; set; }
     public DbSet<BookingImage> BookingImages { get; set; }
     public DbSet<Support> Supports { get; set; }
+    public DbSet<SearchRequestDetail> SearchRequestDetails { get; set; }
 }

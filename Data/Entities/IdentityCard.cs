@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Data.Entities;
 public class IdentityCard : BaseEntity
 {
-    public Guid? UserId { get; set; }
+    public Guid UserId { get; set; }
     [ForeignKey("UserId")]
     public virtual User? User { get; set; }
     public string? FullName { get; set; }
