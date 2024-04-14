@@ -160,10 +160,12 @@ public enum BookingStatus
     Pending = 0,
     Accept = 1,
     Arrived = 2,
-    OnGoing = 3,
-    Complete = 4,
-    Cancel = 5,
-    PayBooking = 6
+    CheckIn = 3,
+    OnGoing = 4,
+    CheckOut = 5,
+    Complete = 6,
+    PayBooking = 7,
+    Cancel = 8,
 }
 
 public enum VehicleImageType
@@ -180,6 +182,12 @@ public enum BookingImageType
     Behind = 1,
     Left = 2,
     Right = 3,
+}
+
+public enum BookingImageTime
+{
+    CheckIn = 0,
+    CheckOut = 1,
 }
 
 public enum SupportType

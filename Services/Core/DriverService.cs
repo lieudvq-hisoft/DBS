@@ -316,8 +316,35 @@ public class DriverService : IDriverService
         result.Succeed = false;
         try
         {
-            FormattableString fsQuery =
-                $@"
+            FormattableString fsQuery = null;
+            if (locationCustomer.IsFemaleDriver)
+            {
+                fsQuery =
+                    $@"
+                select distinct  anu.""Id"", anu.""Email"", ds.""IsOnline"", dl.""Latitude"", dl.""Longitude""
+                from
+                ""AspNetUsers"" anu 
+                join ""DriverLocations"" dl on anu.""Id"" = dl.""DriverId"" 
+                join ""DriverStatuses"" ds on ds.""DriverId"" = anu.""Id"" 
+                where ds.""IsOnline"" = true 	
+                    AND ds.""IsFree"" = true
+                    AND anu.""Gender"" = 1
+                    AND anu.""IsPublicGender"" = true
+	                AND (
+                    6371 * acos(
+                        cos(radians({locationCustomer.Latitude}))
+                        * cos(radians(dl.""Latitude""))
+                        * cos(radians(dl.""Longitude"") - radians({locationCustomer.Longitude}))
+                        + sin(radians({locationCustomer.Latitude}))
+                        * sin(radians(dl.""Latitude""))
+                    )
+                ) <= {locationCustomer.Radius}
+                ";
+            }
+            else
+            {
+                fsQuery =
+                    $@"
                 select distinct  anu.""Id"", anu.""Email"", ds.""IsOnline"", dl.""Latitude"", dl.""Longitude""
                 from
                 ""AspNetUsers"" anu 
@@ -335,6 +362,7 @@ public class DriverService : IDriverService
                     )
                 ) <= {locationCustomer.Radius}
                 ";
+            }
             var data = _dbContext.Set<DriverOnlineModel>().FromSqlRaw(fsQuery.ToString()).AsQueryable();
             result.Data = data.ToList();
             result.Succeed = true;

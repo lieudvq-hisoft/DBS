@@ -78,10 +78,26 @@ public class BookingController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpPut("ChangeStatusToCheckIn")]
+    public async Task<ActionResult> ChangeStatusToCheckIn([FromBody] ChangeBookingStatusModel model)
+    {
+        var result = await _bookingService.ChangeStatusToCheckIn(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
     [HttpPut("ChangeStatusToOnGoing")]
     public async Task<ActionResult> ChangeStatusToOnGoing([FromBody] ChangeBookingStatusModel model)
     {
         var result = await _bookingService.ChangeStatusToOnGoing(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPut("ChangeStatusToCheckOut")]
+    public async Task<ActionResult> ChangeStatusToCheckOut([FromBody] ChangeBookingStatusModel model)
+    {
+        var result = await _bookingService.ChangeStatusToCheckOut(model, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

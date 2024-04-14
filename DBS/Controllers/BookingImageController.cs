@@ -18,10 +18,18 @@ public class BookingImageController : ControllerBase
         _bookingImageService = bookingImageService;
     }
 
-    [HttpPost()]
-    public async Task<ActionResult> AddImage([FromForm] BookingImageCreateModel model)
+    [HttpPost("CheckIn")]
+    public async Task<ActionResult> AddImageCheckIn([FromForm] BookingImageCreateModel model)
     {
-        var result = await _bookingImageService.AddImage(model);
+        var result = await _bookingImageService.AddImageCheckIn(model);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPost("CheckOut")]
+    public async Task<ActionResult> AddImageCheckOut([FromForm] BookingImageCreateModel model)
+    {
+        var result = await _bookingImageService.AddImageCheckOut(model);
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
@@ -35,10 +43,18 @@ public class BookingImageController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpGet("{BookingId}")]
-    public async Task<ActionResult> GetImageByBookingId(Guid BookingId)
+    [HttpGet("CheckInImage/{BookingId}")]
+    public async Task<ActionResult> GetCheckInImagesByBookingId(Guid BookingId)
     {
-        var result = await _bookingImageService.GetImagesByBookingId(BookingId);
+        var result = await _bookingImageService.GetCheckInImagesByBookingId(BookingId);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpGet("CheckOutImage/{BookingId}")]
+    public async Task<ActionResult> GetCheckOutImagesByBookingId(Guid BookingId)
+    {
+        var result = await _bookingImageService.GetCheckOutImagesByBookingId(BookingId);
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

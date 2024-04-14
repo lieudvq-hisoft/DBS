@@ -3,6 +3,7 @@ using AutoMapper;
 using Confluent.Kafka;
 using Data.DataAccess;
 using Data.Entities;
+using Data.Enums;
 using Data.Model;
 using Data.Models;
 using Microsoft.AspNetCore.Identity;
@@ -14,8 +15,10 @@ namespace Services.Core;
 
 public interface IBookingImageService
 {
-    Task<ResultModel> AddImage(BookingImageCreateModel model);
-    Task<ResultModel> GetImagesByBookingId(Guid BookingId);
+    Task<ResultModel> AddImageCheckIn(BookingImageCreateModel model);
+    Task<ResultModel> AddImageCheckOut(BookingImageCreateModel model);
+    Task<ResultModel> GetCheckInImagesByBookingId(Guid BookingId);
+    Task<ResultModel> GetCheckOutImagesByBookingId(Guid BookingId);
     Task<ResultModel> UpdateImage(BookingImageUpdateModel model, Guid BookingImageId);
     Task<ResultModel> DeleteImage(Guid BookingImageId);
     Task<ResultModel> DownloadImage(FileModel model);
@@ -40,7 +43,7 @@ public class BookingImageService : IBookingImageService
         _userManager = userManager;
     }
 
-    public async Task<ResultModel> AddImage(BookingImageCreateModel model)
+    public async Task<ResultModel> AddImageCheckIn(BookingImageCreateModel model)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -52,14 +55,63 @@ public class BookingImageService : IBookingImageService
                 result.ErrorMessage = "Booking not exist!";
                 return result;
             }
-            if (booking.Status != Data.Enums.BookingStatus.Arrived)
+            if (booking.Status != BookingStatus.CheckIn)
             {
-                result.ErrorMessage = "Driver not Arrived";
+                result.ErrorMessage = "Driver not CheckIn";
+                return result;
+            }
+            var checkExist = _dbContext.BookingImages
+                .Where(_ => _.BookingId == booking.Id && _.BookingImageTime == BookingImageTime.CheckIn && _.BookingImageType == model.BookingImageType && !_.IsDeleted).FirstOrDefault();
+            if (checkExist != null)
+            {
+                result.ErrorMessage = $"Booking Image when CheckIn with type {checkExist.BookingImageType} existed";
                 return result;
             }
             var bookingImage = _mapper.Map<BookingImageCreateModel, BookingImage>(model);
             _dbContext.BookingImages.Add(bookingImage);
-            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingImage", bookingImage.Id.ToString());
+            bookingImage.BookingImageTime = BookingImageTime.CheckIn;
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingImageCheckIn", bookingImage.Id.ToString());
+            bookingImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            await _dbContext.SaveChangesAsync();
+
+            result.Succeed = true;
+            result.Data = _mapper.Map<BookingImageModel>(bookingImage);
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> AddImageCheckOut(BookingImageCreateModel model)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var booking = _dbContext.Bookings.Where(_ => _.Id == model.BookingId && !_.IsDeleted).FirstOrDefault();
+            if (booking == null)
+            {
+                result.ErrorMessage = "Booking not exist!";
+                return result;
+            }
+            if (booking.Status != BookingStatus.CheckOut)
+            {
+                result.ErrorMessage = "Driver not CheckOut";
+                return result;
+            }
+            var checkExist = _dbContext.BookingImages
+                .Where(_ => _.BookingId == booking.Id && _.BookingImageTime == BookingImageTime.CheckOut && _.BookingImageType == model.BookingImageType && !_.IsDeleted).FirstOrDefault();
+            if (checkExist != null)
+            {
+                result.ErrorMessage = $"Booking Image when CheckOut with type {checkExist.BookingImageType} existed";
+                return result;
+            }
+            var bookingImage = _mapper.Map<BookingImageCreateModel, BookingImage>(model);
+            _dbContext.BookingImages.Add(bookingImage);
+            bookingImage.BookingImageTime = BookingImageTime.CheckOut;
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingImageCheckIn", bookingImage.Id.ToString());
             bookingImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             await _dbContext.SaveChangesAsync();
 
@@ -133,7 +185,7 @@ public class BookingImageService : IBookingImageService
         return result;
     }
 
-    public async Task<ResultModel> GetImagesByBookingId(Guid BookingId)
+    public async Task<ResultModel> GetCheckInImagesByBookingId(Guid BookingId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -141,7 +193,41 @@ public class BookingImageService : IBookingImageService
         {
             var bookingImages = _dbContext.BookingImages
                 .Include(_ => _.Booking)
-                .Where(_ => _.BookingId == BookingId && !_.IsDeleted)
+                .Where(_ => _.BookingId == BookingId && _.BookingImageTime == BookingImageTime.CheckIn && !_.IsDeleted)
+                .ToList();
+            if (bookingImages == null || bookingImages.Count == 0)
+            {
+                result.ErrorMessage = "Booking Image not exist!";
+                return result;
+            }
+            var data = _mapper.Map<List<BookingImageModel>>(bookingImages);
+            foreach (var item in bookingImages)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + item.ImageData;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                item.ImageData = Convert.ToBase64String(imageBytes);
+            }
+
+            result.Data = data;
+            result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> GetCheckOutImagesByBookingId(Guid BookingId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var bookingImages = _dbContext.BookingImages
+                .Include(_ => _.Booking)
+                .Where(_ => _.BookingId == BookingId && _.BookingImageTime == BookingImageTime.CheckOut && !_.IsDeleted)
                 .ToList();
             if (bookingImages == null || bookingImages.Count == 0)
             {
