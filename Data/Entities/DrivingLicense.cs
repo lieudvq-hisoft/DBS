@@ -13,6 +13,7 @@ public class DrivingLicense : BaseEntity
     [ForeignKey("DriverId")]
     public virtual User? Driver { get; set; }
     public string Type { get; set; }
+    public string DrivingLicenseNumber { get; set; }
     public DateOnly IssueDate { get; set; }
-    public DateOnly ExpriedDate { get; set; }
+    public DateOnly ExpiredDate { get; set; }
 }

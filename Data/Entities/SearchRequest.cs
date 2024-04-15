@@ -17,5 +17,6 @@ public class SearchRequest : BaseEntity
     public virtual BookingVehicle? BookingVehicle { get; set; }
     public long Price { get; set; }
     public string? Note { get; set; }
+    public BookingType BookingType { get; set; } = BookingType.MySelf;
     public SearchRequestStatus Status { get; set; } = SearchRequestStatus.Processing;
 }

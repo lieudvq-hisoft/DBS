@@ -17,6 +17,7 @@ namespace Data.Model
         public BookingVehicleModel BookingVehicle { get; set; }
         public long Price { get; set; }
         public string? Note { get; set; }
+        public BookingType? BookingType { get; set; }
     }
 
     public class SearchRequestModel
@@ -34,6 +35,7 @@ namespace Data.Model
         public BookingVehicleModel BookingVehicle { get; set; }
         public long Price { get; set; }
         public string? Note { get; set; }
+        public BookingType? BookingType { get; set; }
         public SearchRequestStatus Status { get; set; }
     }
 

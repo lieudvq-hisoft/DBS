@@ -372,6 +372,10 @@ public class DrivingLicenseService : IDrivingLicenseService
                 result.ErrorMessage = "Driving License not exist!";
                 return result;
             }
+            if (model.DrivingLicenseNumber != null)
+            {
+                drivingLicense.DrivingLicenseNumber = model.DrivingLicenseNumber;
+            }
             if (model.Type != null)
             {
                 drivingLicense.Type = model.Type;
@@ -380,9 +384,9 @@ public class DrivingLicenseService : IDrivingLicenseService
             {
                 drivingLicense.IssueDate = (DateOnly)model.IssueDate;
             }
-            if (model.ExpriedDate != null)
+            if (model.ExpiredDate != null)
             {
-                drivingLicense.ExpriedDate = (DateOnly)model.ExpriedDate;
+                drivingLicense.ExpiredDate = (DateOnly)model.ExpiredDate;
             }
             drivingLicense.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
@@ -855,6 +859,10 @@ public class DrivingLicenseService : IDrivingLicenseService
                 result.ErrorMessage = "Driving License not exist!";
                 return result;
             }
+            if (model.DrivingLicenseNumber != null)
+            {
+                drivingLicense.DrivingLicenseNumber = model.DrivingLicenseNumber;
+            }
             if (model.Type != null)
             {
                 drivingLicense.Type = model.Type;
@@ -863,9 +871,9 @@ public class DrivingLicenseService : IDrivingLicenseService
             {
                 drivingLicense.IssueDate = (DateOnly)model.IssueDate;
             }
-            if (model.ExpriedDate != null)
+            if (model.ExpiredDate != null)
             {
-                drivingLicense.ExpriedDate = (DateOnly)model.ExpriedDate;
+                drivingLicense.ExpiredDate = (DateOnly)model.ExpiredDate;
             }
             drivingLicense.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();

@@ -10,6 +10,12 @@ namespace Data.Models
         public Guid BookingId { get; set; }
     }
 
+    public class AddCheckInNoteModel
+    {
+        public Guid BookingId { get; set; }
+        public string CheckInNote { get; set; }
+    }
+
     public class BookingCreateModel
     {
         public Guid SearchRequestId { get; set; }
@@ -21,6 +27,7 @@ namespace Data.Models
         public Guid Id { get; set; }
         public Guid SearchRequestId { get; set; }
         public Guid DriverId { get; set; }
+        public string CheckInNote { get; set; }
         public BookingStatus Status { get; set; }
         public SearchRequestModel SearchRequest { get; set; }
         public UserModel Driver { get; set; }

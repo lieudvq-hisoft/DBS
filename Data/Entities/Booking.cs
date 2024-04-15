@@ -13,6 +13,7 @@ public class Booking : BaseEntity
     public virtual User? Driver { get; set; }
     public DateTime? PickUpTime { get; set; }
     public DateTime? DropOffTime { get; set; }
+    public string? CheckInNote { get; set; }
     public BookingStatus Status { get; set; } = BookingStatus.Accept;
 
 }
