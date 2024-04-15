@@ -47,6 +47,6 @@ namespace Data.Models
         public Guid Id { get; set; }
         public Guid DrivingLicenseId { get; set; }
         public bool IsFront { get; set; }
-        public string ImageData { get; set; }
+        public string ImageUrl { get; set; }
     }
 }

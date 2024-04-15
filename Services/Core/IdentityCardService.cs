@@ -299,7 +299,7 @@ public class IdentityCardService : IIdentityCardService
             var identityCardImage = _mapper.Map<IdentityCardImageCreateModel, IdentityCardImage>(model);
             _dbContext.IdentityCardImages.Add(identityCardImage);
             string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "IdentityCardImage", identityCardImage.Id.ToString());
-            identityCardImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            identityCardImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
@@ -326,7 +326,7 @@ public class IdentityCardService : IIdentityCardService
             else
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                if (identityCardImage.ImageData == null || !identityCardImage.ImageData.Contains(model.Path))
+                if (identityCardImage.ImageUrl == null || !identityCardImage.ImageUrl.Contains(model.Path))
                 {
                     result.ErrorMessage = "File does not exist";
                     result.Succeed = false;
@@ -362,9 +362,9 @@ public class IdentityCardService : IIdentityCardService
             foreach (var item in identityCardImages)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + item.ImageData;
+                string stringPath = dirPath + item.ImageUrl;
                 byte[] imageBytes = File.ReadAllBytes(stringPath);
-                item.ImageData = Convert.ToBase64String(imageBytes);
+                item.ImageUrl = Convert.ToBase64String(imageBytes);
             }
 
             result.Data = data;
@@ -392,7 +392,7 @@ public class IdentityCardService : IIdentityCardService
             if (model.File != null)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "IdentityCardImage", identityCardImage.Id.ToString());
-                identityCardImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+                identityCardImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             }
             identityCardImage.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
@@ -766,7 +766,7 @@ public class IdentityCardService : IIdentityCardService
             var identityCardImage = _mapper.Map<IdentityCardImageCreateModel, IdentityCardImage>(model);
             _dbContext.IdentityCardImages.Add(identityCardImage);
             string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "IdentityCardImage", identityCardImage.Id.ToString());
-            identityCardImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            identityCardImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
@@ -793,7 +793,7 @@ public class IdentityCardService : IIdentityCardService
             else
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                if (identityCardImage.ImageData == null || !identityCardImage.ImageData.Contains(model.Path))
+                if (identityCardImage.ImageUrl == null || !identityCardImage.ImageUrl.Contains(model.Path))
                 {
                     result.ErrorMessage = "File does not exist";
                     result.Succeed = false;
@@ -842,9 +842,9 @@ public class IdentityCardService : IIdentityCardService
             foreach (var item in identityCardImages)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + item.ImageData;
+                string stringPath = dirPath + item.ImageUrl;
                 byte[] imageBytes = File.ReadAllBytes(stringPath);
-                item.ImageData = Convert.ToBase64String(imageBytes);
+                item.ImageUrl = Convert.ToBase64String(imageBytes);
             }
 
             result.Data = data;
@@ -885,7 +885,7 @@ public class IdentityCardService : IIdentityCardService
             if (model.File != null)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "IdentityCardImage", identityCardImage.Id.ToString());
-                identityCardImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+                identityCardImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             }
             identityCardImage.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();

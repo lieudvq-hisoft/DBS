@@ -9,7 +9,7 @@ public class SearchRequestDetailCreateModel
     public string? Name { get; set; }
     public string? PhoneNumber { get; set; }
     public string? Note { get; set; }
-    public IFormFile? ImageData { get; set; }
+    public IFormFile? ImageUrl { get; set; }
     public string? LicensePlate { get; set; }
     public string? Brand { get; set; }
     public string? Color { get; set; }
@@ -23,7 +23,7 @@ public class SearchRequestDetailModel
     public string Name { get; set; }
     public string PhoneNumber { get; set; }
     public string Note { get; set; }
-    public string ImageData { get; set; }
+    public string ImageUrl { get; set; }
     public string LicensePlate { get; set; }
     public string Brand { get; set; }
     public string Color { get; set; }

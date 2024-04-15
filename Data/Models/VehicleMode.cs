@@ -29,7 +29,7 @@ public class VehicleModel
     public string Brand { get; set; }
     public string Model { get; set; }
     public string Color { get; set; }
-    public string ImageData { get; set; }
+    public string ImageUrl { get; set; }
 }
 
 public class VehicleImageCreateModel
@@ -49,6 +49,6 @@ public class VehicleImageModel
     public Guid Id { get; set; }
     public Guid VehicleId { get; set; }
     public VehicleModel Vehicle { get; set; }
-    public string ImageData { get; set; }
+    public string ImageUrl { get; set; }
     public VehicleImageType VehicleImageType { get; set; }
 }
