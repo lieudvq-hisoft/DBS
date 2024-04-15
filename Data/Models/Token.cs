@@ -15,6 +15,7 @@ public class Token
     public int ExpiresIn { get; set; }
     public string UserName { get; set; }
     public string? PhoneNumber { get; set; }
+    public string? Email { get; set; }
     public string? Name { get; set; }
     public string Avatar { get; set; }
     public int CurrenNoticeCount { get; set; }

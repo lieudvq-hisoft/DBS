@@ -59,6 +59,7 @@ namespace Services.Utils
                 UserID = user.Id.ToString(),
                 UserName = user.UserName!,
                 PhoneNumber = user.PhoneNumber!,
+                Email = user.Email!,
                 Avatar = user.Avatar != null ? Avatar : user.Avatar,
                 Name = user.Name!,
                 Roles = role
