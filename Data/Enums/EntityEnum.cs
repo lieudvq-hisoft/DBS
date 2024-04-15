@@ -203,3 +203,9 @@ public enum SupportStatus
     Solved = 2,
     CantSolved = 3,
 }
+
+public enum BookingType
+{
+    MySelf,
+    Someone,
+}
