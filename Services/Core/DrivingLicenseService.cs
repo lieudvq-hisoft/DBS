@@ -110,7 +110,7 @@ public class DrivingLicenseService : IDrivingLicenseService
             var drivingLicenseImage = _mapper.Map<DrivingLicenseImageCreateModel, DrivingLicenseImage>(model);
             _dbContext.DrivingLicenseImages.Add(drivingLicenseImage);
             string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "DrivingLicenseImage", drivingLicenseImage.Id.ToString());
-            drivingLicenseImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            drivingLicenseImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
@@ -178,7 +178,7 @@ public class DrivingLicenseService : IDrivingLicenseService
                 return result;
             }
             string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-            MyFunction.DeleteFile(dirPathDelete + drivingLicenseImage.ImageData);
+            MyFunction.DeleteFile(dirPathDelete + drivingLicenseImage.ImageUrl);
 
             _dbContext.DrivingLicenseImages.Remove(drivingLicenseImage);
             await _dbContext.SaveChangesAsync();
@@ -208,7 +208,7 @@ public class DrivingLicenseService : IDrivingLicenseService
             else
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                if (drivingLicenseImage.ImageData == null || !drivingLicenseImage.ImageData.Contains(model.Path))
+                if (drivingLicenseImage.ImageUrl == null || !drivingLicenseImage.ImageUrl.Contains(model.Path))
                 {
                     result.ErrorMessage = "Image does not exist";
                     result.Succeed = false;
@@ -326,9 +326,9 @@ public class DrivingLicenseService : IDrivingLicenseService
             foreach (var item in drivingLicenseImages)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + item.ImageData;
+                string stringPath = dirPath + item.ImageUrl;
                 byte[] imageBytes = File.ReadAllBytes(stringPath);
-                item.ImageData = Convert.ToBase64String(imageBytes);
+                item.ImageUrl = Convert.ToBase64String(imageBytes);
             }
 
             result.Data = data;
@@ -418,9 +418,9 @@ public class DrivingLicenseService : IDrivingLicenseService
             if (model.File != null)
             {
                 string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                MyFunction.DeleteFile(dirPathDelete + drivingLicenseImage.ImageData);
+                MyFunction.DeleteFile(dirPathDelete + drivingLicenseImage.ImageUrl);
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "DrivingLicenseImage", drivingLicenseImage.Id.ToString());
-                drivingLicenseImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+                drivingLicenseImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             }
             drivingLicenseImage.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
@@ -513,7 +513,7 @@ public class DrivingLicenseService : IDrivingLicenseService
             var drivingLicenseImage = _mapper.Map<DrivingLicenseImageCreateModel, DrivingLicenseImage>(model);
             _dbContext.DrivingLicenseImages.Add(drivingLicenseImage);
             string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "DrivingLicenseImage", drivingLicenseImage.Id.ToString());
-            drivingLicenseImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            drivingLicenseImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
@@ -605,7 +605,7 @@ public class DrivingLicenseService : IDrivingLicenseService
                 return result;
             }
             string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-            MyFunction.DeleteFile(dirPathDelete + drivingLicenseImage.ImageData);
+            MyFunction.DeleteFile(dirPathDelete + drivingLicenseImage.ImageUrl);
 
             _dbContext.DrivingLicenseImages.Remove(drivingLicenseImage);
             await _dbContext.SaveChangesAsync();
@@ -647,7 +647,7 @@ public class DrivingLicenseService : IDrivingLicenseService
             else
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                if (drivingLicenseImage.ImageData == null || !drivingLicenseImage.ImageData.Contains(model.Path))
+                if (drivingLicenseImage.ImageUrl == null || !drivingLicenseImage.ImageUrl.Contains(model.Path))
                 {
                     result.ErrorMessage = "Image does not exist";
                     result.Succeed = false;
@@ -801,9 +801,9 @@ public class DrivingLicenseService : IDrivingLicenseService
             foreach (var item in drivingLicenseImages)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + item.ImageData;
+                string stringPath = dirPath + item.ImageUrl;
                 byte[] imageBytes = File.ReadAllBytes(stringPath);
-                item.ImageData = Convert.ToBase64String(imageBytes);
+                item.ImageUrl = Convert.ToBase64String(imageBytes);
             }
 
             result.Data = data;
@@ -917,9 +917,9 @@ public class DrivingLicenseService : IDrivingLicenseService
             if (model.File != null)
             {
                 string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                MyFunction.DeleteFile(dirPathDelete + drivingLicenseImage.ImageData);
+                MyFunction.DeleteFile(dirPathDelete + drivingLicenseImage.ImageUrl);
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "DrivingLicenseImage", drivingLicenseImage.Id.ToString());
-                drivingLicenseImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+                drivingLicenseImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             }
             drivingLicenseImage.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();

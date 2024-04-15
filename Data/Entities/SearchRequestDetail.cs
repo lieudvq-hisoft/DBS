@@ -12,7 +12,7 @@ public class SearchRequestDetail : BaseEntity
     public string? Name { get; set; }
     public string? PhoneNumber { get; set; }
     public string? Note { get; set; }
-    public string? ImageData { get; set; }
+    public string? ImageUrl { get; set; }
 
     //Vehicle
     public string? LicensePlate { get; set; }

@@ -71,10 +71,10 @@ public class SearchRequestDetailService : ISearchRequestDetailService
             var searchRequestDetail = _mapper.Map<SearchRequestDetailCreateModel, SearchRequestDetail>(model);
             _dbContext.SearchRequestDetails.Add(searchRequestDetail);
 
-            if (model.ImageData != null)
+            if (model.ImageUrl != null)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "SearchRequestDetail", "CustomerImage", searchRequestDetail.Id.ToString());
-                searchRequestDetail.ImageData = await MyFunction.UploadFileAsync(model.ImageData, dirPath, "/app/Storage");
+                searchRequestDetail.ImageUrl = await MyFunction.UploadFileAsync(model.ImageUrl, dirPath, "/app/Storage");
             }
 
             if (model.VehicleImage != null)
@@ -116,12 +116,12 @@ public class SearchRequestDetailService : ISearchRequestDetailService
             var data = _mapper.Map<SearchRequestDetailModel>(searchRequestDetailId);
             data.SearchRequest = _mapper.Map<SearchRequestModel>(searchRequestDetailId.SearchRequest);
 
-            if (data.ImageData != null)
+            if (data.ImageUrl != null)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + data.ImageData;
+                string stringPath = dirPath + data.ImageUrl;
                 byte[] imageBytes = File.ReadAllBytes(stringPath);
-                data.ImageData = Convert.ToBase64String(imageBytes);
+                data.ImageUrl = Convert.ToBase64String(imageBytes);
             }
 
             if (data.VehicleImage != null)
@@ -167,12 +167,12 @@ public class SearchRequestDetailService : ISearchRequestDetailService
             var data = _mapper.Map<SearchRequestDetailModel>(searchRequestDetailId);
             data.SearchRequest = _mapper.Map<SearchRequestModel>(searchRequestDetailId.SearchRequest);
 
-            if (data.ImageData != null)
+            if (data.ImageUrl != null)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + data.ImageData;
+                string stringPath = dirPath + data.ImageUrl;
                 byte[] imageBytes = File.ReadAllBytes(stringPath);
-                data.ImageData = Convert.ToBase64String(imageBytes);
+                data.ImageUrl = Convert.ToBase64String(imageBytes);
             }
 
             if (data.VehicleImage != null)

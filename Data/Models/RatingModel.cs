@@ -30,5 +30,5 @@ public class RatingModel
     public BookingModel Booking { get; set; }
     public int Star { get; set; }
     public string Comment { get; set; }
-    public string ImageData { get; set; }
+    public string ImageUrl { get; set; }
 }

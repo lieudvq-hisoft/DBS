@@ -9,6 +9,6 @@ public class VehicleImage : BaseEntity
     public Guid VehicleId { get; set; }
     [ForeignKey("VehicleId")]
     public virtual Vehicle Vehicle { get; set; }
-    public string ImageData { get; set; }
+    public string ImageUrl { get; set; }
     public VehicleImageType VehicleImageType { get; set; }
 }

@@ -71,7 +71,7 @@ public class BookingImageService : IBookingImageService
             _dbContext.BookingImages.Add(bookingImage);
             bookingImage.BookingImageTime = BookingImageTime.CheckIn;
             string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingImageCheckIn", bookingImage.Id.ToString());
-            bookingImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            bookingImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
@@ -112,7 +112,7 @@ public class BookingImageService : IBookingImageService
             _dbContext.BookingImages.Add(bookingImage);
             bookingImage.BookingImageTime = BookingImageTime.CheckOut;
             string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingImageCheckIn", bookingImage.Id.ToString());
-            bookingImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            bookingImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
@@ -138,7 +138,7 @@ public class BookingImageService : IBookingImageService
                 return result;
             }
             string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-            MyFunction.DeleteFile(dirPathDelete + bookingImage.ImageData);
+            MyFunction.DeleteFile(dirPathDelete + bookingImage.ImageUrl);
 
             _dbContext.BookingImages.Remove(bookingImage);
             await _dbContext.SaveChangesAsync();
@@ -168,7 +168,7 @@ public class BookingImageService : IBookingImageService
             else
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                if (bookingImage.ImageData == null || !bookingImage.ImageData.Contains(model.Path))
+                if (bookingImage.ImageUrl == null || !bookingImage.ImageUrl.Contains(model.Path))
                 {
                     result.ErrorMessage = "Image does not exist";
                     result.Succeed = false;
@@ -204,9 +204,9 @@ public class BookingImageService : IBookingImageService
             foreach (var item in bookingImages)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + item.ImageData;
+                string stringPath = dirPath + item.ImageUrl;
                 byte[] imageBytes = File.ReadAllBytes(stringPath);
-                item.ImageData = Convert.ToBase64String(imageBytes);
+                item.ImageUrl = Convert.ToBase64String(imageBytes);
             }
 
             result.Data = data;
@@ -238,9 +238,9 @@ public class BookingImageService : IBookingImageService
             foreach (var item in bookingImages)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + item.ImageData;
+                string stringPath = dirPath + item.ImageUrl;
                 byte[] imageBytes = File.ReadAllBytes(stringPath);
-                item.ImageData = Convert.ToBase64String(imageBytes);
+                item.ImageUrl = Convert.ToBase64String(imageBytes);
             }
 
             result.Data = data;
@@ -270,9 +270,9 @@ public class BookingImageService : IBookingImageService
             if (model.File != null)
             {
                 string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                MyFunction.DeleteFile(dirPathDelete + bookingImage.ImageData);
+                MyFunction.DeleteFile(dirPathDelete + bookingImage.ImageUrl);
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingImage", bookingImage.Id.ToString());
-                bookingImage.ImageData = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+                bookingImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
             }
             bookingImage.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();

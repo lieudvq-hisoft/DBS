@@ -61,7 +61,7 @@ namespace Data.Models
     {
         public Guid IdentityCardId { get; set; }
         public Guid Id { get; set; }
-        public string ImageData { get; set; }
+        public string ImageUrl { get; set; }
         public bool IsFront { get; set; }
     }
 }

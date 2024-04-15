@@ -20,7 +20,7 @@ public class BookingImageModel
     public Guid Id { get; set; }
     public Guid BookingId { get; set; }
     public BookingModel Booking { get; set; }
-    public string ImageData { get; set; }
+    public string ImageUrl { get; set; }
     public BookingImageType BookingImageType { get; set; }
     public BookingImageTime BookingImageTime { get; set; }
 }
