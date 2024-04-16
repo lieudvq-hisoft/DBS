@@ -21,7 +21,7 @@ public class SearchRequestController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult> Login([FromBody] SearchRequestCreateModel model)
+    public async Task<ActionResult> Login([FromForm] SearchRequestCreateModel model)
     {
         var result = await _searchRequestService.Add(model, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);

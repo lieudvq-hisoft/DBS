@@ -11,6 +11,7 @@ using Data.Utils.Paging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Services.Utils;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Services.Core;
@@ -82,17 +83,64 @@ public class SearchRequestService : ISearchRequestService
             var searchRequest = _mapper.Map<SearchRequestCreateModel, SearchRequest>(model);
             searchRequest.CustomerId = customer.Id;
 
-            var bookingVehicle = _mapper.Map<BookingVehicleModel, BookingVehicle>(model.BookingVehicle);
-            _dbContext.BookingVehicles.Add(bookingVehicle);
-            searchRequest.BookingVehicle = bookingVehicle;
+            if (model.BookingVehicle != null)
+            {
+                var bookingVehicle = _mapper.Map<BookingVehicleCreateModel, BookingVehicle>(model.BookingVehicle);
+                _dbContext.BookingVehicles.Add(bookingVehicle);
+                if (model.BookingVehicle.File != null)
+                {
+                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingVehicle", bookingVehicle.Id.ToString());
+                    bookingVehicle.ImageUrl = await MyFunction.UploadFileAsync(model.BookingVehicle.File, dirPath, "/app/Storage");
+                }
+                searchRequest.BookingVehicle = bookingVehicle;
+            }
+
+            if (model.BookedPersonInfo != null)
+            {
+                var bookedPersonInfo = _mapper.Map<BookedPersonInfoCreateModel, BookedPersonInfo>(model.BookedPersonInfo);
+                _dbContext.BookedPersonInfos.Add(bookedPersonInfo);
+                if (model.BookedPersonInfo.File != null)
+                {
+                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookedPersonInfo", bookedPersonInfo.Id.ToString());
+                    bookedPersonInfo.ImageUrl = await MyFunction.UploadFileAsync(model.BookedPersonInfo.File, dirPath, "/app/Storage");
+                }
+                searchRequest.BookedPersonInfo = bookedPersonInfo;
+            }
 
             _dbContext.SearchRequests.Add(searchRequest);
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<SearchRequestModel>(searchRequest);
             data.Customer = _mapper.Map<UserModel>(customer);
-            data.BookingVehicle = _mapper.Map<BookingVehicleModel>(bookingVehicle);
             data.DriverId = driver.Id;
+
+            if (searchRequest.BookingVehicle != null)
+            {
+                var bookingVehicle = _mapper.Map<BookingVehicleModel>(searchRequest.BookingVehicle);
+                if (bookingVehicle.ImageUrl != null)
+                {
+                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                    string stringPath = dirPath + bookingVehicle.ImageUrl;
+                    byte[] imageBytes = File.ReadAllBytes(stringPath);
+                    bookingVehicle.ImageUrl = Convert.ToBase64String(imageBytes);
+                }
+
+                data.BookingVehicle = bookingVehicle;
+            }
+
+            if (searchRequest.BookedPersonInfo != null)
+            {
+
+                var bookedPersonInfo = _mapper.Map<BookedPersonInfoModel>(searchRequest.BookedPersonInfo);
+                if (bookedPersonInfo.ImageUrl != null)
+                {
+                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                    string stringPath = dirPath + bookedPersonInfo.ImageUrl;
+                    byte[] imageBytes = File.ReadAllBytes(stringPath);
+                    bookedPersonInfo.ImageUrl = Convert.ToBase64String(imageBytes);
+                }
+                data.BookedPersonInfo = bookedPersonInfo;
+            }
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
@@ -291,8 +339,26 @@ public class SearchRequestService : ISearchRequestService
             var oldData = _mapper.Map<SearchRequestModel>(searchRequest);
             oldData.Status = SearchRequestStatus.Cancel;
             oldData.Customer = _mapper.Map<UserModel>(searchRequest.Customer);
-            oldData.BookingVehicle = _mapper.Map<BookingVehicleModel>(searchRequest.BookingVehicle);
             oldData.DriverId = oldDriver.Id;
+            var bookingVehicleOldData = _mapper.Map<BookingVehicleModel>(searchRequest.BookingVehicle);
+            if (bookingVehicleOldData.ImageUrl != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + bookingVehicleOldData.ImageUrl;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                bookingVehicleOldData.ImageUrl = Convert.ToBase64String(imageBytes);
+            }
+            oldData.BookingVehicle = bookingVehicleOldData;
+
+            var bookedPersonInfoOldData = _mapper.Map<BookedPersonInfoModel>(searchRequest.BookedPersonInfo);
+            if (bookedPersonInfoOldData.ImageUrl != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + bookedPersonInfoOldData.ImageUrl;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                bookedPersonInfoOldData.ImageUrl = Convert.ToBase64String(imageBytes);
+            }
+            oldData.BookedPersonInfo = bookedPersonInfoOldData;
 
             var oldKafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { model.OldDriverId }, Payload = oldData };
             var oldJson = Newtonsoft.Json.JsonConvert.SerializeObject(oldKafkaModel);
@@ -302,8 +368,27 @@ public class SearchRequestService : ISearchRequestService
             // Send to New Driver
             var data = _mapper.Map<SearchRequestModel>(searchRequest);
             data.Customer = _mapper.Map<UserModel>(searchRequest.Customer);
-            data.BookingVehicle = _mapper.Map<BookingVehicleModel>(searchRequest.BookingVehicle);
             data.DriverId = newDriver.Id;
+
+            var bookingVehicleData = _mapper.Map<BookingVehicleModel>(searchRequest.BookingVehicle);
+            if (bookingVehicleData.ImageUrl != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + bookingVehicleData.ImageUrl;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                bookingVehicleData.ImageUrl = Convert.ToBase64String(imageBytes);
+            }
+            data.BookingVehicle = bookingVehicleData;
+
+            var bookedPersonInfoData = _mapper.Map<BookedPersonInfoModel>(searchRequest.BookedPersonInfo);
+            if (bookedPersonInfoData.ImageUrl != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + bookedPersonInfoData.ImageUrl;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                bookedPersonInfoData.ImageUrl = Convert.ToBase64String(imageBytes);
+            }
+            data.BookedPersonInfo = bookedPersonInfoData;
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { model.NewDriverId }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
