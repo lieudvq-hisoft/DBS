@@ -18,6 +18,7 @@ public class User : IdentityUser<Guid>
     public DateTime DateCreated { get; set; } = DateTime.Now;
     public DateTime DateUpdated { get; set; } = DateTime.Now;
     public virtual ICollection<UserRole> UserRoles { get; set; }
+
     //Driver
     public virtual ICollection<DriverLocation> DriverLocations { get; set; }
     public virtual ICollection<DriverStatus> DriverStatuses { get; set; }
