@@ -14,8 +14,7 @@ namespace Data.Model
         public double DropOffLatitude { get; set; }
         public string DropOffAddress { get; set; }
         public string PickupAddress { get; set; }
-        public BookingVehicleCreateModel? BookingVehicle { get; set; }
-        public BookedPersonInfoCreateModel? BookedPersonInfo { get; set; }
+        public BookingVehicleModel BookingVehicle { get; set; }
         public long Price { get; set; }
         public string? Note { get; set; }
         public BookingType? BookingType { get; set; }
@@ -34,7 +33,6 @@ namespace Data.Model
         public string DropOffAddress { get; set; }
         public string PickupAddress { get; set; }
         public BookingVehicleModel BookingVehicle { get; set; }
-        public BookedPersonInfoModel BookedPersonInfo { get; set; }
         public long Price { get; set; }
         public string? Note { get; set; }
         public BookingType? BookingType { get; set; }

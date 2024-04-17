@@ -22,35 +22,6 @@ namespace DBS.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Data.Entities.BookedPersonInfo", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("BookedPersonInfos");
-                });
-
             modelBuilder.Entity("Data.Entities.Booking", b =>
                 {
                     b.Property<Guid>("Id")
@@ -166,9 +137,11 @@ namespace DBS.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Brand")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Color")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("DateCreated")
@@ -177,16 +150,15 @@ namespace DBS.Migrations
                     b.Property<DateTime>("DateUpdated")
                         .HasColumnType("timestamp without time zone");
 
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("text");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<string>("LicensePlate")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Model")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -504,9 +476,6 @@ namespace DBS.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("BookedPersonInfoId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("BookingType")
                         .HasColumnType("integer");
 
@@ -555,8 +524,6 @@ namespace DBS.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BookedPersonInfoId");
 
                     b.HasIndex("BookingVehicleId");
 
@@ -1097,10 +1064,6 @@ namespace DBS.Migrations
 
             modelBuilder.Entity("Data.Entities.SearchRequest", b =>
                 {
-                    b.HasOne("Data.Entities.BookedPersonInfo", "BookedPersonInfo")
-                        .WithMany()
-                        .HasForeignKey("BookedPersonInfoId");
-
                     b.HasOne("Data.Entities.BookingVehicle", "BookingVehicle")
                         .WithMany()
                         .HasForeignKey("BookingVehicleId");
@@ -1110,8 +1073,6 @@ namespace DBS.Migrations
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("BookedPersonInfo");
 
                     b.Navigation("BookingVehicle");
 
