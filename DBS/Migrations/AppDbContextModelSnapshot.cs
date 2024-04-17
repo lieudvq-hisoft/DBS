@@ -565,6 +565,55 @@ namespace DBS.Migrations
                     b.ToTable("SearchRequests");
                 });
 
+            modelBuilder.Entity("Data.Entities.SearchRequestDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Brand")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Color")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LicensePlate")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SearchRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("VehicleImage")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SearchRequestId");
+
+                    b.ToTable("SearchRequestDetails");
+                });
+
             modelBuilder.Entity("Data.Entities.Support", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1067,6 +1116,17 @@ namespace DBS.Migrations
                     b.Navigation("BookingVehicle");
 
                     b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("Data.Entities.SearchRequestDetail", b =>
+                {
+                    b.HasOne("Data.Entities.SearchRequest", "SearchRequest")
+                        .WithMany()
+                        .HasForeignKey("SearchRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SearchRequest");
                 });
 
             modelBuilder.Entity("Data.Entities.Vehicle", b =>
