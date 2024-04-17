@@ -182,7 +182,6 @@ public enum BookingImageType
     Behind = 1,
     Left = 2,
     Right = 3,
-    Customer = 4
 }
 
 public enum BookingImageTime
