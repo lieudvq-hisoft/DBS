@@ -15,7 +15,6 @@ public class SearchRequest : BaseEntity
     public string DropOffAddress { get; set; }
     public string PickupAddress { get; set; }
     public virtual BookingVehicle? BookingVehicle { get; set; }
-    public virtual BookedPersonInfo? BookedPersonInfo { get; set; }
     public long Price { get; set; }
     public string? Note { get; set; }
     public BookingType BookingType { get; set; } = BookingType.MySelf;
