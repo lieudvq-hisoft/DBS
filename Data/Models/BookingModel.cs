@@ -28,6 +28,8 @@ namespace Data.Models
         public Guid SearchRequestId { get; set; }
         public Guid DriverId { get; set; }
         public string CheckInNote { get; set; }
+        public DateTime PickUpTime { get; set; }
+        public DateTime DropOffTime { get; set; }
         public BookingStatus Status { get; set; }
         public SearchRequestModel SearchRequest { get; set; }
         public UserModel Driver { get; set; }

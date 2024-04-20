@@ -18,6 +18,7 @@ public interface IRatingService
     Task<ResultModel> GetByBookingId(Guid BookingId);
     Task<ResultModel> GetByDriverId(Guid UserId);
     Task<ResultModel> UpdateRating(RatingUpdateModel model, Guid RatingId, Guid UserId);
+    Task<ResultModel> CheckBookingCanRating(Guid BookingId);
 
 }
 
@@ -270,6 +271,42 @@ public class RatingService : IRatingService
 
             result.Succeed = true;
             result.Data = _mapper.Map<RatingModel>(rating);
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> CheckBookingCanRating(Guid BookingId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var booking = _dbContext.Bookings.Where(_ => _.Id == BookingId && !_.IsDeleted).FirstOrDefault();
+            if (booking == null)
+            {
+                result.ErrorMessage = "Booking not exist";
+                return result;
+            }
+            var rating = _dbContext.Ratings
+                .Include(_ => _.Booking)
+                .Where(_ => _.BookingId == BookingId && !_.IsDeleted).FirstOrDefault();
+
+            var dropOffTime = booking.DropOffTime;
+            var now = DateTime.Now.AddDays(-2);
+            if (rating == null && booking.DropOffTime >= DateTime.Now.AddDays(-2))
+            {
+                result.Data = true;
+            }
+            else
+            {
+                result.Data = false;
+            }
+
+            result.Succeed = true;
         }
         catch (Exception ex)
         {
