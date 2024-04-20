@@ -11,7 +11,6 @@ using Data.Utils.Paging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Services.Core;
 
@@ -91,7 +90,15 @@ public class SearchRequestService : ISearchRequestService
 
             var data = _mapper.Map<SearchRequestModel>(searchRequest);
             data.Customer = _mapper.Map<UserModel>(customer);
-            data.BookingVehicle = _mapper.Map<BookingVehicleModel>(bookingVehicle);
+            var bookingVehicleData = _mapper.Map<BookingVehicleModel>(bookingVehicle);
+            if (bookingVehicleData.ImageUrl != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + bookingVehicleData.ImageUrl;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                bookingVehicleData.ImageUrl = Convert.ToBase64String(imageBytes);
+            }
+            data.BookingVehicle = bookingVehicleData;
             data.DriverId = driver.Id;
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = data };
