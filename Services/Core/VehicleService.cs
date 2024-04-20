@@ -253,6 +253,7 @@ public class VehicleService : IVehicleService
                 var vehicleImage = _dbContext.VehicleImages.Where(_ => _.VehicleId == item.Id && !_.IsDeleted).FirstOrDefault();
                 if (vehicleImage != null)
                 {
+                    item.ImagePath = vehicleImage.ImageUrl;
                     string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
                     string stringPath = dirPath + vehicleImage.ImageUrl;
                     byte[] imageBytes = File.ReadAllBytes(stringPath);

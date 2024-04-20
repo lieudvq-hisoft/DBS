@@ -30,6 +30,7 @@ public class VehicleModel
     public string Model { get; set; }
     public string Color { get; set; }
     public string ImageUrl { get; set; }
+    public string ImagePath { get; set; }
 }
 
 public class VehicleImageCreateModel
