@@ -58,4 +58,12 @@ public class RatingController : ControllerBase
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
+
+    [HttpGet("CheckBookingCanRating/{BookingId}")]
+    public async Task<ActionResult> CheckBookingCanRating(Guid BookingId)
+    {
+        var result = await _ratingService.CheckBookingCanRating(BookingId);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
 }
