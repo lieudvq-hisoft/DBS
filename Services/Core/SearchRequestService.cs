@@ -81,19 +81,30 @@ public class SearchRequestService : ISearchRequestService
             var searchRequest = _mapper.Map<SearchRequestCreateModel, SearchRequest>(model);
             searchRequest.CustomerId = customer.Id;
 
-            var bookingVehicle = _mapper.Map<BookingVehicleModel>(model.BookingVehicle);
+            var bookingVehicle = _mapper.Map<BookingVehicleModel, BookingVehicle>(model.BookingVehicle);
+            _dbContext.BookingVehicles.Add(bookingVehicle);
             searchRequest.BookingVehicle = bookingVehicle;
 
-            var customerBookedOnBehalf = _mapper.Map<CustomerBookedOnBehalfModel>(model.CustomerBookedOnBehalf);
-            searchRequest.CustomerBookedOnBehalf = customerBookedOnBehalf;
+            if (model.BookingType != null && model.BookingType == BookingType.Someone && model.CustomerBookedOnBehalf == null)
+            {
+                result.ErrorMessage = "Booking for Someone is required CustomerBookedOnBehalf";
+                return result;
+            }
+
+            if (model.BookingType != null && model.BookingType == BookingType.Someone)
+            {
+                var customerBookedOnBehalf = _mapper.Map<CustomerBookedOnBehalfModel, CustomerBookedOnBehalf>(model.CustomerBookedOnBehalf);
+                _dbContext.CustomerBookedOnBehalves.Add(customerBookedOnBehalf);
+                searchRequest.CustomerBookedOnBehalf = customerBookedOnBehalf;
+            }
 
             _dbContext.SearchRequests.Add(searchRequest);
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<SearchRequestModel>(searchRequest);
             data.Customer = _mapper.Map<UserModel>(customer);
-            data.BookingVehicle = _mapper.Map<BookingVehicleModel>(bookingVehicle); ;
-            data.CustomerBookedOnBehalf = _mapper.Map<CustomerBookedOnBehalfModel>(customerBookedOnBehalf); ;
+            data.BookingVehicle = _mapper.Map<BookingVehicleModel>(searchRequest.BookingVehicle);
+            data.CustomerBookedOnBehalf = _mapper.Map<CustomerBookedOnBehalfModel>(searchRequest.CustomerBookedOnBehalf);
             data.DriverId = driver.Id;
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = data };
@@ -276,6 +287,8 @@ public class SearchRequestService : ISearchRequestService
             }
             var searchRequest = _dbContext.SearchRequests
                 .Include(_ => _.Customer)
+                .Include(_ => _.BookingVehicle)
+                .Include(_ => _.CustomerBookedOnBehalf)
                 .Where(_ => _.Id == model.SearchRequestId && !_.IsDeleted).FirstOrDefault();
             if (searchRequest == null)
             {
