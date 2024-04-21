@@ -15,10 +15,8 @@ public class SearchRequest : BaseEntity
     public double DropOffLatitude { get; set; }
     public string DropOffAddress { get; set; }
     public string PickupAddress { get; set; }
-    [NotMapped]
-    public virtual BookingVehicleModel? BookingVehicle { get; set; }
-    [NotMapped]
-    public virtual CustomerBookedOnBehalfModel? CustomerBookedOnBehalf { get; set; }
+    public virtual BookingVehicle? BookingVehicle { get; set; }
+    public virtual CustomerBookedOnBehalf? CustomerBookedOnBehalf { get; set; }
     public long Price { get; set; }
     public string? Note { get; set; }
     public BookingType BookingType { get; set; } = BookingType.MySelf;

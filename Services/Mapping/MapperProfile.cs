@@ -26,6 +26,12 @@ namespace Services.Mapping
             CreateMap<BookingCreateModel, Booking>();
             CreateMap<Booking, BookingModel>();
 
+            CreateMap<BookingVehicleModel, BookingVehicle>();
+            CreateMap<BookingVehicle, BookingVehicleModel>();
+
+            CreateMap<CustomerBookedOnBehalfModel, CustomerBookedOnBehalf>();
+            CreateMap<CustomerBookedOnBehalf, CustomerBookedOnBehalfModel>();
+
             CreateMap<RatingCreateModel, Rating>();
             CreateMap<Rating, RatingModel>();
 
