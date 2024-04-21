@@ -17,8 +17,6 @@ namespace Services.Mapping
 
             CreateMap<SearchRequestCreateModel, SearchRequest>();
             CreateMap<SearchRequest, SearchRequestModel>();
-            CreateMap<SearchRequestDetailCreateModel, SearchRequestDetail>();
-            CreateMap<SearchRequestDetail, SearchRequestDetailModel>();
 
             CreateMap<IdentityCardCreateModel, IdentityCard>();
             CreateMap<IdentityCard, IdentityCardModel>();
@@ -27,9 +25,6 @@ namespace Services.Mapping
 
             CreateMap<BookingCreateModel, Booking>();
             CreateMap<Booking, BookingModel>();
-
-            CreateMap<BookingVehicleModel, BookingVehicle>();
-            CreateMap<BookingVehicle, BookingVehicleModel>();
 
             CreateMap<RatingCreateModel, Rating>();
             CreateMap<Rating, RatingModel>();
