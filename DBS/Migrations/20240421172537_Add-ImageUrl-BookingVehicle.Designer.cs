@@ -3,6 +3,7 @@ using System;
 using Data.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DBS.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240421172537_Add-ImageUrl-BookingVehicle")]
+    partial class AddImageUrlBookingVehicle
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -128,6 +131,46 @@ namespace DBS.Migrations
                     b.HasIndex("BookingId");
 
                     b.ToTable("BookingPayments");
+                });
+
+            modelBuilder.Entity("Data.Entities.BookingVehicle", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Brand")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LicensePlate")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BookingVehicles");
                 });
 
             modelBuilder.Entity("Data.Entities.DriverLocation", b =>
@@ -443,6 +486,9 @@ namespace DBS.Migrations
                     b.Property<int>("BookingType")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("BookingVehicleId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
@@ -486,9 +532,60 @@ namespace DBS.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BookingVehicleId");
+
                     b.HasIndex("CustomerId");
 
                     b.ToTable("SearchRequests");
+                });
+
+            modelBuilder.Entity("Data.Entities.SearchRequestDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Brand")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Color")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LicensePlate")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SearchRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("VehicleImage")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SearchRequestId");
+
+                    b.ToTable("SearchRequestDetails");
                 });
 
             modelBuilder.Entity("Data.Entities.Support", b =>
@@ -974,13 +1071,30 @@ namespace DBS.Migrations
 
             modelBuilder.Entity("Data.Entities.SearchRequest", b =>
                 {
+                    b.HasOne("Data.Entities.BookingVehicle", "BookingVehicle")
+                        .WithMany()
+                        .HasForeignKey("BookingVehicleId");
+
                     b.HasOne("Data.Entities.User", "Customer")
                         .WithMany()
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("BookingVehicle");
+
                     b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("Data.Entities.SearchRequestDetail", b =>
+                {
+                    b.HasOne("Data.Entities.SearchRequest", "SearchRequest")
+                        .WithMany()
+                        .HasForeignKey("SearchRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SearchRequest");
                 });
 
             modelBuilder.Entity("Data.Entities.Vehicle", b =>

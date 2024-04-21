@@ -81,24 +81,19 @@ public class SearchRequestService : ISearchRequestService
             var searchRequest = _mapper.Map<SearchRequestCreateModel, SearchRequest>(model);
             searchRequest.CustomerId = customer.Id;
 
-            var bookingVehicle = _mapper.Map<BookingVehicleModel, BookingVehicle>(model.BookingVehicle);
-            _dbContext.BookingVehicles.Add(bookingVehicle);
+            var bookingVehicle = _mapper.Map<BookingVehicleModel>(model.BookingVehicle);
             searchRequest.BookingVehicle = bookingVehicle;
+
+            var customerBookedOnBehalf = _mapper.Map<CustomerBookedOnBehalfModel>(model.CustomerBookedOnBehalf);
+            searchRequest.CustomerBookedOnBehalf = customerBookedOnBehalf;
 
             _dbContext.SearchRequests.Add(searchRequest);
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<SearchRequestModel>(searchRequest);
             data.Customer = _mapper.Map<UserModel>(customer);
-            var bookingVehicleData = _mapper.Map<BookingVehicleModel>(bookingVehicle);
-            if (bookingVehicleData.ImageUrl != null)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + bookingVehicleData.ImageUrl;
-                byte[] imageBytes = File.ReadAllBytes(stringPath);
-                bookingVehicleData.ImageUrl = Convert.ToBase64String(imageBytes);
-            }
-            data.BookingVehicle = bookingVehicleData;
+            data.BookingVehicle = _mapper.Map<BookingVehicleModel>(bookingVehicle); ;
+            data.CustomerBookedOnBehalf = _mapper.Map<CustomerBookedOnBehalfModel>(customerBookedOnBehalf); ;
             data.DriverId = driver.Id;
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = data };
@@ -281,7 +276,6 @@ public class SearchRequestService : ISearchRequestService
             }
             var searchRequest = _dbContext.SearchRequests
                 .Include(_ => _.Customer)
-                .Include(_ => _.BookingVehicle)
                 .Where(_ => _.Id == model.SearchRequestId && !_.IsDeleted).FirstOrDefault();
             if (searchRequest == null)
             {
@@ -299,6 +293,7 @@ public class SearchRequestService : ISearchRequestService
             oldData.Status = SearchRequestStatus.Cancel;
             oldData.Customer = _mapper.Map<UserModel>(searchRequest.Customer);
             oldData.BookingVehicle = _mapper.Map<BookingVehicleModel>(searchRequest.BookingVehicle);
+            oldData.CustomerBookedOnBehalf = _mapper.Map<CustomerBookedOnBehalfModel>(searchRequest.CustomerBookedOnBehalf);
             oldData.DriverId = oldDriver.Id;
 
             var oldKafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { model.OldDriverId }, Payload = oldData };
@@ -310,6 +305,7 @@ public class SearchRequestService : ISearchRequestService
             var data = _mapper.Map<SearchRequestModel>(searchRequest);
             data.Customer = _mapper.Map<UserModel>(searchRequest.Customer);
             data.BookingVehicle = _mapper.Map<BookingVehicleModel>(searchRequest.BookingVehicle);
+            data.CustomerBookedOnBehalf = _mapper.Map<CustomerBookedOnBehalfModel>(searchRequest.CustomerBookedOnBehalf);
             data.DriverId = newDriver.Id;
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { model.NewDriverId }, Payload = data };

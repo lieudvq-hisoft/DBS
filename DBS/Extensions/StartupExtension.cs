@@ -63,7 +63,6 @@ public static class StartupExtension
         services.AddScoped<IDriverService, DriverService>();
         services.AddScoped<IExternalAuthService, ExternalAuthService>();
         services.AddScoped<ISearchRequestService, SearchRequestService>();
-        services.AddScoped<ISearchRequestDetailService, SearchRequestDetailService>();
         services.AddScoped<IIdentityCardService, IdentityCardService>();
         services.AddScoped<IVehicleService, VehicleService>();
         services.AddScoped<IBookingService, BookingService>();
