@@ -55,6 +55,7 @@ namespace Services.Mapping
             CreateMap<DriverLocation, LocationModel>();
 
             CreateMap<SupportCreateModel, Support>();
+            CreateMap<SupportBookingIssueCreateModel, Support>();
             CreateMap<Support, SupportModel>();
         }
     }

@@ -195,6 +195,7 @@ public enum SupportType
 {
     Recruitment = 0,
     SupportIssue = 1,
+    BookingIssue = 2
 }
 
 public enum SupportStatus
