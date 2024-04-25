@@ -395,6 +395,11 @@ public class BookingService : IBookingService
             var data = _mapper.Map<BookingModel>(booking);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 
+            var kafkaModelDriver = new KafkaModel { UserReceiveNotice = new List<Guid>() { data.Customer.Id }, Payload = data };
+            var jsonDriver = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelDriver);
+            await _producer.ProduceAsync("dbs-booking-status-checkin", new Message<Null, string> { Value = jsonDriver });
+            _producer.Flush();
+
             result.Data = data;
             result.Succeed = true;
         }
@@ -509,6 +514,11 @@ public class BookingService : IBookingService
 
             var data = _mapper.Map<BookingModel>(booking);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
+
+            var kafkaModelDriver = new KafkaModel { UserReceiveNotice = new List<Guid>() { data.Customer.Id }, Payload = data };
+            var jsonDriver = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelDriver);
+            await _producer.ProduceAsync("dbs-booking-status-checkout", new Message<Null, string> { Value = jsonDriver });
+            _producer.Flush();
 
             result.Data = data;
             result.Succeed = true;
