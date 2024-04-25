@@ -17,6 +17,7 @@ namespace Services.Core;
 public interface ISupportService
 {
     Task<ResultModel> Create(SupportCreateModel model);
+    Task<ResultModel> CreateBookingIssue(SupportBookingIssueCreateModel model);
     Task<ResultModel> GetByID(Guid SupportId, Guid UserId);
     Task<ResultModel> GetAll(PagingParam<SortSupportCriteria> paginationModel, Guid UserId);
     Task<ResultModel> ChangeStatusToInProcess(Guid SupportId, Guid UserId);
@@ -95,6 +96,26 @@ public class SupportService : ISupportService
                     return result;
 
             }
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+    public async Task<ResultModel> CreateBookingIssue(SupportBookingIssueCreateModel model)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var supportBookingIssue = _mapper.Map<SupportBookingIssueCreateModel, Support>(model);
+            supportBookingIssue.SupportType = SupportType.BookingIssue;
+            _dbContext.Supports.Add(supportBookingIssue);
+            await _dbContext.SaveChangesAsync();
+
+            result.Succeed = true;
+            result.Data = _mapper.Map<SupportModel>(supportBookingIssue);
         }
         catch (Exception ex)
         {

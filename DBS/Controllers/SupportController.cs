@@ -28,6 +28,15 @@ public class SupportController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPost("BookingIssue")]
+    public async Task<ActionResult> CreateSupportBookingIssue([FromBody] SupportBookingIssueCreateModel model)
+    {
+        var result = await _supportService.CreateBookingIssue(model);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("{SupportId}")]
     public async Task<ActionResult> GetById(Guid SupportId)
     {
