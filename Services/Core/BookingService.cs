@@ -160,7 +160,7 @@ public class BookingService : IBookingService
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var bookings = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
             bookings = bookings.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
-            var viewModels = _mapper.ProjectTo<SupportModel>(bookings);
+            var viewModels = _mapper.ProjectTo<BookingModel>(bookings);
 
             paging.Data = viewModels;
             result.Data = paging;

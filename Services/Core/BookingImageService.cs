@@ -201,7 +201,7 @@ public class BookingImageService : IBookingImageService
                 return result;
             }
             var data = _mapper.Map<List<BookingImageModel>>(bookingImages);
-            foreach (var item in bookingImages)
+            foreach (var item in data)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
                 string stringPath = dirPath + item.ImageUrl;
@@ -235,7 +235,7 @@ public class BookingImageService : IBookingImageService
                 return result;
             }
             var data = _mapper.Map<List<BookingImageModel>>(bookingImages);
-            foreach (var item in bookingImages)
+            foreach (var item in data)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
                 string stringPath = dirPath + item.ImageUrl;
@@ -277,8 +277,15 @@ public class BookingImageService : IBookingImageService
             bookingImage.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
+            var data = _mapper.Map<BookingImageModel>(bookingImage);
+
+            string dirPathUpdate = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+            string stringPath = dirPathUpdate + data.ImageUrl;
+            byte[] imageBytes = File.ReadAllBytes(stringPath);
+            data.ImageUrl = Convert.ToBase64String(imageBytes);
+
             result.Succeed = true;
-            result.Data = _mapper.Map<BookingImageModel>(bookingImage);
+            result.Data = data;
         }
         catch (Exception ex)
         {
