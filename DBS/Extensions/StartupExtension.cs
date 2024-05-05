@@ -71,6 +71,7 @@ public static class StartupExtension
         services.AddScoped<IBookingImageService, BookingImageService>();
         services.AddScoped<IDrivingLicenseService, DrivingLicenseService>();
         services.AddScoped<ISupportService, SupportService>();
+        services.AddScoped<IBookingCancelService, BookingCancelService>();
         services.AddScoped<IMailService, MailService>();
         services.AddSingleton<IHangfireServices, HangfireServices>();
         services.AddHostedService<HangfireJob>();

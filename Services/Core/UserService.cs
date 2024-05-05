@@ -27,6 +27,7 @@ public interface IUserService
     Task<ResultModel> UpdateProfile(ProfileUpdateModel model, Guid userId);
     Task<ResultModel> UploadAvatar(UpLoadAvatarModel model, Guid userId);
     Task<ResultModel> DeleteImage(Guid userId);
+    Task<ResultModel> ChangePublicGender(ChangePublicGenderModel model, Guid userId);
     Task<ResultModel> GetProfile(Guid id);
     Task<ResultModel> ChangePassword(ChangePasswordModel model, Guid userId);
     Task<ResultModel> ResetPassword(ResetPasswordModel model);
@@ -405,6 +406,54 @@ public class UserService : IUserService
             }
 
             dataView.Name = data.Name;
+            result.Succeed = true;
+            result.Data = dataView;
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> ChangePublicGender(ChangePublicGenderModel model, Guid userId)
+    {
+        ResultModel result = new ResultModel();
+        try
+        {
+            var driver = _dbContext.Users.Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
+            if (driver == null)
+            {
+                result.ErrorMessage = "Driver not exists";
+                result.Succeed = false;
+                return result;
+            }
+            if (!driver.IsActive)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "User has been deactivated";
+                return result;
+            }
+            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
+            if (!checkDriver)
+            {
+                result.ErrorMessage = "The user must be Driver";
+                return result;
+            }
+            driver.IsPublicGender = model.IsPublicGender;
+            driver.DateUpdated = DateTime.Now;
+            await _dbContext.SaveChangesAsync();
+
+            var dataView = _mapper.Map<ProfileModel>(driver);
+
+            if (dataView.Avatar != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + dataView.Avatar;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                dataView.Avatar = Convert.ToBase64String(imageBytes);
+            }
+
             result.Succeed = true;
             result.Data = dataView;
         }
