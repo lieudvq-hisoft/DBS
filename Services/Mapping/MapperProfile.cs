@@ -57,6 +57,11 @@ namespace Services.Mapping
             CreateMap<SupportCreateModel, Support>();
             CreateMap<SupportBookingIssueCreateModel, Support>();
             CreateMap<Support, SupportModel>();
+
+            CreateMap<BookingCancelCreateModel, BookingCancel>();
+            CreateMap<BookingCancel, BookingCancelModel>();
+            CreateMap<BookingCancelImageCreateModel, BookingCancelImage>();
+            CreateMap<BookingCancelImage, BookingCancelImageModel>();
         }
     }
 }

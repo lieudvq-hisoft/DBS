@@ -147,4 +147,13 @@ public class DriverController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPut("ChangePublicGender")]
+    public async Task<ActionResult> ChangePublicGender([FromBody] ChangePublicGenderModel model)
+    {
+        var result = await _userService.ChangePublicGender(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
 }

@@ -82,4 +82,6 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<Support> Supports { get; set; }
     public DbSet<BookingVehicle> BookingVehicles { get; set; }
     public DbSet<CustomerBookedOnBehalf> CustomerBookedOnBehalves { get; set; }
+    public DbSet<BookingCancel> BookingCancels { get; set; }
+    public DbSet<BookingCancelImage> BookingCancelImages { get; set; }
 }
