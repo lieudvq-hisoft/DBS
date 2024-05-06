@@ -29,7 +29,7 @@ builder.Services.AddCors(o => o.AddPolicy("CorsPolicy", builder =>
         .AllowAnyMethod()
         .AllowAnyHeader()
         .AllowAnyOrigin()
-        .WithOrigins("http://localhost:3000", "https://ims.hisoft.vn"
+        .WithOrigins("http://localhost:3000", "https://ims.hisoft.vn", "https://secureridehome.onrender.com"
         );
 }));
 
