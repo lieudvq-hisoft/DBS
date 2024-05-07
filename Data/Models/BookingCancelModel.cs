@@ -13,6 +13,15 @@ namespace Data.Models
     public class BookingCancelCreateModel
     {
         public Guid BookingId { get; set; }
+        public IList<IFormFile>? Files { get; set; }
+        public string CancelReason { get; set; }
+    }
+
+    public class BookingCancelNotiModel
+    {
+        public Guid Id { get; set; }
+        public string[]? ImageUrls { get; set; }
+        public UserModel CancelPerson { get; set; }
         public string CancelReason { get; set; }
     }
 
@@ -21,19 +30,8 @@ namespace Data.Models
         public Guid Id { get; set; }
         public BookingModel Booking { get; set; }
         public UserModel CancelPerson { get; set; }
+        public string[]? ImageUrls { get; set; }
         public string CancelReason { get; set; }
     }
 
-    public class BookingCancelImageCreateModel
-    {
-        public Guid BookingCancelId { get; set; }
-        public IFormFile File { get; set; }
-    }
-
-    public class BookingCancelImageModel
-    {
-        public Guid Id { get; set; }
-        public BookingCancelModel BookingCancel { get; set; }
-        public string ImageUrl { get; set; }
-    }
 }

@@ -60,8 +60,7 @@ namespace Services.Mapping
 
             CreateMap<BookingCancelCreateModel, BookingCancel>();
             CreateMap<BookingCancel, BookingCancelModel>();
-            CreateMap<BookingCancelImageCreateModel, BookingCancelImage>();
-            CreateMap<BookingCancelImage, BookingCancelImageModel>();
+            CreateMap<BookingCancel, BookingCancelNotiModel>();
         }
     }
 }
