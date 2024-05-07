@@ -35,6 +35,8 @@ namespace Data.Models
         public UserModel Driver { get; set; }
         public UserModel Customer { get; set; }
         public LocationModel DriverLocation { get; set; }
+        public BookingCancelNotiModel? BookingCancel { get; set; }
+
     }
 
 }

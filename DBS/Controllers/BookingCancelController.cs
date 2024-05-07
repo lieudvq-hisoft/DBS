@@ -21,7 +21,7 @@ public class BookingCancelController : ControllerBase
     }
 
     [HttpPost("Customer")]
-    public async Task<ActionResult> CustomerCancel([FromBody] BookingCancelCreateModel model)
+    public async Task<ActionResult> CustomerCancel([FromForm] BookingCancelCreateModel model)
     {
         var result = await _bookingCancelService.CustomerCancel(model, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
@@ -48,31 +48,6 @@ public class BookingCancelController : ControllerBase
     public async Task<ActionResult> GetById(Guid BookingCancelId)
     {
         var result = await _bookingCancelService.GetByID(BookingCancelId, Guid.Parse(User.GetId()));
-        if (result.Succeed) return Ok(result.Data);
-        return BadRequest(result.ErrorMessage);
-    }
-
-    [HttpPost("BookingCancelImage")]
-    public async Task<ActionResult> AddImage([FromForm] BookingCancelImageCreateModel model)
-    {
-        var result = await _bookingCancelService.AddImage(model);
-        if (result.Succeed) return Ok(result.Data);
-        return BadRequest(result.ErrorMessage);
-    }
-
-    [HttpPost("BookingCancelImage/Download")]
-    public async Task<ActionResult> DownloadImage([FromBody] FileModel model)
-    {
-        var result = await _bookingCancelService.DownloadImage(model);
-        FileEModel file = (FileEModel)result.Data;
-        if (result.Succeed) return File(file.Content, "application/octet-stream", "BookingCancelImage" + file.Extension);
-        return BadRequest(result.ErrorMessage);
-    }
-
-    [HttpGet("BookingCancelImage/{BookingCancelId}")]
-    public async Task<ActionResult> GetImageByBookingCancelId(Guid BookingCancelId)
-    {
-        var result = await _bookingCancelService.GetImagesByBookingCancelId(BookingCancelId);
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

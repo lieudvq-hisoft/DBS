@@ -24,10 +24,6 @@ public interface IBookingCancelService
     Task<ResultModel> DriverCancel(BookingCancelCreateModel model, Guid DriverId);
     Task<ResultModel> Get(PagingParam<SortCriteria> paginationModel, Guid UserId);
     Task<ResultModel> GetByID(Guid BookingCancelId, Guid UserId);
-    Task<ResultModel> AddImage(BookingCancelImageCreateModel model);
-    Task<ResultModel> GetImagesByBookingCancelId(Guid BookingCancelId);
-    Task<ResultModel> DeleteImage(Guid BookingCancelImageId);
-    Task<ResultModel> DownloadImage(FileModel model);
     Task<ResultModel> GetForAdmin(PagingParam<SortCriteria> paginationModel, Guid UserId, Guid AdminId);
     Task<ResultModel> GetByIdForAdmin(Guid BookingCancelId, Guid AdminId);
 }
@@ -99,6 +95,19 @@ public class BookingCancelService : IBookingCancelService
             bookingCancel.CancelPersonId = CustomerId;
             _dbContext.BookingCancels.Add(bookingCancel);
 
+            if (model.Files != null && model.Files.Count > 0)
+            {
+                bookingCancel.ImageUrls = Array.Empty<string>();
+                var imgUrlsList = bookingCancel.ImageUrls.ToList();
+                foreach (var file in model.Files)
+                {
+                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingCancelImage", bookingCancel.Id.ToString(), DateTime.Now.Ticks.ToString());
+                    var ImgUrl = await MyFunction.UploadFileAsync(file, dirPath, "/app/Storage");
+                    imgUrlsList.Add(ImgUrl);
+                }
+                bookingCancel.ImageUrls = imgUrlsList.ToArray();
+            }
+
             var driver = _dbContext.Users.Where(_ => _.Id == booking.DriverId)
                 .Include(_ => _.DriverStatuses)
                 .FirstOrDefault();
@@ -112,9 +121,8 @@ public class BookingCancelService : IBookingCancelService
 
             await _dbContext.SaveChangesAsync();
 
-            var data = _mapper.Map<BookingCancelModel>(bookingCancel);
-            data.Booking = _mapper.Map<BookingModel>(booking);
-            data.CancelPerson = _mapper.Map<UserModel>(customer);
+            var data = _mapper.Map<BookingModel>(booking);
+            data.BookingCancel = _mapper.Map<BookingCancelNotiModel>(bookingCancel);
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.DriverId }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
@@ -181,6 +189,19 @@ public class BookingCancelService : IBookingCancelService
             bookingCancel.CancelPersonId = DriverId;
             _dbContext.BookingCancels.Add(bookingCancel);
 
+            if (model.Files != null && model.Files.Count > 0)
+            {
+                bookingCancel.ImageUrls = Array.Empty<string>();
+                var imgUrlsList = bookingCancel.ImageUrls.ToList();
+                foreach (var file in model.Files)
+                {
+                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingCancelImage", bookingCancel.Id.ToString(), DateTime.Now.ToString());
+                    var ImgUrl = await MyFunction.UploadFileAsync(file, dirPath, "/app/Storage");
+                    imgUrlsList.Add(ImgUrl);
+                }
+                bookingCancel.ImageUrls = imgUrlsList.ToArray();
+            }
+
             var driverStatus = driver.DriverStatuses.FirstOrDefault();
             driverStatus.IsFree = true;
             driverStatus.DateUpdated = DateTime.Now;
@@ -191,9 +212,8 @@ public class BookingCancelService : IBookingCancelService
 
             await _dbContext.SaveChangesAsync();
 
-            var data = _mapper.Map<BookingCancelModel>(bookingCancel);
-            data.Booking = _mapper.Map<BookingModel>(booking);
-            data.CancelPerson = _mapper.Map<UserModel>(driver);
+            var data = _mapper.Map<BookingModel>(booking);
+            data.BookingCancel = _mapper.Map<BookingCancelNotiModel>(bookingCancel);
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
@@ -218,13 +238,31 @@ public class BookingCancelService : IBookingCancelService
         {
             var data = _dbContext.BookingCancels
                 .Include(_ => _.Booking)
+                    .ThenInclude(booking => booking.SearchRequest)
+                        .ThenInclude(sr => sr.Customer)
+                .Include(_ => _.Booking)
+                    .ThenInclude(booking => booking.Driver)
                 .Include(_ => _.CancelPerson)
                 .Where(_ => _.CancelPersonId == UserId && !_.IsDeleted);
 
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var bookingCancels = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
             bookingCancels = bookingCancels.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
-            var viewModels = _mapper.ProjectTo<BookingCancelModel>(bookingCancels);
+            var viewModels = _mapper.Map<List<BookingCancelModel>>(bookingCancels);
+
+            foreach (var item in viewModels)
+            {
+                if (item.ImageUrls != null && item.ImageUrls.Length > 0)
+                {
+                    for (int j = 0; j < item.ImageUrls.Length; j++)
+                    {
+                        string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                        string stringPath = dirPath + item.ImageUrls[j];
+                        byte[] imageBytes = File.ReadAllBytes(stringPath);
+                        item.ImageUrls[j] = Convert.ToBase64String(imageBytes);
+                    }
+                }
+            }
 
             paging.Data = viewModels;
             result.Data = paging;
@@ -251,6 +289,10 @@ public class BookingCancelService : IBookingCancelService
             }
             var bookingCancel = _dbContext.BookingCancels
                 .Include(_ => _.Booking)
+                    .ThenInclude(booking => booking.SearchRequest)
+                        .ThenInclude(sr => sr.Customer)
+                .Include(_ => _.Booking)
+                    .ThenInclude(booking => booking.Driver)
                 .Include(_ => _.CancelPerson)
                 .Where(_ => _.Id == BookingCancelId && !_.IsDeleted).FirstOrDefault();
             if (bookingCancel == null)
@@ -260,138 +302,19 @@ public class BookingCancelService : IBookingCancelService
             }
             var data = _mapper.Map<BookingCancelModel>(bookingCancel);
 
-            result.Data = data;
-            result.Succeed = true;
-        }
-        catch (Exception ex)
-        {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-        }
-        return result;
-    }
-
-
-    public async Task<ResultModel> AddImage(BookingCancelImageCreateModel model)
-    {
-        var result = new ResultModel();
-        result.Succeed = false;
-        try
-        {
-            var bookingCancel = _dbContext.BookingCancels
-                .Include(_ => _.Booking)
-                .Include(_ => _.CancelPerson)
-                .Where(_ => _.Id == model.BookingCancelId && !_.IsDeleted).FirstOrDefault();
-            if (bookingCancel == null)
+            if (data.ImageUrls != null && data.ImageUrls.Length > 0)
             {
-                result.ErrorMessage = "Booking Canncel not exist";
-                return result;
-            }
-
-            var bookingCancelImage = _mapper.Map<BookingCancelImageCreateModel, BookingCancelImage>(model);
-            _dbContext.BookingCancelImages.Add(bookingCancelImage);
-            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingCancelImage", bookingCancelImage.Id.ToString());
-            bookingCancelImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
-            await _dbContext.SaveChangesAsync();
-
-            result.Succeed = true;
-            result.Data = _mapper.Map<BookingCancelImageModel>(bookingCancelImage);
-        }
-        catch (Exception ex)
-        {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-        }
-        return result;
-    }
-
-    public async Task<ResultModel> GetImagesByBookingCancelId(Guid BookingCancelId)
-    {
-        var result = new ResultModel();
-        result.Succeed = false;
-        try
-        {
-            var bookingCancel = _dbContext.BookingCancels.Where(_ => _.Id == BookingCancelId && !_.IsDeleted).FirstOrDefault();
-            if (bookingCancel == null)
-            {
-                result.ErrorMessage = "Booking Cancel not exist";
-                return result;
-            }
-            var bookingCancelImage = _dbContext.BookingCancelImages.Where(_ => _.BookingCancelId == BookingCancelId && !_.IsDeleted).ToList();
-            if (bookingCancelImage == null || bookingCancelImage.Count == 0)
-            {
-                result.ErrorMessage = "Driving License Image not exist!";
-                return result;
-            }
-            var data = _mapper.Map<List<BookingCancelImageModel>>(bookingCancelImage);
-            foreach (var item in data)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + item.ImageUrl;
-                byte[] imageBytes = File.ReadAllBytes(stringPath);
-                item.ImageUrl = Convert.ToBase64String(imageBytes);
-            }
-
-            result.Data = data;
-            result.Succeed = true;
-        }
-        catch (Exception ex)
-        {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-        }
-        return result;
-    }
-
-    public async Task<ResultModel> DeleteImage(Guid BookingCancelImageId)
-    {
-        var result = new ResultModel();
-        result.Succeed = false;
-        try
-        {
-            var bookingCancelImage = _dbContext.BookingCancelImages.Where(_ => _.Id == BookingCancelImageId && !_.IsDeleted).FirstOrDefault();
-            if (bookingCancelImage == null)
-            {
-                result.ErrorMessage = "Booking Cancel Image not exist!";
-                return result;
-            }
-            string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-            MyFunction.DeleteFile(dirPathDelete + bookingCancelImage.ImageUrl);
-
-            _dbContext.BookingCancelImages.Remove(bookingCancelImage);
-            await _dbContext.SaveChangesAsync();
-
-            result.Succeed = true;
-            result.Data = "Delete Booking Cancel Image successful";
-        }
-        catch (Exception ex)
-        {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-        }
-        return result;
-    }
-
-    public async Task<ResultModel> DownloadImage(FileModel model)
-    {
-        var result = new ResultModel();
-        result.Succeed = false;
-        try
-        {
-            var bookingCancelImage = _dbContext.BookingCancelImages.Where(_ => _.Id == model.Id && !_.IsDeleted).FirstOrDefault();
-            if (bookingCancelImage == null)
-            {
-                result.Succeed = false;
-                result.ErrorMessage = "Driving License Image not found";
-            }
-            else
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                if (bookingCancelImage.ImageUrl == null || !bookingCancelImage.ImageUrl.Contains(model.Path))
+                for (int i = 0; i < data.ImageUrls.Length; i++)
                 {
-                    result.ErrorMessage = "Image does not exist";
-                    result.Succeed = false;
-                    return result;
+                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                    string stringPath = dirPath + data.ImageUrls[i];
+                    byte[] imageBytes = File.ReadAllBytes(stringPath);
+                    data.ImageUrls[i] = Convert.ToBase64String(imageBytes);
                 }
-                result.Data = await MyFunction.DownloadFile(dirPath + model.Path);
-                result.Succeed = true;
             }
+
+            result.Data = data;
+            result.Succeed = true;
         }
         catch (Exception ex)
         {
@@ -420,13 +343,32 @@ public class BookingCancelService : IBookingCancelService
             }
             var data = _dbContext.BookingCancels
                 .Include(_ => _.Booking)
+                    .ThenInclude(booking => booking.SearchRequest)
+                        .ThenInclude(sr => sr.Customer)
+                .Include(_ => _.Booking)
+                    .ThenInclude(booking => booking.Driver)
                 .Include(_ => _.CancelPerson)
                 .Where(_ => _.CancelPersonId == UserId && !_.IsDeleted);
 
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var bookingCancels = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
             bookingCancels = bookingCancels.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
-            var viewModels = _mapper.ProjectTo<BookingCancelModel>(bookingCancels);
+
+            var viewModels = _mapper.Map<List<BookingCancelModel>>(bookingCancels);
+
+            foreach (var item in viewModels)
+            {
+                if (item.ImageUrls != null && item.ImageUrls.Length > 0)
+                {
+                    for (int j = 0; j < item.ImageUrls.Length; j++)
+                    {
+                        string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                        string stringPath = dirPath + item.ImageUrls[j];
+                        byte[] imageBytes = File.ReadAllBytes(stringPath);
+                        item.ImageUrls[j] = Convert.ToBase64String(imageBytes);
+                    }
+                }
+            }
 
             paging.Data = viewModels;
             result.Data = paging;
@@ -459,11 +401,26 @@ public class BookingCancelService : IBookingCancelService
             }
             var bookingCancel = _dbContext.BookingCancels
                 .Include(_ => _.Booking)
+                    .ThenInclude(booking => booking.SearchRequest)
+                        .ThenInclude(sr => sr.Customer)
+                .Include(_ => _.Booking)
+                    .ThenInclude(booking => booking.Driver)
                 .Include(_ => _.CancelPerson)
                 .Where(_ => _.Id == BookingCancelId && !_.IsDeleted)
                 .FirstOrDefault();
 
             var data = _mapper.Map<BookingCancelModel>(bookingCancel);
+
+            if (data.ImageUrls != null && data.ImageUrls.Length > 0)
+            {
+                for (int i = 0; i < data.ImageUrls.Length; i++)
+                {
+                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                    string stringPath = dirPath + data.ImageUrls[i];
+                    byte[] imageBytes = File.ReadAllBytes(stringPath);
+                    data.ImageUrls[i] = Convert.ToBase64String(imageBytes);
+                }
+            }
 
             result.Data = data;
             result.Succeed = true;
