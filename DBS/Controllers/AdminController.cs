@@ -23,6 +23,16 @@ public class AdminController : ControllerBase
     private readonly IIdentityCardService _identityCardService;
     private readonly IVehicleService _vehicleService;
 
+    public AdminController(IUserService userService, IBookingCancelService bookingCancelService, IBookingService bookingService, IDriverService driverService, IDrivingLicenseService drivingLicenseService, IIdentityCardService identityCardService, IVehicleService vehicleService)
+    {
+        _userService = userService;
+        _bookingCancelService = bookingCancelService;
+        _bookingService = bookingService;
+        _driverService = driverService;
+        _drivingLicenseService = drivingLicenseService;
+        _identityCardService = identityCardService;
+        _vehicleService = vehicleService;
+    }
 
     [HttpPut("User/BanAccount")]
     public async Task<ActionResult> BanAccount([FromBody] BanAccountModel model)
