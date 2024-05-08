@@ -29,7 +29,7 @@ public class BookingCancelController : ControllerBase
     }
 
     [HttpPost("Driver")]
-    public async Task<ActionResult> DriverCancel([FromBody] BookingCancelCreateModel model)
+    public async Task<ActionResult> DriverCancel([FromForm] BookingCancelCreateModel model)
     {
         var result = await _bookingCancelService.DriverCancel(model, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
@@ -52,19 +52,4 @@ public class BookingCancelController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpGet("ByAdmin/All/{UserId}")]
-    public async Task<ActionResult> GetByAdmin([FromQuery] PagingParam<SortCriteria> paginationModel, Guid UserId)
-    {
-        var result = await _bookingCancelService.GetForAdmin(paginationModel, UserId, Guid.Parse(User.GetId()));
-        if (result.Succeed) return Ok(result.Data);
-        return BadRequest(result.ErrorMessage);
-    }
-
-    [HttpGet("ByAdmin/{BookingCancelId}")]
-    public async Task<ActionResult> GetByIdByAdmin(Guid BookingCancelId)
-    {
-        var result = await _bookingCancelService.GetByIdForAdmin(BookingCancelId, Guid.Parse(User.GetId()));
-        if (result.Succeed) return Ok(result.Data);
-        return BadRequest(result.ErrorMessage);
-    }
 }

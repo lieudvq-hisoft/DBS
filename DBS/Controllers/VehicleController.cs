@@ -35,14 +35,6 @@ public class VehicleController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpGet("Admin/{CustomerId}")]
-    public async Task<ActionResult> GetAllByAdmin(Guid CustomerId)
-    {
-        var result = await _vehicleService.GetAllByAdmin(Guid.Parse(User.GetId()), CustomerId);
-        if (result.Succeed) return Ok(result.Data);
-        return BadRequest(result.ErrorMessage);
-    }
-
     [HttpGet("{VehicleId}")]
     public async Task<ActionResult> Get(Guid VehicleId)
     {

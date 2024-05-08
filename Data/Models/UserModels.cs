@@ -24,6 +24,7 @@ namespace Data.Model
         public Gender? Gender { get; set; }
         public DateOnly? Dob { get; set; }
         public bool IsPublicGender { get; set; }
+        public bool IsActive { get; set; }
     }
 
     public class RegisterModel
@@ -60,6 +61,7 @@ namespace Data.Model
         public string Role { get; set; }
         public DateTime? DateCreated { get; set; }
         public bool IsPublicGender { get; set; }
+        public bool IsActive { get; set; }
     }
 
     public class ProfileUpdateModel
@@ -117,6 +119,11 @@ namespace Data.Model
         public bool IsPublicGender { get; set; }
     }
 
+    public class BanAccountModel
+    {
+        public Guid UserId { get; set; }
+    }
+
     public class ProfileModel
     {
         public Guid Id { get; set; }
@@ -130,5 +137,6 @@ namespace Data.Model
         public Gender? Gender { get; set; }
         public DateOnly? Dob { get; set; }
         public bool IsPublicGender { get; set; }
+        public bool IsActive { get; set; }
     }
 }

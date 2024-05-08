@@ -42,15 +42,6 @@ public class DriverController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
-    [HttpPost("RegisterByAdmin")]
-    public async Task<ActionResult> RegisterDriverByAdmin([FromForm] RegisterDriverByAdminModel model)
-    {
-        var result = await _driverService.RegisterDriverByAdmin(model, Guid.Parse(User.GetId()));
-        if (result.Succeed) return Ok(result.Data);
-        return BadRequest(result.ErrorMessage);
-    }
-
-    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPut("Location")]
     public async Task<ActionResult> UpdateLocation([FromBody] LocationModel model)
     {
