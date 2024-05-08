@@ -29,6 +29,8 @@ public interface IUserService
     Task<ResultModel> DeleteImage(Guid userId);
     Task<ResultModel> ChangePublicGender(ChangePublicGenderModel model, Guid userId);
     Task<ResultModel> GetProfile(Guid id);
+    Task<ResultModel> BanAccount(BanAccountModel model, Guid adminId);
+    Task<ResultModel> UnBanAccount(BanAccountModel model, Guid adminId);
     Task<ResultModel> ChangePassword(ChangePasswordModel model, Guid userId);
     Task<ResultModel> ResetPassword(ResetPasswordModel model);
     Task<ResultModel> ForgotPassword(ForgotPasswordModel model);
@@ -406,6 +408,130 @@ public class UserService : IUserService
             }
 
             dataView.Name = data.Name;
+            result.Succeed = true;
+            result.Data = dataView;
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> BanAccount(BanAccountModel model, Guid adminId)
+    {
+        ResultModel result = new ResultModel();
+        try
+        {
+            var admin = _dbContext.Users.Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exists";
+                result.Succeed = false;
+                return result;
+            }
+            if (!admin.IsActive)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "Admin has been deactivated";
+                return result;
+            }
+            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
+            if (!checkAdmin)
+            {
+                result.ErrorMessage = "The user must be Admin";
+                return result;
+            }
+            var user = _dbContext.Users.Where(_ => _.Id == model.UserId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
+            {
+                result.ErrorMessage = "User not exists";
+                result.Succeed = false;
+                return result;
+            }
+            if (!user.IsActive)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "User has been deactivated";
+                return result;
+            }
+
+            user.IsActive = false;
+            user.DateUpdated = DateTime.Now;
+            await _dbContext.SaveChangesAsync();
+
+            var dataView = _mapper.Map<ProfileModel>(user);
+
+            if (dataView.Avatar != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + dataView.Avatar;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                dataView.Avatar = Convert.ToBase64String(imageBytes);
+            }
+
+            result.Succeed = true;
+            result.Data = dataView;
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> UnBanAccount(BanAccountModel model, Guid adminId)
+    {
+        ResultModel result = new ResultModel();
+        try
+        {
+            var admin = _dbContext.Users.Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exists";
+                result.Succeed = false;
+                return result;
+            }
+            if (!admin.IsActive)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "Admin has been deactivated";
+                return result;
+            }
+            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
+            if (!checkAdmin)
+            {
+                result.ErrorMessage = "The user must be Admin";
+                return result;
+            }
+            var user = _dbContext.Users.Where(_ => _.Id == model.UserId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
+            {
+                result.ErrorMessage = "User not exists";
+                result.Succeed = false;
+                return result;
+            }
+            if (!user.IsActive)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "User has been deactivated";
+                return result;
+            }
+
+            user.IsActive = true;
+            user.DateUpdated = DateTime.Now;
+            await _dbContext.SaveChangesAsync();
+
+            var dataView = _mapper.Map<ProfileModel>(user);
+
+            if (dataView.Avatar != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + dataView.Avatar;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                dataView.Avatar = Convert.ToBase64String(imageBytes);
+            }
+
             result.Succeed = true;
             result.Data = dataView;
         }

@@ -38,14 +38,6 @@ public class BookingController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpGet("ForAdmin")]
-    public async Task<ActionResult> GetBookingsForAdmin([FromQuery] PagingParam<SortBookingCriteria> paginationModel)
-    {
-        var result = await _bookingService.GetBookingsForAdmin(paginationModel, Guid.Parse(User.GetId()));
-        if (result.Succeed) return Ok(result.Data);
-        return BadRequest(result.ErrorMessage);
-    }
-
     [HttpGet("ForCustomer")]
     public async Task<ActionResult> GetBookingsForCustomer([FromQuery] PagingParam<SortBookingCriteria> paginationModel)
     {

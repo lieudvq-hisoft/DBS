@@ -73,15 +73,6 @@ public class CustomerController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
-    [HttpGet("GetUserByAdmin")]
-    public async Task<ActionResult> GetUserByAdmin([FromQuery] PagingParam<UserSortByAdminCriteria> paginationModel, [FromQuery] SearchModel searchModel)
-    {
-        var result = await _userService.GetUserByAdmin(paginationModel, searchModel, Guid.Parse(User.GetId()));
-        if (result.Succeed) return Ok(result.Data);
-        return BadRequest(result.ErrorMessage);
-    }
-
-    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("Profile")]
     public async Task<ActionResult> GetProfile()
     {
