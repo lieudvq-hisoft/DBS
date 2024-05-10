@@ -211,3 +211,10 @@ public enum BookingType
     MySelf,
     Someone,
 }
+
+public enum TypeWalletTransaction
+{
+    AddFunds = 0,
+    WithdrawFunds = 1,
+    Pay = 2
+}

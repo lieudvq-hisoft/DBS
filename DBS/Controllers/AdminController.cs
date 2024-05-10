@@ -77,9 +77,11 @@ public class AdminController : ControllerBase
 
 
     [HttpGet("User/All")]
-    public async Task<ActionResult> GetUserByAdmin([FromQuery] PagingParam<UserSortByAdminCriteria> paginationModel, [FromQuery] SearchModel searchModel)
+    public async Task<ActionResult> GetUserByAdmin(
+        [FromQuery] PagingParam<UserSortByAdminCriteria> paginationModel,
+        [FromQuery] SearchModel searchModel, [FromQuery] string Role)
     {
-        var result = await _userService.GetUserByAdmin(paginationModel, searchModel, Guid.Parse(User.GetId()));
+        var result = await _userService.GetUserByAdmin(paginationModel, searchModel, Guid.Parse(User.GetId()), Role);
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
