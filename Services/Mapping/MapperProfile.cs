@@ -67,6 +67,14 @@ namespace Services.Mapping
             CreateMap<Wallet, WalletModel>();
             CreateMap<WalletTransactionCreateModel, WalletTransaction>();
             CreateMap<WalletTransaction, WalletTransactionModel>();
+
+            CreateMap<PaymentResponseModel, PaymentResponseModel>();
+            CreateMap<MomoCreatePaymentResponseModel, MomoCreatePaymentResponseModel>();
+
+            CreateMap<BrandVehicleCreateModel, BrandVehicle>();
+            CreateMap<BrandVehicle, BrandVehicleModel>();
+            CreateMap<ModelVehicleCreateModel, ModelVehicle>();
+            CreateMap<ModelVehicle, ModelVehicleModel>();
         }
     }
 }

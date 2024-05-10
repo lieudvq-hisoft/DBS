@@ -25,6 +25,7 @@ public class VnPayLibrary
 
         var orderId = Convert.ToInt64(vnPay.GetResponseData("vnp_TxnRef"));
         var vnPayTranId = Convert.ToInt64(vnPay.GetResponseData("vnp_TransactionNo"));
+        var vnPayAmount = Convert.ToInt64(vnPay.GetResponseData("vnp_Amount"));
         var vnpResponseCode = vnPay.GetResponseData("vnp_ResponseCode");
         var vnpSecureHash =
             collection.FirstOrDefault(k => k.Key == "vnp_SecureHash").Value; //hash của dữ liệu trả về
@@ -48,7 +49,8 @@ public class VnPayLibrary
             PaymentId = vnPayTranId.ToString(),
             TransactionId = vnPayTranId.ToString(),
             Token = vnpSecureHash,
-            VnPayResponseCode = vnpResponseCode
+            VnPayResponseCode = vnpResponseCode,
+            Amount = vnPayAmount
         };
     }
     public string GetIpAddress(HttpContext context)

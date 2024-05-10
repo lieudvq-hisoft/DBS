@@ -3,7 +3,6 @@ namespace Data.Models;
 
 public class PaymentInformationModel
 {
-    public string OrderType { get; set; }
     public double Amount { get; set; }
 }
 
@@ -17,4 +16,5 @@ public class PaymentResponseModel
     public bool Success { get; set; }
     public string Token { get; set; }
     public string VnPayResponseCode { get; set; }
+    public long Amount { get; set; }
 }

@@ -85,4 +85,6 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<BookingCancel> BookingCancels { get; set; }
     public DbSet<Wallet> Wallets { get; set; }
     public DbSet<WalletTransaction> WalletTransactions { get; set; }
+    public DbSet<BrandVehicle> BrandVehicles { get; set; }
+    public DbSet<ModelVehicle> ModelVehicles { get; set; }
 }

@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Services.Core;
+using Services.Utils;
 
 
 namespace DBS.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-//[Authorize(AuthenticationSchemes = "Bearer")]
 public class VNPayController : ControllerBase
 {
     private readonly IVNPayService _vnPayService;
@@ -19,19 +19,20 @@ public class VNPayController : ControllerBase
         _vnPayService = vnPayService;
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPost("CreatePaymentUrl")]
     public async Task<ActionResult> CreatePaymentUrl(PaymentInformationModel model)
     {
-        var result = await _vnPayService.CreatePaymentUrl(model, HttpContext);
+        var result = await _vnPayService.CreatePaymentUrl(model, HttpContext, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
 
     [HttpGet("PaymentCallback")]
-    public IActionResult PaymentCallback()
+    public async Task<ActionResult> PaymentCallback()
     {
-        var response = _vnPayService.PaymentExecute(Request.Query);
+        var response = await _vnPayService.PaymentExecute(Request.Query);
 
-        return null;
+        return Ok(response);
     }
 }

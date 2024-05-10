@@ -26,5 +26,7 @@ namespace Data.Models
         public WalletModel Wallet { get; set; }
         public long TotalMoney { get; set; }
         public TypeWalletTransaction TypeWalletTransaction { get; set; }
+        public PaymentType PaymentType { get; set; }
+        public DateTime DateCreated { get; set; }
     }
 }

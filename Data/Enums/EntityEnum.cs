@@ -75,6 +75,13 @@ public enum SortBookingCriteria
     Status,
 }
 
+public enum SortWalletCriteria
+{
+    DateCreated,
+    TypeWalletTransaction,
+    PaymentType
+}
+
 public enum RackSortCriteria
 {
     DateCreated
@@ -217,4 +224,10 @@ public enum TypeWalletTransaction
     AddFunds = 0,
     WithdrawFunds = 1,
     Pay = 2
+}
+
+public enum PaymentType
+{
+    VNPay = 0,
+    MoMo = 1,
 }

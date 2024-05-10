@@ -11,4 +11,5 @@ public class WalletTransaction : BaseEntity
     public virtual Wallet Wallet { get; set; }
     public long TotalMoney { get; set; }
     public TypeWalletTransaction TypeWalletTransaction { get; set; }
+    public PaymentType PaymentType { get; set; }
 }

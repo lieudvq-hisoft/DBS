@@ -3,6 +3,7 @@ using System;
 using Data.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DBS.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240510102115_Update-WalletTransaction")]
+    partial class UpdateWalletTransaction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -201,30 +204,6 @@ namespace DBS.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("BookingVehicles");
-                });
-
-            modelBuilder.Entity("Data.Entities.BrandVehicle", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("BrandName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("BrandVehicles");
                 });
 
             modelBuilder.Entity("Data.Entities.CustomerBookedOnBehalf", b =>
@@ -471,35 +450,6 @@ namespace DBS.Migrations
                     b.HasIndex("IdentityCardId");
 
                     b.ToTable("IdentityCardImages");
-                });
-
-            modelBuilder.Entity("Data.Entities.ModelVehicle", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("BrandVehicleId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("ModelName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BrandVehicleId");
-
-                    b.ToTable("ModelVehicles");
                 });
 
             modelBuilder.Entity("Data.Entities.Rating", b =>
@@ -1208,17 +1158,6 @@ namespace DBS.Migrations
                         .IsRequired();
 
                     b.Navigation("IdentityCard");
-                });
-
-            modelBuilder.Entity("Data.Entities.ModelVehicle", b =>
-                {
-                    b.HasOne("Data.Entities.BrandVehicle", "BrandVehicle")
-                        .WithMany()
-                        .HasForeignKey("BrandVehicleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("BrandVehicle");
                 });
 
             modelBuilder.Entity("Data.Entities.Rating", b =>

@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Services.Core;
+using Services.Utils;
 
 namespace DBS.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-//[Authorize(AuthenticationSchemes = "Bearer")]
 public class MoMoController : ControllerBase
 {
     private IMoMoService _momoService;
@@ -18,17 +18,19 @@ public class MoMoController : ControllerBase
         _momoService = momoService;
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPost("CreatePaymentUrl")]
-    public async Task<IActionResult> CreatePaymentUrl(OrderInfoModel model)
+    public async Task<ActionResult> CreatePaymentUrl(OrderInfoModel model)
     {
-        var response = await _momoService.CreatePaymentAsync(model);
+        var response = await _momoService.CreatePaymentAsync(model, Guid.Parse(User.GetId()));
         return Ok(response);
     }
 
     [HttpGet("PaymentCallBack")]
-    public IActionResult PaymentCallBack()
+    public async Task<ActionResult> PaymentCallBack()
     {
-        var response = _momoService.PaymentExecuteAsync(HttpContext.Request.Query);
+        var response = await _momoService.PaymentExecuteAsync(HttpContext.Request.Query);
+
         return Ok(response);
     }
 }

@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
 using Confluent.Kafka;
+using Data.Common.PaginationModel;
 using Data.DataAccess;
 using Data.Entities;
+using Data.Enums;
 using Data.Model;
 using Data.Models;
+using Data.Utils.Paging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -11,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Services.Core;
 
@@ -18,10 +22,11 @@ public interface IWalletService
 {
     Task<ResultModel> CreateWallet(WalletCreateModel model);
     Task<ResultModel> GetWallet(Guid userId);
+    Task<ResultModel> CheckExistWallet(Guid userId);
     Task<ResultModel> AddFunds(WalletTransactionCreateModel model, Guid userId);
     Task<ResultModel> WithdrawFunds(WalletTransactionCreateModel model, Guid userId);
     Task<ResultModel> Pay(WalletTransactionCreateModel model, Guid userId);
-    Task<ResultModel> GetTransactions(Guid userId);
+    Task<ResultModel> GetTransactions(PagingParam<SortWalletCriteria> paginationModel, Guid userId);
 
 }
 
@@ -102,6 +107,42 @@ public class WalletService : IWalletService
 
             result.Succeed = true;
             result.Data = _mapper.Map<WalletModel>(wallet);
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+
+        return result;
+    }
+
+    public async Task<ResultModel> CheckExistWallet(Guid userId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var user = _dbContext.Users.Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            if (!user.IsActive)
+            {
+                result.ErrorMessage = "User has been deactivated";
+                return result;
+            }
+            var wallet = _dbContext.Wallets.Where(_ => _.UserId == userId).FirstOrDefault();
+            if (wallet == null)
+            {
+                result.Data = false;
+                result.Succeed = true;
+                return result;
+            }
+
+            result.Succeed = true;
+            result.Data = true;
         }
         catch (Exception ex)
         {
@@ -251,7 +292,7 @@ public class WalletService : IWalletService
         return result;
     }
 
-    public async Task<ResultModel> GetTransactions(Guid userId)
+    public async Task<ResultModel> GetTransactions(PagingParam<SortWalletCriteria> paginationModel, Guid userId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -274,15 +315,23 @@ public class WalletService : IWalletService
                 result.ErrorMessage = "Wallet not exist";
                 return result;
             }
-            var walletTransactions = _dbContext.WalletTransactions.Where(_ => _.WalletId == wallet.Id).ToList();
+            var data = _dbContext.WalletTransactions.Where(_ => _.WalletId == wallet.Id);
+
+            var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
+            var walletTransactions = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
+            walletTransactions = walletTransactions.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
+            var viewModels = _mapper.Map<List<WalletTransactionModel>>(walletTransactions);
+
             if (walletTransactions == null)
             {
                 result.ErrorMessage = "Wallet Transactions not exist";
                 return result;
             }
 
+            paging.Data = viewModels;
+            result.Data = paging;
+
             result.Succeed = true;
-            result.Data = _mapper.Map<List<WalletTransactionModel>>(walletTransactions);
         }
         catch (Exception ex)
         {
