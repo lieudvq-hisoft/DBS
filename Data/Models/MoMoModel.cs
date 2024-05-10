@@ -24,7 +24,7 @@ public class MomoCreatePaymentResponseModel
 public class MomoExecuteResponseModel
 {
     public string OrderId { get; set; }
-    public string Amount { get; set; }
+    public long Amount { get; set; }
     public string OrderInfo { get; set; }
 }
 
@@ -41,8 +41,5 @@ public class MomoOptionModel
 
 public class OrderInfoModel
 {
-    public string FullName { get; set; }
-    public string OrderId { get; set; }
-    public string OrderInfo { get; set; }
     public double Amount { get; set; }
 }

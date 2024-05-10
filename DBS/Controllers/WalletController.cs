@@ -1,4 +1,6 @@
-﻿using Data.Models;
+﻿using Data.Common.PaginationModel;
+using Data.Enums;
+using Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Core;
@@ -34,6 +36,14 @@ public class WalletController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpGet("CheckExistWallet")]
+    public async Task<ActionResult> CheckExistWallet()
+    {
+        var result = await _walletService.CheckExistWallet(Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
     [HttpPost("AddFunds")]
     public async Task<ActionResult> AddFunds([FromBody] WalletTransactionCreateModel model)
     {
@@ -59,9 +69,9 @@ public class WalletController : ControllerBase
     }
 
     [HttpGet("WalletTransaction")]
-    public async Task<ActionResult> GetTransactions()
+    public async Task<ActionResult> GetTransactions([FromQuery] PagingParam<SortWalletCriteria> paginationModel)
     {
-        var result = await _walletService.GetTransactions(Guid.Parse(User.GetId()));
+        var result = await _walletService.GetTransactions(paginationModel, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
