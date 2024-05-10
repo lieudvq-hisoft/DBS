@@ -482,7 +482,7 @@ public class IdentityCardService : IIdentityCardService
             var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
             if (user == null)
             {
-                result.ErrorMessage = "Driver not exist!";
+                result.ErrorMessage = "User not exist!";
                 return result;
             }
             if (!user.IsActive)
@@ -503,7 +503,7 @@ public class IdentityCardService : IIdentityCardService
                 }
                 if (ageDifferenceInYears < 18)
                 {
-                    result.ErrorMessage = "Driver must be at least 18 years old.";
+                    result.ErrorMessage = "User must be at least 18 years old.";
                     result.Succeed = false;
                     return result;
                 }
@@ -559,7 +559,7 @@ public class IdentityCardService : IIdentityCardService
             var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
             if (user == null)
             {
-                result.ErrorMessage = "Driver not exist!";
+                result.ErrorMessage = "User not exist!";
                 return result;
             }
             if (!user.IsActive)
@@ -607,12 +607,12 @@ public class IdentityCardService : IIdentityCardService
             var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
             if (user == null)
             {
-                result.ErrorMessage = "Driver not exist!";
+                result.ErrorMessage = "User not exist!";
                 return result;
             }
             if (!user.IsActive)
             {
-                result.ErrorMessage = "Driver has been deactivated";
+                result.ErrorMessage = "User has been deactivated";
                 return result;
             }
             var identityCard = _dbContext.IdentityCards.Where(_ => _.UserId == UserId && !_.IsDeleted).FirstOrDefault();
@@ -652,12 +652,12 @@ public class IdentityCardService : IIdentityCardService
             var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
             if (user == null)
             {
-                result.ErrorMessage = "Driver not exist!";
+                result.ErrorMessage = "User not exist!";
                 return result;
             }
             if (!user.IsActive)
             {
-                result.ErrorMessage = "Driver has been deactivated";
+                result.ErrorMessage = "User has been deactivated";
                 return result;
             }
             var identityCard = _dbContext.IdentityCards.Where(_ => _.UserId == UserId && !_.IsDeleted).FirstOrDefault();
@@ -683,7 +683,7 @@ public class IdentityCardService : IIdentityCardService
                 }
                 if (ageDifferenceInYears < 18)
                 {
-                    result.ErrorMessage = "Driver must be at least 18 years old.";
+                    result.ErrorMessage = "User must be at least 18 years old.";
                     result.Succeed = false;
                     return result;
                 }

@@ -23,7 +23,7 @@ public interface IUserService
     Task<ResultModel> CheckExistUserWithEmail(ForgotPasswordModel model);
     Task<ResultModel> Login(LoginModel model);
     Task<ResultModel> GetCustomer(PagingParam<CustomerSortCriteria> paginationModel, SearchModel searchModel);
-    Task<ResultModel> GetUserByAdmin(PagingParam<UserSortByAdminCriteria> paginationModel, SearchModel searchModel, Guid AdminId);
+    Task<ResultModel> GetUserByAdmin(PagingParam<UserSortByAdminCriteria> paginationModel, SearchModel searchModel, Guid AdminId, string Role);
     Task<ResultModel> UpdateProfile(ProfileUpdateModel model, Guid userId);
     Task<ResultModel> UploadAvatar(UpLoadAvatarModel model, Guid userId);
     Task<ResultModel> DeleteImage(Guid userId);
@@ -34,6 +34,7 @@ public interface IUserService
     Task<ResultModel> ChangePassword(ChangePasswordModel model, Guid userId);
     Task<ResultModel> ResetPassword(ResetPasswordModel model);
     Task<ResultModel> ForgotPassword(ForgotPasswordModel model);
+    Task<ResultModel> RegisterStaffByAdmin(RegisterStaffByAdminModel model, Guid UserId);
 }
 public class UserService : IUserService
 {
@@ -183,7 +184,7 @@ public class UserService : IUserService
         return result;
     }
 
-    public async Task<ResultModel> GetUserByAdmin(PagingParam<UserSortByAdminCriteria> paginationModel, SearchModel searchModel, Guid AdminId)
+    public async Task<ResultModel> GetUserByAdmin(PagingParam<UserSortByAdminCriteria> paginationModel, SearchModel searchModel, Guid AdminId, string Role)
     {
         ResultModel result = new ResultModel();
         try
@@ -201,7 +202,7 @@ public class UserService : IUserService
                 return result;
             }
             var data = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
-                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName != RoleNormalizedName.Admin) && !_.IsDeleted)
+                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName != RoleNormalizedName.Admin && ur.Role.NormalizedName == Role) && !_.IsDeleted)
                     .Select(user => new UserModelByAdmin
                     {
                         Id = user.Id,
@@ -749,6 +750,74 @@ public class UserService : IUserService
             result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
         }
 
+        return result;
+    }
+
+    public async Task<ResultModel> RegisterStaffByAdmin(RegisterStaffByAdminModel model, Guid UserId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var admin = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not found";
+                return result;
+            }
+            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
+            if (!checkAdmin)
+            {
+                result.ErrorMessage = "The user must be Admin";
+                return result;
+            }
+
+            var checkEmailExisted = await _userManager.FindByEmailAsync(model.Email);
+            if (checkEmailExisted != null)
+            {
+                result.ErrorMessage = "Email already existed";
+                result.Succeed = false;
+                return result;
+            }
+            var userRole = new UserRole { };
+
+            var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.NormalizedName == RoleNormalizedName.Staff);
+            if (role == null)
+            {
+                var newRole = new Role { Name = "Staff", NormalizedName = RoleNormalizedName.Staff };
+                _dbContext.Roles.Add(newRole);
+                userRole.RoleId = newRole.Id;
+            }
+            else
+            {
+                userRole.RoleId = role.Id;
+            }
+
+            var user = _mapper.Map<RegisterStaffByAdminModel, User>(model);
+
+            var checkCreateSuccess = await _userManager.CreateAsync(user, model.PhoneNumber);
+
+            if (!checkCreateSuccess.Succeeded)
+            {
+                result.ErrorMessage = checkCreateSuccess.ToString();
+                result.Succeed = false;
+                return result;
+            }
+            if (model.File != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Avatar", user.Id.ToString());
+                user.Avatar = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            }
+            userRole.UserId = user.Id;
+            _dbContext.UserRoles.Add(userRole);
+            await _dbContext.SaveChangesAsync();
+            result.Succeed = true;
+            result.Data = _mapper.Map<UserModel>(user);
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
         return result;
     }
 }

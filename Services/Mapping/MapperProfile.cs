@@ -11,6 +11,7 @@ namespace Services.Mapping
         {
             CreateMap<RegisterModel, User>();
             CreateMap<RegisterDriverByAdminModel, User>();
+            CreateMap<RegisterStaffByAdminModel, User>();
             CreateMap<User, UserModel>();
             CreateMap<User, UserModelByAdmin>();
             CreateMap<User, ProfileModel>();
@@ -61,6 +62,11 @@ namespace Services.Mapping
             CreateMap<BookingCancelCreateModel, BookingCancel>();
             CreateMap<BookingCancel, BookingCancelModel>();
             CreateMap<BookingCancel, BookingCancelNotiModel>();
+
+            CreateMap<WalletCreateModel, Wallet>();
+            CreateMap<Wallet, WalletModel>();
+            CreateMap<WalletTransactionCreateModel, WalletTransaction>();
+            CreateMap<WalletTransaction, WalletTransactionModel>();
         }
     }
 }
