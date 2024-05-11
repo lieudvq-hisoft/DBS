@@ -75,6 +75,8 @@ public static class StartupExtension
         services.AddScoped<IWalletService, WalletService>();
         services.AddScoped<IVNPayService, VNPayService>();
         services.AddScoped<IMoMoService, MoMoService>();
+        services.AddScoped<IModelVehicleService, ModelVehicleService>();
+        services.AddScoped<IBrandVehicleService, BrandVehicleService>();
         services.AddScoped<IMailService, MailService>();
         services.AddSingleton<IHangfireServices, HangfireServices>();
         services.AddHostedService<HangfireJob>();

@@ -12,4 +12,5 @@ public class WalletTransaction : BaseEntity
     public long TotalMoney { get; set; }
     public TypeWalletTransaction TypeWalletTransaction { get; set; }
     public PaymentType PaymentType { get; set; }
+    public WalletTransactionStatus Status { get; set; } = WalletTransactionStatus.Waiting;
 }

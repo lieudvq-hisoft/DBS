@@ -192,7 +192,7 @@ public class WalletService : IWalletService
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
-            result.Data = _mapper.Map<WalletTransactionModel>(walletTransaction);
+            result.Data = _mapper.Map<WalletModel>(wallet);
         }
         catch (Exception ex)
         {
@@ -237,7 +237,7 @@ public class WalletService : IWalletService
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
-            result.Data = _mapper.Map<WalletTransactionModel>(walletTransaction);
+            result.Data = _mapper.Map<WalletModel>(wallet);
         }
         catch (Exception ex)
         {
@@ -271,8 +271,9 @@ public class WalletService : IWalletService
                 return result;
             }
             var walletTransaction = _mapper.Map<WalletTransactionCreateModel, WalletTransaction>(model);
-            walletTransaction.TypeWalletTransaction = Data.Enums.TypeWalletTransaction.Pay;
+            walletTransaction.TypeWalletTransaction = TypeWalletTransaction.Pay;
             walletTransaction.WalletId = wallet.Id;
+            walletTransaction.Status = WalletTransactionStatus.Success;
             _dbContext.WalletTransactions.Add(walletTransaction);
 
             wallet.TotalMoney -= walletTransaction.TotalMoney;
@@ -282,7 +283,7 @@ public class WalletService : IWalletService
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
-            result.Data = _mapper.Map<WalletTransactionModel>(walletTransaction);
+            result.Data = _mapper.Map<WalletModel>(wallet);
         }
         catch (Exception ex)
         {
