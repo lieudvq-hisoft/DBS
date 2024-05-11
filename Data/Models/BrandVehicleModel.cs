@@ -11,6 +11,12 @@ namespace Data.Models
         public string BrandName { get; set; }
     }
 
+    public class BrandVehicleUpdateModel
+    {
+        public Guid BrandVehicleId { get; set; }
+        public string BrandName { get; set; }
+    }
+
     public class BrandVehicleModel
     {
         public Guid Id { get; set; }

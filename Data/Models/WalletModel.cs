@@ -23,10 +23,10 @@ namespace Data.Models
     public class WalletTransactionModel
     {
         public Guid Id { get; set; }
-        public WalletModel Wallet { get; set; }
         public long TotalMoney { get; set; }
         public TypeWalletTransaction TypeWalletTransaction { get; set; }
         public PaymentType PaymentType { get; set; }
+        public WalletTransactionStatus Status { get; set; }
         public DateTime DateCreated { get; set; }
     }
 }

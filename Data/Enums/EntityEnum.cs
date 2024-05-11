@@ -171,8 +171,7 @@ public enum BookingStatus
     OnGoing = 4,
     CheckOut = 5,
     Complete = 6,
-    PayBooking = 7,
-    Cancel = 8,
+    Cancel = 7,
 }
 
 public enum VehicleImageType
@@ -225,6 +224,14 @@ public enum TypeWalletTransaction
     WithdrawFunds = 1,
     Pay = 2
 }
+
+public enum WalletTransactionStatus
+{
+    Waiting = 0,
+    Success = 1,
+    Failure = 2,
+}
+
 
 public enum PaymentType
 {
