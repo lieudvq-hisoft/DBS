@@ -19,7 +19,7 @@ namespace Services.Core;
 public interface IMoMoService
 {
     Task<ResultModel> CreatePaymentAsync(OrderInfoModel model, Guid userId);
-    Task<ResultModel> PaymentExecuteAsync(IQueryCollection collection);
+    void PaymentExecuteAsync(IQueryCollection collection);
 }
 
 public class MoMoService : IMoMoService
@@ -132,10 +132,8 @@ public class MoMoService : IMoMoService
         return result;
     }
 
-    public async Task<ResultModel> PaymentExecuteAsync(IQueryCollection collection)
+    public async void PaymentExecuteAsync(IQueryCollection collection)
     {
-        var result = new ResultModel();
-        result.Succeed = false;
         try
         {
             var amount = Convert.ToInt64(collection.First(s => s.Key == "amount").Value);
@@ -144,10 +142,10 @@ public class MoMoService : IMoMoService
             var message = Convert.ToString(collection.First(s => s.Key == "message").Value);
             var userId = orderId.Split(',')[1];
             var walletTransactionId = orderId.Split(',')[2];
+            var wallet = _dbContext.Wallets.Where(_ => _.UserId == Guid.Parse(userId)).FirstOrDefault();
 
             if (message.Equals("Success"))
             {
-                var wallet = _dbContext.Wallets.Where(_ => _.UserId == Guid.Parse(userId)).FirstOrDefault();
                 wallet.TotalMoney += amount;
                 _dbContext.Wallets.Update(wallet);
 
@@ -163,8 +161,12 @@ public class MoMoService : IMoMoService
                     OrderId = orderId,
                     OrderInfo = orderInfo,
                 };
-                result.Data = data;
-                result.Succeed = true;
+
+                var payload = _mapper.Map<WalletModel>(wallet);
+                var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { Guid.Parse(userId) }, Payload = payload };
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+                await _producer.ProduceAsync("dbs-wallet-addfunds-success", new Message<Null, string> { Value = json });
+                _producer.Flush();
             }
             else
             {
@@ -174,15 +176,18 @@ public class MoMoService : IMoMoService
 
                 await _dbContext.SaveChangesAsync();
 
-                result.ErrorMessage = "Something when wrong with MoMo";
+                //var payload = _mapper.Map<WalletModel>(wallet);
+                //var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { Guid.Parse(userId) }, Payload = payload };
+                //var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+                //await _producer.ProduceAsync("dbs-wallet-addfunds-failure", new Message<Null, string> { Value = json });
+                //_producer.Flush();
             }
         }
         catch (Exception ex)
         {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+            throw new Exception(ex.Message);
         }
 
-        return result;
     }
 
     private string ComputeHmacSha256(string message, string secretKey)

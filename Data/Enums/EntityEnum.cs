@@ -232,7 +232,6 @@ public enum WalletTransactionStatus
     Failure = 2,
 }
 
-
 public enum PaymentType
 {
     VNPay = 0,
