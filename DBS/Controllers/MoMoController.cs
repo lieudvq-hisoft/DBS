@@ -27,10 +27,8 @@ public class MoMoController : ControllerBase
     }
 
     [HttpGet("PaymentCallBack")]
-    public async Task<ActionResult> PaymentCallBack()
+    public async void PaymentCallBack()
     {
-        var response = await _momoService.PaymentExecuteAsync(HttpContext.Request.Query);
-
-        return Ok(response);
+        _momoService.PaymentExecuteAsync(HttpContext.Request.Query);
     }
 }
