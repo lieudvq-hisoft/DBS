@@ -18,6 +18,7 @@ namespace Data.Model
         public CustomerBookedOnBehalfModel? CustomerBookedOnBehalf { get; set; }
         public long Price { get; set; }
         public string? Note { get; set; }
+        public BookingPaymentMethod BookingPaymentMethod { get; set; }
         public BookingType? BookingType { get; set; }
     }
 
@@ -37,6 +38,7 @@ namespace Data.Model
         public CustomerBookedOnBehalfModel? CustomerBookedOnBehalf { get; set; }
         public long Price { get; set; }
         public string? Note { get; set; }
+        public BookingPaymentMethod BookingPaymentMethod { get; set; }
         public BookingType? BookingType { get; set; }
         public SearchRequestStatus Status { get; set; }
     }

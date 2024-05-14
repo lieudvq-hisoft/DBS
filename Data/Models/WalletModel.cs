@@ -20,6 +20,11 @@ namespace Data.Models
         public long TotalMoney { get; set; }
     }
 
+    public class ResponeWithdrawFundsRequest
+    {
+        public Guid WithdrawFundsId { get; set; }
+    }
+
     public class WalletTransactionModel
     {
         public Guid Id { get; set; }

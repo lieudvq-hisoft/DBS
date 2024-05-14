@@ -6,15 +6,11 @@ using Data.Entities;
 using Data.Enums;
 using Data.Model;
 using Data.Models;
+using Data.Utils;
 using Data.Utils.Paging;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Services.Core;
 
@@ -25,9 +21,10 @@ public interface IWalletService
     Task<ResultModel> CheckExistWallet(Guid userId);
     Task<ResultModel> AddFunds(WalletTransactionCreateModel model, Guid userId);
     Task<ResultModel> WithdrawFunds(WalletTransactionCreateModel model, Guid userId);
+    Task<ResultModel> AcceptWithdrawFundsRequest(ResponeWithdrawFundsRequest model, Guid adminId);
+    Task<ResultModel> RejectWithdrawFundsRequest(ResponeWithdrawFundsRequest model, Guid adminId);
     Task<ResultModel> Pay(WalletTransactionCreateModel model, Guid userId);
     Task<ResultModel> GetTransactions(PagingParam<SortWalletCriteria> paginationModel, Guid userId);
-
 }
 
 public class WalletService : IWalletService
@@ -226,15 +223,132 @@ public class WalletService : IWalletService
                 return result;
             }
             var walletTransaction = _mapper.Map<WalletTransactionCreateModel, WalletTransaction>(model);
-            walletTransaction.TypeWalletTransaction = Data.Enums.TypeWalletTransaction.WithdrawFunds;
+            walletTransaction.TypeWalletTransaction = TypeWalletTransaction.WithdrawFunds;
             walletTransaction.WalletId = wallet.Id;
             _dbContext.WalletTransactions.Add(walletTransaction);
+
+            await _dbContext.SaveChangesAsync();
+
+            var admin = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
+                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Admin) && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exist";
+                return result;
+            }
+
+            var payload = _mapper.Map<WalletTransactionModel>(walletTransaction);
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { admin.Id }, Payload = payload };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            await _producer.ProduceAsync("dbs-wallet-withrawsfunds-request", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
+            result.Succeed = true;
+            result.Data = _mapper.Map<WalletModel>(wallet);
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+
+        return result;
+    }
+
+    public async Task<ResultModel> AcceptWithdrawFundsRequest(ResponeWithdrawFundsRequest model, Guid adminId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var admin = _dbContext.Users.Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exist";
+                return result;
+            }
+            if (!admin.IsActive)
+            {
+                result.ErrorMessage = "Admin has been deactivated";
+                return result;
+            }
+            var walletTransaction = _dbContext.WalletTransactions.Where(_ => _.Id == model.WithdrawFundsId).FirstOrDefault();
+            if (walletTransaction == null)
+            {
+                result.ErrorMessage = "Wallet Transaction not exist";
+                return result;
+            }
+            walletTransaction.Status = WalletTransactionStatus.Success;
+            walletTransaction.DateUpdated = DateTime.Now;
+
+            var wallet = _dbContext.Wallets.Where(_ => _.Id == walletTransaction.WalletId).FirstOrDefault();
+            if (wallet == null)
+            {
+                result.ErrorMessage = "Wallet not exist";
+                return result;
+            }
 
             wallet.TotalMoney -= walletTransaction.TotalMoney;
             wallet.DateUpdated = DateTime.Now;
             _dbContext.Wallets.Update(wallet);
 
             await _dbContext.SaveChangesAsync();
+
+            var payload = _mapper.Map<WalletTransactionModel>(walletTransaction);
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { wallet.UserId }, Payload = payload };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            await _producer.ProduceAsync("dbs-wallet-withrawsfunds-success", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
+            result.Succeed = true;
+            result.Data = _mapper.Map<WalletModel>(wallet);
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+
+        return result;
+    }
+
+    public async Task<ResultModel> RejectWithdrawFundsRequest(ResponeWithdrawFundsRequest model, Guid adminId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var admin = _dbContext.Users.Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exist";
+                return result;
+            }
+            if (!admin.IsActive)
+            {
+                result.ErrorMessage = "Admin has been deactivated";
+                return result;
+            }
+            var walletTransaction = _dbContext.WalletTransactions.Where(_ => _.Id == model.WithdrawFundsId).FirstOrDefault();
+            if (walletTransaction == null)
+            {
+                result.ErrorMessage = "Wallet Transaction not exist";
+                return result;
+            }
+            walletTransaction.Status = WalletTransactionStatus.Failure;
+            walletTransaction.DateUpdated = DateTime.Now;
+            await _dbContext.SaveChangesAsync();
+
+            var wallet = _dbContext.Wallets.Where(_ => _.Id == walletTransaction.WalletId).FirstOrDefault();
+            if (wallet == null)
+            {
+                result.ErrorMessage = "Wallet not exist";
+                return result;
+            }
+
+            var payload = _mapper.Map<WalletTransactionModel>(walletTransaction);
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { wallet.UserId }, Payload = payload };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            await _producer.ProduceAsync("dbs-wallet-withrawsfunds-failure", new Message<Null, string> { Value = json });
+            _producer.Flush();
 
             result.Succeed = true;
             result.Data = _mapper.Map<WalletModel>(wallet);
