@@ -218,11 +218,21 @@ public enum BookingType
     Someone,
 }
 
+public enum BookingPaymentMethod
+{
+    Cash,
+    SecureWallet,
+    MoMo,
+    VNPay
+}
+
 public enum TypeWalletTransaction
 {
     AddFunds = 0,
     WithdrawFunds = 1,
-    Pay = 2
+    Pay = 2,
+    Income = 3,
+    Refund = 4,
 }
 
 public enum WalletTransactionStatus
