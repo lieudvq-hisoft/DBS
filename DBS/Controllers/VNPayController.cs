@@ -20,6 +20,15 @@ public class VNPayController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPost("CreatePaymentBookingUrl")]
+    public async Task<ActionResult> CreatePaymentBookingUrl(PaymentInformationModel model)
+    {
+        var result = await _vnPayService.CreatePaymentBookingUrl(model, HttpContext, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPost("CreatePaymentUrl")]
     public async Task<ActionResult> CreatePaymentUrl(PaymentInformationModel model)
     {

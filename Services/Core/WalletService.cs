@@ -222,12 +222,6 @@ public class WalletService : IWalletService
                 result.ErrorMessage = "Wallet not exist";
                 return result;
             }
-            var walletTransaction = _mapper.Map<WalletTransactionCreateModel, WalletTransaction>(model);
-            walletTransaction.TypeWalletTransaction = TypeWalletTransaction.WithdrawFunds;
-            walletTransaction.WalletId = wallet.Id;
-            _dbContext.WalletTransactions.Add(walletTransaction);
-
-            await _dbContext.SaveChangesAsync();
 
             var admin = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
                     .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Admin) && !_.IsDeleted).FirstOrDefault();
@@ -236,6 +230,17 @@ public class WalletService : IWalletService
                 result.ErrorMessage = "Admin not exist";
                 return result;
             }
+
+            var walletTransaction = _mapper.Map<WalletTransactionCreateModel, WalletTransaction>(model);
+            walletTransaction.TypeWalletTransaction = TypeWalletTransaction.WithdrawFunds;
+            walletTransaction.WalletId = wallet.Id;
+            _dbContext.WalletTransactions.Add(walletTransaction);
+
+            wallet.TotalMoney -= walletTransaction.TotalMoney;
+            wallet.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(wallet);
+
+            await _dbContext.SaveChangesAsync();
 
             var payload = _mapper.Map<WalletTransactionModel>(walletTransaction);
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { admin.Id }, Payload = payload };
@@ -287,12 +292,6 @@ public class WalletService : IWalletService
                 return result;
             }
 
-            wallet.TotalMoney -= walletTransaction.TotalMoney;
-            wallet.DateUpdated = DateTime.Now;
-            _dbContext.Wallets.Update(wallet);
-
-            await _dbContext.SaveChangesAsync();
-
             var payload = _mapper.Map<WalletTransactionModel>(walletTransaction);
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { wallet.UserId }, Payload = payload };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
@@ -333,9 +332,6 @@ public class WalletService : IWalletService
                 result.ErrorMessage = "Wallet Transaction not exist";
                 return result;
             }
-            walletTransaction.Status = WalletTransactionStatus.Failure;
-            walletTransaction.DateUpdated = DateTime.Now;
-            await _dbContext.SaveChangesAsync();
 
             var wallet = _dbContext.Wallets.Where(_ => _.Id == walletTransaction.WalletId).FirstOrDefault();
             if (wallet == null)
@@ -343,6 +339,15 @@ public class WalletService : IWalletService
                 result.ErrorMessage = "Wallet not exist";
                 return result;
             }
+
+            walletTransaction.Status = WalletTransactionStatus.Failure;
+            walletTransaction.DateUpdated = DateTime.Now;
+
+            wallet.TotalMoney += walletTransaction.TotalMoney;
+            wallet.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(wallet);
+
+            await _dbContext.SaveChangesAsync();
 
             var payload = _mapper.Map<WalletTransactionModel>(walletTransaction);
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { wallet.UserId }, Payload = payload };
@@ -384,6 +389,22 @@ public class WalletService : IWalletService
                 result.ErrorMessage = "Wallet not exist";
                 return result;
             }
+
+            var admin = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
+                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Admin) && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exist";
+                return result;
+            }
+
+            var walletAdmin = _dbContext.Wallets.Where(_ => _.UserId == admin.Id).FirstOrDefault();
+            if (walletAdmin == null)
+            {
+                result.ErrorMessage = "Wallet Admin not exist";
+                return result;
+            }
+
             var walletTransaction = _mapper.Map<WalletTransactionCreateModel, WalletTransaction>(model);
             walletTransaction.TypeWalletTransaction = TypeWalletTransaction.Pay;
             walletTransaction.WalletId = wallet.Id;
@@ -393,6 +414,10 @@ public class WalletService : IWalletService
             wallet.TotalMoney -= walletTransaction.TotalMoney;
             wallet.DateUpdated = DateTime.Now;
             _dbContext.Wallets.Update(wallet);
+
+            walletAdmin.TotalMoney += walletTransaction.TotalMoney;
+            walletAdmin.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(walletAdmin);
 
             await _dbContext.SaveChangesAsync();
 

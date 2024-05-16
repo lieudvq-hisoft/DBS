@@ -43,3 +43,9 @@ public class OrderInfoModel
 {
     public double Amount { get; set; }
 }
+
+public class OrderInfoBookingModel
+{
+    public string DropOffAddress { get; set; }
+    public double Amount { get; set; }
+}
