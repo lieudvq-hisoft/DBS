@@ -570,6 +570,55 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Driver don't have permission";
                 return result;
             }
+
+            var wallet = _dbContext.Wallets.Where(_ => _.UserId == driver.Id).FirstOrDefault();
+            if (wallet == null)
+            {
+                result.ErrorMessage = "Wallet not exist";
+                return result;
+            }
+
+            var admin = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
+                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Admin) && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exist";
+                return result;
+            }
+
+            var walletAdmin = _dbContext.Wallets.Where(_ => _.UserId == admin.Id).FirstOrDefault();
+            if (walletAdmin == null)
+            {
+                result.ErrorMessage = "Wallet Admin not exist";
+                return result;
+            }
+
+            var walletTransaction = new WalletTransaction
+            {
+                TotalMoney = booking.SearchRequest.Price,
+                TypeWalletTransaction = TypeWalletTransaction.Income,
+                WalletId = wallet.Id,
+                Status = WalletTransactionStatus.Success,
+            };
+            _dbContext.WalletTransactions.Add(walletTransaction);
+
+            var walletAdminTransaction = new WalletTransaction
+            {
+                TotalMoney = booking.SearchRequest.Price,
+                TypeWalletTransaction = TypeWalletTransaction.DriverIncome,
+                WalletId = walletAdmin.Id,
+                Status = WalletTransactionStatus.Success,
+            };
+            _dbContext.WalletTransactions.Add(walletAdminTransaction);
+
+            wallet.TotalMoney += (long)(walletTransaction.TotalMoney * 0.8);
+            wallet.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(wallet);
+
+            walletAdmin.TotalMoney -= (long)(walletTransaction.TotalMoney * 0.8);
+            walletAdmin.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(walletAdmin);
+
             var driverStatus = driver.DriverStatuses.FirstOrDefault();
             driverStatus.IsFree = true;
             driverStatus.IsOnline = true;
@@ -583,13 +632,22 @@ public class BookingService : IBookingService
 
             var data = _mapper.Map<BookingModel>(booking);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
-
             data.Status = BookingStatus.Complete;
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
             await _producer.ProduceAsync("dbs-booking-status-complete", new Message<Null, string> { Value = json });
+            _producer.Flush();
 
+            var payloadWalletAdmin = _mapper.Map<WalletModel>(walletAdmin);
+            var kafkaModelWalletAdmin = new KafkaModel { UserReceiveNotice = new List<Guid>() { admin.Id }, Payload = payloadWalletAdmin };
+            var jsonWalletAdmin = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWalletAdmin);
+            await _producer.ProduceAsync("dbs-wallet-driverincome-admin", new Message<Null, string> { Value = jsonWalletAdmin });
+            _producer.Flush();
 
+            var payloadWallet = _mapper.Map<WalletModel>(wallet);
+            var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = payloadWallet };
+            var jsonWallet = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWallet);
+            await _producer.ProduceAsync("dbs-wallet-income-driver", new Message<Null, string> { Value = jsonWallet });
             _producer.Flush();
 
             result.Data = data;
@@ -642,6 +700,55 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Driver don't have permission";
                 return result;
             }
+
+            var wallet = _dbContext.Wallets.Where(_ => _.UserId == booking.SearchRequest.CustomerId).FirstOrDefault();
+            if (wallet == null)
+            {
+                result.ErrorMessage = "Wallet not exist";
+                return result;
+            }
+
+            var admin = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
+                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Admin) && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exist";
+                return result;
+            }
+
+            var walletAdmin = _dbContext.Wallets.Where(_ => _.UserId == admin.Id).FirstOrDefault();
+            if (walletAdmin == null)
+            {
+                result.ErrorMessage = "Wallet Admin not exist";
+                return result;
+            }
+
+            var walletTransaction = new WalletTransaction
+            {
+                TotalMoney = booking.SearchRequest.Price,
+                TypeWalletTransaction = TypeWalletTransaction.Refund,
+                WalletId = wallet.Id,
+                Status = WalletTransactionStatus.Success,
+            };
+            _dbContext.WalletTransactions.Add(walletTransaction);
+
+            var walletAdminTransaction = new WalletTransaction
+            {
+                TotalMoney = booking.SearchRequest.Price,
+                TypeWalletTransaction = TypeWalletTransaction.Refund,
+                WalletId = walletAdmin.Id,
+                Status = WalletTransactionStatus.Success,
+            };
+            _dbContext.WalletTransactions.Add(walletAdminTransaction);
+
+            wallet.TotalMoney += walletTransaction.TotalMoney;
+            wallet.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(wallet);
+
+            walletAdmin.TotalMoney -= walletTransaction.TotalMoney;
+            walletAdmin.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(walletAdmin);
+
             var driverStatus = driver.DriverStatuses.FirstOrDefault();
             driverStatus.IsFree = true;
             driverStatus.DateUpdated = DateTime.Now;
@@ -649,6 +756,7 @@ public class BookingService : IBookingService
 
             booking.Status = BookingStatus.Cancel;
             booking.DateUpdated = DateTime.Now;
+
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
@@ -657,6 +765,18 @@ public class BookingService : IBookingService
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
             await _producer.ProduceAsync("dbs-booking-driver-cancel", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
+            var payloadWalletAdmin = _mapper.Map<WalletModel>(walletAdmin);
+            var kafkaModelWalletAdmin = new KafkaModel { UserReceiveNotice = new List<Guid>() { admin.Id }, Payload = payloadWalletAdmin };
+            var jsonWalletAdmin = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWalletAdmin);
+            await _producer.ProduceAsync("dbs-wallet-refund-admin", new Message<Null, string> { Value = jsonWalletAdmin });
+            _producer.Flush();
+
+            var payloadWallet = _mapper.Map<WalletModel>(wallet);
+            var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = payloadWallet };
+            var jsonWallet = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWallet);
+            await _producer.ProduceAsync("dbs-wallet-refund-customer", new Message<Null, string> { Value = jsonWallet });
             _producer.Flush();
 
             result.Data = data;
@@ -707,6 +827,55 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Customer don't have permission";
                 return result;
             }
+
+            var wallet = _dbContext.Wallets.Where(_ => _.UserId == booking.SearchRequest.CustomerId).FirstOrDefault();
+            if (wallet == null)
+            {
+                result.ErrorMessage = "Wallet not exist";
+                return result;
+            }
+
+            var admin = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
+                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Admin) && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exist";
+                return result;
+            }
+
+            var walletAdmin = _dbContext.Wallets.Where(_ => _.UserId == admin.Id).FirstOrDefault();
+            if (walletAdmin == null)
+            {
+                result.ErrorMessage = "Wallet Admin not exist";
+                return result;
+            }
+
+            var walletTransaction = new WalletTransaction
+            {
+                TotalMoney = booking.SearchRequest.Price,
+                TypeWalletTransaction = TypeWalletTransaction.Refund,
+                WalletId = wallet.Id,
+                Status = WalletTransactionStatus.Success,
+            };
+            _dbContext.WalletTransactions.Add(walletTransaction);
+
+            var walletAdminTransaction = new WalletTransaction
+            {
+                TotalMoney = booking.SearchRequest.Price,
+                TypeWalletTransaction = TypeWalletTransaction.Refund,
+                WalletId = walletAdmin.Id,
+                Status = WalletTransactionStatus.Success,
+            };
+            _dbContext.WalletTransactions.Add(walletAdminTransaction);
+
+            wallet.TotalMoney += walletTransaction.TotalMoney;
+            wallet.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(wallet);
+
+            walletAdmin.TotalMoney -= walletTransaction.TotalMoney;
+            walletAdmin.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(walletAdmin);
+
             var driver = _dbContext.Users.Where(_ => _.Id == booking.DriverId)
                 .Include(_ => _.DriverStatuses)
                 .FirstOrDefault();
@@ -725,6 +894,18 @@ public class BookingService : IBookingService
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.DriverId }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
             await _producer.ProduceAsync("dbs-booking-customer-cancel", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
+            var payloadWalletAdmin = _mapper.Map<WalletModel>(walletAdmin);
+            var kafkaModelWalletAdmin = new KafkaModel { UserReceiveNotice = new List<Guid>() { admin.Id }, Payload = payloadWalletAdmin };
+            var jsonWalletAdmin = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWalletAdmin);
+            await _producer.ProduceAsync("dbs-wallet-refund-admin", new Message<Null, string> { Value = jsonWalletAdmin });
+            _producer.Flush();
+
+            var payloadWallet = _mapper.Map<WalletModel>(wallet);
+            var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = payloadWallet };
+            var jsonWallet = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWallet);
+            await _producer.ProduceAsync("dbs-wallet-refund-customer", new Message<Null, string> { Value = jsonWallet });
             _producer.Flush();
 
             result.Data = data;

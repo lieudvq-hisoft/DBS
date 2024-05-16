@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Services.Utils;
 using System.Data;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Services.Core;
 
@@ -92,6 +93,11 @@ public class UserService : IUserService
                 var role = await _dbContext.Roles.FindAsync(userRole.RoleId);
                 if (role != null) roles.Add(role.Name);
             }
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(_mapper.Map<UserModel>(userByEmail));
+            await _producer.ProduceAsync("dbs-user-create-new", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
             var token = await MyFunction.GetAccessToken(userByEmail, roles, _configuration);
             result.Succeed = true;
             result.Data = token;
@@ -307,6 +313,7 @@ public class UserService : IUserService
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(_mapper.Map<UserModel>(data));
             await _producer.ProduceAsync("dbs-user-update", new Message<Null, string> { Value = json });
             _producer.Flush();
+
             result.Succeed = true;
             result.Data = _mapper.Map<UserModel>(data);
         }
