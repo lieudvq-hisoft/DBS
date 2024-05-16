@@ -233,6 +233,7 @@ public enum TypeWalletTransaction
     Pay = 2,
     Income = 3,
     Refund = 4,
+    DriverIncome = 5
 }
 
 public enum WalletTransactionStatus

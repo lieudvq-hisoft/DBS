@@ -323,12 +323,12 @@ public class DrivingLicenseService : IDrivingLicenseService
                 return result;
             }
             var data = _mapper.Map<List<DrivingLicenseImageModel>>(drivingLicenseImages);
-            foreach (var item in drivingLicenseImages)
+            for (int i = 0; i < data.Count; i++)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + item.ImageUrl;
+                string stringPath = dirPath + data[i].ImageUrl;
                 byte[] imageBytes = File.ReadAllBytes(stringPath);
-                item.ImageUrl = Convert.ToBase64String(imageBytes);
+                data[i].ImageUrl = Convert.ToBase64String(imageBytes);
             }
 
             result.Data = data;
@@ -798,12 +798,12 @@ public class DrivingLicenseService : IDrivingLicenseService
                 return result;
             }
             var data = _mapper.Map<List<DrivingLicenseImageModel>>(drivingLicenseImages);
-            foreach (var item in drivingLicenseImages)
+            for (int i = 0; i < data.Count; i++)
             {
                 string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + item.ImageUrl;
+                string stringPath = dirPath + data[i].ImageUrl;
                 byte[] imageBytes = File.ReadAllBytes(stringPath);
-                item.ImageUrl = Convert.ToBase64String(imageBytes);
+                data[i].ImageUrl = Convert.ToBase64String(imageBytes);
             }
 
             result.Data = data;
