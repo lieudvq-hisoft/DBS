@@ -56,7 +56,10 @@ public class BookingService : IBookingService
         result.Succeed = false;
         try
         {
-            var searchRequest = _dbContext.SearchRequests.Where(_ => _.Id == model.SearchRequestId && !_.IsDeleted).FirstOrDefault();
+            var searchRequest = _dbContext.SearchRequests
+                .Include(_ => _.Customer)
+                .Where(_ => _.Id == model.SearchRequestId && !_.IsDeleted)
+                .FirstOrDefault();
             if (searchRequest == null)
             {
                 result.ErrorMessage = "Search Request not exist";
@@ -80,6 +83,8 @@ public class BookingService : IBookingService
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
+
+            data.Customer = _mapper.Map<UserModel>(searchRequest.Customer);
 
             if (data.Customer.Avatar != null)
             {
