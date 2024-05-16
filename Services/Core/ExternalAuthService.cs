@@ -49,7 +49,7 @@ public class ExternalAuthService : IExternalAuthService
         try
         {
             var decodedToken = await VerifyFirebaseToken(externalAuth);
-            if(decodedToken == null)
+            if (decodedToken == null)
             {
                 result.ErrorMessage = "Invalid External Authentication";
                 result.Succeed = false;
