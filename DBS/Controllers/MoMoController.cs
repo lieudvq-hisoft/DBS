@@ -26,9 +26,19 @@ public class MoMoController : ControllerBase
         return Ok(response);
     }
 
-    [HttpGet("PaymentCallBack")]
-    public async void PaymentCallBack()
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPost("CreatePaymentBookingUrl")]
+    public async Task<ActionResult> CreatePaymentBookingAsync(OrderInfoBookingModel model)
     {
-        _momoService.PaymentExecuteAsync(HttpContext.Request.Query);
+        var response = await _momoService.CreatePaymentBookingAsync(model, Guid.Parse(User.GetId()));
+        return Ok(response);
+    }
+
+    [HttpGet("PaymentCallBack")]
+    public async Task<ActionResult> PaymentCallBack()
+    {
+        var response = await _momoService.PaymentExecuteAsync(HttpContext.Request.Query);
+
+        return Redirect(response);
     }
 }

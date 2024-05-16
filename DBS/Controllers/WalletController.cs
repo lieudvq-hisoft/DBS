@@ -60,6 +60,22 @@ public class WalletController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpPut("AcceptWithdrawFundsRequest")]
+    public async Task<ActionResult> AcceptWithdrawFundsRequest([FromBody] ResponeWithdrawFundsRequest model)
+    {
+        var result = await _walletService.AcceptWithdrawFundsRequest(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPut("RejectWithdrawFundsRequest")]
+    public async Task<ActionResult> RejectWithdrawFundsRequest([FromBody] ResponeWithdrawFundsRequest model)
+    {
+        var result = await _walletService.RejectWithdrawFundsRequest(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
     [HttpPost("Pay")]
     public async Task<ActionResult> Pay([FromBody] WalletTransactionCreateModel model)
     {
