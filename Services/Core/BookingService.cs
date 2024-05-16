@@ -80,6 +80,12 @@ public class BookingService : IBookingService
             searchRequest.Status = SearchRequestStatus.Completed;
             searchRequest.DateUpdated = DateTime.Now;
 
+            var driverStatus = driver.DriverStatuses.FirstOrDefault();
+            driverStatus.IsFree = false;
+            driverStatus.IsOnline = true;
+            driverStatus.DateUpdated = DateTime.Now;
+            _dbContext.DriverStatuses.Update(driverStatus);
+
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
@@ -101,12 +107,6 @@ public class BookingService : IBookingService
                 byte[] imageBytes = File.ReadAllBytes(stringPath);
                 data.Driver.Avatar = Convert.ToBase64String(imageBytes);
             }
-
-            var driverStatus = driver.DriverStatuses.FirstOrDefault();
-            driverStatus.IsFree = false;
-            driverStatus.IsOnline = true;
-            driverStatus.DateUpdated = DateTime.Now;
-            _dbContext.DriverStatuses.Update(driverStatus);
 
             var driverLocation = driver.DriverLocations.FirstOrDefault();
             if (driverLocation != null)
