@@ -81,6 +81,22 @@ public class BookingService : IBookingService
 
             var data = _mapper.Map<BookingModel>(booking);
 
+            if (data.Customer.Avatar != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + data.Customer.Avatar;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                data.Customer.Avatar = Convert.ToBase64String(imageBytes);
+            }
+
+            if (data.Driver.Avatar != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + data.Driver.Avatar;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                data.Driver.Avatar = Convert.ToBase64String(imageBytes);
+            }
+
             var driverStatus = driver.DriverStatuses.FirstOrDefault();
             driverStatus.IsFree = false;
             driverStatus.IsOnline = true;
@@ -701,6 +717,15 @@ public class BookingService : IBookingService
                 return result;
             }
 
+            if (booking.Status == BookingStatus.CheckIn)
+            {
+                var images = _dbContext.BookingImages.Where(_ => _.BookingId == booking.Id).ToList();
+                if (images.Count > 0)
+                {
+                    _dbContext.BookingImages.RemoveRange(images);
+                }
+            }
+
             var wallet = _dbContext.Wallets.Where(_ => _.UserId == booking.SearchRequest.CustomerId).FirstOrDefault();
             if (wallet == null)
             {
@@ -826,6 +851,15 @@ public class BookingService : IBookingService
             {
                 result.ErrorMessage = "Customer don't have permission";
                 return result;
+            }
+
+            if (booking.Status == BookingStatus.CheckIn)
+            {
+                var images = _dbContext.BookingImages.Where(_ => _.BookingId == booking.Id).ToList();
+                if (images.Count > 0)
+                {
+                    _dbContext.BookingImages.RemoveRange(images);
+                }
             }
 
             var wallet = _dbContext.Wallets.Where(_ => _.UserId == booking.SearchRequest.CustomerId).FirstOrDefault();

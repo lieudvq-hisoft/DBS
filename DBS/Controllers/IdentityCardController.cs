@@ -100,4 +100,12 @@ public class IdentityCardController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpGet("CheckExistImage/{IsFront}")]
+    public async Task<ActionResult> CheckExistIdentityCardImage(bool IsFront)
+    {
+        var result = await _identityCardService.CheckExistIdentityCardImage(IsFront, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
 }

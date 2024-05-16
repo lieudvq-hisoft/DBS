@@ -24,6 +24,7 @@ public interface IIdentityCardService
     Task<ResultModel> DeleteImage(Guid IdentityCardImageId);
     Task<ResultModel> DownloadImage(FileModel model);
     Task<ResultModel> CheckExistIdentityCard(Guid UserId);
+    Task<ResultModel> CheckExistIdentityCardImage(bool IsFront, Guid UserId);
     Task<ResultModel> AddByAdmin(IdentityCardCreateModel model, Guid UserId, Guid AdminId);
     Task<ResultModel> GetByAdmin(Guid UserId, Guid AdminId);
     Task<ResultModel> UpdateByAdmin(IdentityCardUpdateModel model, Guid UserId, Guid AdminId);
@@ -452,6 +453,49 @@ public class IdentityCardService : IIdentityCardService
             var checkExist = _dbContext.IdentityCards.Where(_ => _.UserId == UserId && !_.IsDeleted).FirstOrDefault();
             result.Succeed = true;
             result.Data = checkExist != null ? true : false;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> CheckExistIdentityCardImage(bool IsFront, Guid UserId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
+            {
+                result.ErrorMessage = "Driver not exist!";
+                return result;
+            }
+            if (!user.IsActive)
+            {
+                result.ErrorMessage = "User has been deactivated";
+                return result;
+            }
+            var identityCard = _dbContext.IdentityCards.Where(_ => _.UserId == UserId && !_.IsDeleted).FirstOrDefault();
+            if (identityCard == null)
+            {
+                result.ErrorMessage = "Identity Card not exist";
+                return result;
+            }
+            if (IsFront)
+            {
+                var checkExistImage = _dbContext.IdentityCardImages.Where(_ => _.IdentityCardId == identityCard.Id && _.IsFront == true).FirstOrDefault();
+                result.Succeed = true;
+                result.Data = checkExistImage != null ? true : false;
+            }
+            else
+            {
+                var checkExistImage = _dbContext.IdentityCardImages.Where(_ => _.IdentityCardId == identityCard.Id && _.IsFront == false).FirstOrDefault();
+                result.Succeed = true;
+                result.Data = checkExistImage != null ? true : false;
+            }
         }
         catch (Exception ex)
         {
