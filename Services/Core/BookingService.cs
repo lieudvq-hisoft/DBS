@@ -113,6 +113,11 @@ public class BookingService : IBookingService
             {
                 var location = _mapper.Map<LocationModel>(driverLocation);
                 data.DriverLocation = location;
+
+                var kafkaModelLocation = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = location };
+                var jsonLocation = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelLocation);
+                await _producer.ProduceAsync("dbs-driver-status-busy", new Message<Null, string> { Value = jsonLocation });
+                _producer.Flush();
             }
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { searchRequest.CustomerId }, Payload = data };
@@ -558,6 +563,7 @@ public class BookingService : IBookingService
         try
         {
             var driver = _dbContext.Users
+                .Include(_ => _.DriverLocations)
                 .Include(_ => _.DriverStatuses)
                 .Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
@@ -671,6 +677,12 @@ public class BookingService : IBookingService
             await _producer.ProduceAsync("dbs-wallet-income-driver", new Message<Null, string> { Value = jsonWallet });
             _producer.Flush();
 
+            var driverLocations = _mapper.Map<LocationModel>(driver.DriverLocations.FirstOrDefault());
+            var kafkaModelLocation = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = driverLocations };
+            var jsonLocation = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelLocation);
+            await _producer.ProduceAsync("dbs-driver-status-free", new Message<Null, string> { Value = jsonLocation });
+            _producer.Flush();
+
             result.Data = data;
             result.Succeed = true;
         }
@@ -688,6 +700,7 @@ public class BookingService : IBookingService
         try
         {
             var driver = _dbContext.Users
+                .Include(_ => _.DriverLocations)
                 .Include(_ => _.DriverStatuses)
                 .Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
@@ -807,6 +820,12 @@ public class BookingService : IBookingService
             var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = payloadWallet };
             var jsonWallet = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWallet);
             await _producer.ProduceAsync("dbs-wallet-refund-customer", new Message<Null, string> { Value = jsonWallet });
+            _producer.Flush();
+
+            var driverLocations = _mapper.Map<LocationModel>(driver.DriverLocations.FirstOrDefault());
+            var kafkaModelLocation = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = driverLocations };
+            var jsonLocation = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelLocation);
+            await _producer.ProduceAsync("dbs-driver-status-free", new Message<Null, string> { Value = jsonLocation });
             _producer.Flush();
 
             result.Data = data;
@@ -945,6 +964,12 @@ public class BookingService : IBookingService
             var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = payloadWallet };
             var jsonWallet = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWallet);
             await _producer.ProduceAsync("dbs-wallet-refund-customer", new Message<Null, string> { Value = jsonWallet });
+            _producer.Flush();
+
+            var driverLocations = _mapper.Map<LocationModel>(driver.DriverLocations.FirstOrDefault());
+            var kafkaModelLocation = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = driverLocations };
+            var jsonLocation = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelLocation);
+            await _producer.ProduceAsync("dbs-driver-status-free", new Message<Null, string> { Value = jsonLocation });
             _producer.Flush();
 
             result.Data = data;
