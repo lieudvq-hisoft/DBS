@@ -20,6 +20,7 @@ public interface ISearchRequestService
     Task<ResultModel> GetOfCustomer(PagingParam<SortCriteria> paginationModel, Guid customerId);
     Task<ResultModel> UpdateStatusToComplete(Guid SearchRequestId, Guid customerId);
     Task<ResultModel> UpdateStatusToCancel(Guid SearchRequestId, Guid customerId, Guid DriverId);
+    Task<ResultModel> DriverMissSearchRequest(Guid customerId, Guid DriverId);
     Task<ResultModel> NewDriver(NewDriverModel model);
 
 }
@@ -259,6 +260,69 @@ public class SearchRequestService : ISearchRequestService
             result.Data = data;
             result.Succeed = true;
             return result;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> DriverMissSearchRequest(Guid customerId, Guid DriverId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var customer = _dbContext.Users.Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();
+            if (customer == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            var checkCustomer = await _userManager.IsInRoleAsync(customer, RoleNormalizedName.Customer);
+            if (!checkCustomer)
+            {
+                result.ErrorMessage = "The user must be a customer";
+                return result;
+            }
+            var driver = _dbContext.Users
+                .Include(_ => _.DriverStatuses)
+                .Include(_ => _.DriverLocations)
+                .Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
+            if (driver == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
+            if (!checkDriver)
+            {
+                result.ErrorMessage = "The user must be a driver";
+                return result;
+            }
+            var driverStatus = driver.DriverStatuses.FirstOrDefault();
+            driverStatus.IsOnline = false;
+            driverStatus.IsFree = false;
+            _dbContext.DriverStatuses.Update(driverStatus);
+
+            //Todo: Thêm trừ priority ở đây
+
+            await _dbContext.SaveChangesAsync();
+
+            var kafkaModelMiss = new KafkaModel { UserReceiveNotice = new List<Guid>() { customerId }, Payload = null };
+            var jsonMiss = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelMiss);
+            await _producer.ProduceAsync("dbs-searchrequest-driver-miss", new Message<Null, string> { Value = jsonMiss });
+            _producer.Flush();
+
+            var driverLocation = _mapper.Map<LocationModel>(driver.DriverLocations.FirstOrDefault());
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { DriverId }, Payload = driverLocation };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            await _producer.ProduceAsync("dbs-driver-status-offline", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
+            result.Data = _mapper.Map<UserModel>(driver);
+            result.Succeed = true;
         }
         catch (Exception ex)
         {

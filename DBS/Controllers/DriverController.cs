@@ -51,6 +51,15 @@ public class DriverController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPut("TrackingDriverLocation")]
+    public async Task<ActionResult> TrackingDriverLocation([FromBody] TrackingDriverLocationModel model)
+    {
+        var result = await _driverService.TrackingDriverLocation(model);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPut("Status/Online")]
     public async Task<ActionResult> UpdateStatusOnline()
     {
@@ -72,7 +81,7 @@ public class DriverController : ControllerBase
     [HttpGet("Online")]
     public async Task<ActionResult> GetDriverOnline([FromQuery] LocationCustomer locationCustomer)
     {
-        var result = await _driverService.GetDriverOnline(locationCustomer);
+        var result = await _driverService.GetDriverOnline(locationCustomer, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
