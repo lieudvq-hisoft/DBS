@@ -104,6 +104,13 @@ public class SearchRequestService : ISearchRequestService
 
             var data = _mapper.Map<SearchRequestModel>(searchRequest);
             data.Customer = _mapper.Map<UserModel>(customer);
+            if (data.Customer.Avatar != null)
+            {
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string stringPath = dirPath + data.Customer.Avatar;
+                byte[] imageBytes = File.ReadAllBytes(stringPath);
+                data.Customer.Avatar = Convert.ToBase64String(imageBytes);
+            }
             data.BookingVehicle = _mapper.Map<BookingVehicleModel>(searchRequest.BookingVehicle);
             data.CustomerBookedOnBehalf = _mapper.Map<CustomerBookedOnBehalfModel>(searchRequest.CustomerBookedOnBehalf);
             data.DriverId = driver.Id;
