@@ -52,6 +52,14 @@ public class SearchRequestController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpPut("SearchRequestDriverMiss")]
+    public async Task<ActionResult> DriverMissSearchRequest([FromQuery] Guid? CustomerId = null)
+    {
+        var result = await _searchRequestService.DriverMissSearchRequest(CustomerId.HasValue ? CustomerId.Value : Guid.Empty, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
     [HttpPut("NewDriver")]
     public async Task<ActionResult> NewDriver([FromBody] NewDriverModel model)
     {

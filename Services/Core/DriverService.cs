@@ -5,6 +5,7 @@ using Data.DataAccess;
 using Data.Entities;
 using Data.Enums;
 using Data.Model;
+using Data.Models;
 using Data.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -18,9 +19,10 @@ public interface IDriverService
     Task<ResultModel> RegisterDriver(RegisterModel model);
     Task<ResultModel> RegisterDriverByAdmin(RegisterDriverByAdminModel model, Guid UserId);
     Task<ResultModel> UpdateLocation(LocationModel model, Guid driverId);
+    Task<ResultModel> TrackingDriverLocation(TrackingDriverLocationModel model);
     Task<ResultModel> UpdateStatusOffline(Guid driverId);
     Task<ResultModel> UpdateStatusOnline(Guid driverId);
-    Task<ResultModel> GetDriverOnline(LocationCustomer locationCustomer);
+    Task<ResultModel> GetDriverOnline(LocationCustomer locationCustomer, Guid userId);
 
 
 }
@@ -218,13 +220,52 @@ public class DriverService : IDriverService
         return result;
     }
 
+    public async Task<ResultModel> TrackingDriverLocation(TrackingDriverLocationModel model)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var customer = _dbContext.Users.Where(_ => _.Id == model.CustomerId && !_.IsDeleted).FirstOrDefault();
+            if (customer == null)
+            {
+                result.ErrorMessage = "Customer not exists";
+                result.Succeed = false;
+                return result;
+            }
+            var checkCustomer = await _userManager.IsInRoleAsync(customer, RoleNormalizedName.Customer);
+            if (!checkCustomer)
+            {
+                result.ErrorMessage = "The user must be a Customer";
+                result.Succeed = false;
+                return result;
+            }
+
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { model.CustomerId }, Payload = model };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            await _producer.ProduceAsync("dbs-tracking-driver-location", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
+            result.Succeed = true;
+            result.Data = model;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
     public async Task<ResultModel> UpdateStatusOnline(Guid driverId)
     {
         var result = new ResultModel();
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Include(_ => _.DriverStatuses).Where(_ => _.Id == driverId && !_.IsDeleted).FirstOrDefault();
+            var driver = _dbContext.Users
+                .Include(_ => _.DriverStatuses)
+                .Include(_ => _.DriverLocations)
+                .Where(_ => _.Id == driverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
             {
                 result.ErrorMessage = "Driver not exists";
@@ -254,6 +295,13 @@ public class DriverService : IDriverService
                 _dbContext.DriverStatuses.Update(driverStatus);
             }
             await _dbContext.SaveChangesAsync();
+
+            var driverLocations = _mapper.Map<LocationModel>(driver.DriverLocations.FirstOrDefault());
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { driverId }, Payload = driverLocations };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            await _producer.ProduceAsync("dbs-driver-status-online", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
             result.Succeed = true;
             result.Data = driverStatus.Id;
         }
@@ -270,7 +318,10 @@ public class DriverService : IDriverService
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Include(_ => _.DriverStatuses).Where(_ => _.Id == driverId && !_.IsDeleted).FirstOrDefault();
+            var driver = _dbContext.Users
+                .Include(_ => _.DriverLocations)
+                .Include(_ => _.DriverStatuses)
+                .Where(_ => _.Id == driverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
             {
                 result.ErrorMessage = "Driver not exists";
@@ -300,6 +351,13 @@ public class DriverService : IDriverService
                 _dbContext.DriverStatuses.Update(driverStatus);
             }
             await _dbContext.SaveChangesAsync();
+
+            var driverLocations = _mapper.Map<LocationModel>(driver.DriverLocations.FirstOrDefault());
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { driverId }, Payload = driverLocations };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            await _producer.ProduceAsync("dbs-driver-status-offline", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
             result.Succeed = true;
             result.Data = driverStatus.Id;
         }
@@ -310,7 +368,7 @@ public class DriverService : IDriverService
         return result;
     }
 
-    public async Task<ResultModel> GetDriverOnline(LocationCustomer locationCustomer)
+    public async Task<ResultModel> GetDriverOnline(LocationCustomer locationCustomer, Guid userId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -367,6 +425,24 @@ public class DriverService : IDriverService
             result.Data = data.ToList();
             result.Succeed = true;
             await _dbContext.SaveChangesAsync();
+
+            var driverOnlineSignalR = new DriverOnlineSignalRModel
+            {
+                CustomerId = userId,
+                Latitude = locationCustomer.Latitude,
+                Longitude = locationCustomer.Longitude,
+                Radius = locationCustomer.Radius,
+            };
+            var driverOnlines = data.ToList();
+            foreach (var item in driverOnlines)
+            {
+                driverOnlineSignalR.ListDrivers.Add(item.Id);
+            }
+
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { userId }, Payload = driverOnlineSignalR };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            await _producer.ProduceAsync("dbs-get-driver-online", new Message<Null, string> { Value = json });
+            _producer.Flush();
         }
         catch (Exception ex)
         {

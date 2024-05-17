@@ -208,7 +208,7 @@ public class UserService : IUserService
                 return result;
             }
             var data = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
-                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName != RoleNormalizedName.Admin && ur.Role.NormalizedName == Role) && !_.IsDeleted)
+                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName != RoleNormalizedName.Admin && (Role == null || ur.Role.NormalizedName == Role)) && !_.IsDeleted)
                     .Select(user => new UserModelByAdmin
                     {
                         Id = user.Id,
