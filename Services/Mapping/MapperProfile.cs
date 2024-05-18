@@ -75,6 +75,9 @@ namespace Services.Mapping
             CreateMap<BrandVehicle, BrandVehicleModel>();
             CreateMap<ModelVehicleCreateModel, ModelVehicle>();
             CreateMap<ModelVehicle, ModelVehicleModel>();
+
+            CreateMap<LinkedAccountCreateModel, LinkedAccount>();
+            CreateMap<LinkedAccount, LinkedAccountModel>();
         }
     }
 }

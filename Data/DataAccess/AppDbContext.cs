@@ -87,4 +87,5 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<WalletTransaction> WalletTransactions { get; set; }
     public DbSet<BrandVehicle> BrandVehicles { get; set; }
     public DbSet<ModelVehicle> ModelVehicles { get; set; }
+    public DbSet<LinkedAccount> LinkedAccounts { get; set; }
 }
