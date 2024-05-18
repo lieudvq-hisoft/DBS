@@ -248,3 +248,9 @@ public enum PaymentType
     VNPay = 0,
     MoMo = 1,
 }
+
+public enum LinkedAccountType
+{
+    Bank = 0,
+    DigitalWallet = 1,
+}

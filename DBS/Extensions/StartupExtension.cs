@@ -77,6 +77,7 @@ public static class StartupExtension
         services.AddScoped<IMoMoService, MoMoService>();
         services.AddScoped<IModelVehicleService, ModelVehicleService>();
         services.AddScoped<IBrandVehicleService, BrandVehicleService>();
+        services.AddScoped<ILinkedAccountService, LinkedAccountService>();
         services.AddScoped<IMailService, MailService>();
         services.AddSingleton<IHangfireServices, HangfireServices>();
         services.AddHostedService<HangfireJob>();
