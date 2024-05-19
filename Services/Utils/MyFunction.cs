@@ -115,7 +115,7 @@ namespace Services.Utils
                 await file.CopyToAsync(fileStream);
             }
 
-            return filePath.Split("/app/wwwroot")[1];
+            return filePath.Split("/app/wwwroot/")[1];
         }
 
         public static async Task<string> UploadFileAsync(IFormFile file, string path, string splitString)
