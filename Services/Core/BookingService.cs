@@ -92,22 +92,6 @@ public class BookingService : IBookingService
 
             data.Customer = _mapper.Map<UserModel>(searchRequest.Customer);
 
-            if (data.Customer.Avatar != null)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + data.Customer.Avatar;
-                byte[] imageBytes = File.ReadAllBytes(stringPath);
-                data.Customer.Avatar = Convert.ToBase64String(imageBytes);
-            }
-
-            if (data.Driver.Avatar != null)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + data.Driver.Avatar;
-                byte[] imageBytes = File.ReadAllBytes(stringPath);
-                data.Driver.Avatar = Convert.ToBase64String(imageBytes);
-            }
-
             var driverLocation = driver.DriverLocations.FirstOrDefault();
             if (driverLocation != null)
             {

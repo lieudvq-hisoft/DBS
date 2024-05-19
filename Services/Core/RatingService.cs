@@ -83,8 +83,8 @@ public class RatingService : IRatingService
 
             if (rating.ImageUrl != null)
             {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "RatingImage", rating.Id.ToString());
-                rating.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "RatingImage", rating.Id.ToString());
+                rating.ImageUrl = await MyFunction.UploadImageAsync(model.File, dirPath);
             }
 
             var driver = _dbContext.Users.Where(_ => _.Id == booking.DriverId && !_.IsDeleted).FirstOrDefault();
@@ -260,10 +260,10 @@ public class RatingService : IRatingService
             }
             if (model.File != null)
             {
-                string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
                 MyFunction.DeleteFile(dirPathDelete + rating.ImageUrl);
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "RatingImage", rating.Id.ToString());
-                rating.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "RatingImage", rating.Id.ToString());
+                rating.ImageUrl = await MyFunction.UploadImageAsync(model.File, dirPath);
             }
 
             rating.DateUpdated = DateTime.Now;

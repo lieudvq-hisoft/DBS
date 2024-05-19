@@ -99,8 +99,8 @@ public class VehicleService : IVehicleService
             }
             var vehicleImage = _mapper.Map<VehicleImageCreateModel, VehicleImage>(model);
             _dbContext.VehicleImages.Add(vehicleImage);
-            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "VehicleImage", vehicleImage.Id.ToString());
-            vehicleImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "VehicleImage", vehicleImage.Id.ToString());
+            vehicleImage.ImageUrl = await MyFunction.UploadImageAsync(model.File, dirPath);
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
@@ -167,7 +167,7 @@ public class VehicleService : IVehicleService
                 result.ErrorMessage = "Vehicle Image not exist!";
                 return result;
             }
-            string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+            string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             MyFunction.DeleteFile(dirPathDelete + vehicleImage.ImageUrl);
 
             _dbContext.VehicleImages.Remove(vehicleImage);
@@ -198,7 +198,7 @@ public class VehicleService : IVehicleService
             }
             else
             {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
                 if (vehicleImage.ImageUrl == null || !vehicleImage.ImageUrl.Contains(model.Path))
                 {
                     result.ErrorMessage = "Image does not exist";
@@ -249,18 +249,7 @@ public class VehicleService : IVehicleService
                 return result;
             }
             var data = _mapper.Map<List<VehicleModel>>(vehicles);
-            foreach (var item in data)
-            {
-                var vehicleImage = _dbContext.VehicleImages.Where(_ => _.VehicleId == item.Id && !_.IsDeleted).FirstOrDefault();
-                if (vehicleImage != null)
-                {
-                    item.ImagePath = vehicleImage.ImageUrl;
-                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                    string stringPath = dirPath + vehicleImage.ImageUrl;
-                    byte[] imageBytes = File.ReadAllBytes(stringPath);
-                    item.ImageUrl = Convert.ToBase64String(imageBytes);
-                }
-            }
+
             result.Data = data;
             result.Succeed = true;
         }
@@ -321,18 +310,7 @@ public class VehicleService : IVehicleService
                 return result;
             }
             var data = _mapper.Map<List<VehicleModel>>(vehicles);
-            foreach (var item in data)
-            {
-                var vehicleImage = _dbContext.VehicleImages.Where(_ => _.VehicleId == item.Id && !_.IsDeleted).FirstOrDefault();
-                if (vehicleImage != null)
-                {
-                    item.ImagePath = vehicleImage.ImageUrl;
-                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                    string stringPath = dirPath + vehicleImage.ImageUrl;
-                    byte[] imageBytes = File.ReadAllBytes(stringPath);
-                    item.ImageUrl = Convert.ToBase64String(imageBytes);
-                }
-            }
+
             result.Data = data;
             result.Succeed = true;
         }
@@ -400,13 +378,6 @@ public class VehicleService : IVehicleService
                 return result;
             }
             var data = _mapper.Map<List<VehicleImageModel>>(vehicleImages);
-            for (int i = 0; i < data.Count; i++)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + data[i].ImageUrl;
-                byte[] imageBytes = File.ReadAllBytes(stringPath);
-                data[i].ImageUrl = Convert.ToBase64String(imageBytes);
-            }
 
             result.Data = data;
             result.Succeed = true;
@@ -490,10 +461,10 @@ public class VehicleService : IVehicleService
             }
             if (model.File != null)
             {
-                string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
                 MyFunction.DeleteFile(dirPathDelete + vehicleImage.ImageUrl);
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "VehicleImage", vehicleImage.Id.ToString());
-                vehicleImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "VehicleImage", vehicleImage.Id.ToString());
+                vehicleImage.ImageUrl = await MyFunction.UploadImageAsync(model.File, dirPath);
             }
             vehicleImage.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
