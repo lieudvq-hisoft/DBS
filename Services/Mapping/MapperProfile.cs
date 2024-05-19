@@ -54,6 +54,8 @@ namespace Services.Mapping
 
             CreateMap<LocationModel, DriverLocation>();
             CreateMap<DriverLocation, LocationModel>();
+            CreateMap<TrackingDriverLocationModel, DriverLocation>();
+            CreateMap<DriverLocation, TrackingDriverLocationModel>();
 
             CreateMap<SupportCreateModel, Support>();
             CreateMap<SupportBookingIssueCreateModel, Support>();

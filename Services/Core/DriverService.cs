@@ -19,7 +19,7 @@ public interface IDriverService
     Task<ResultModel> RegisterDriver(RegisterModel model);
     Task<ResultModel> RegisterDriverByAdmin(RegisterDriverByAdminModel model, Guid UserId);
     Task<ResultModel> UpdateLocation(LocationModel model, Guid driverId);
-    Task<ResultModel> TrackingDriverLocation(TrackingDriverLocationModel model);
+    Task<ResultModel> TrackingDriverLocation(TrackingDriverLocationModel model, Guid driverId);
     Task<ResultModel> UpdateStatusOffline(Guid driverId);
     Task<ResultModel> UpdateStatusOnline(Guid driverId);
     Task<ResultModel> GetDriverOnline(LocationCustomer locationCustomer, Guid userId);
@@ -186,8 +186,8 @@ public class DriverService : IDriverService
                 result.Succeed = false;
                 return result;
             }
-            var checkCustomer = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
-            if (!checkCustomer)
+            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
+            if (!checkDriver)
             {
                 result.ErrorMessage = "The user must be a driver";
                 result.Succeed = false;
@@ -220,7 +220,7 @@ public class DriverService : IDriverService
         return result;
     }
 
-    public async Task<ResultModel> TrackingDriverLocation(TrackingDriverLocationModel model)
+    public async Task<ResultModel> TrackingDriverLocation(TrackingDriverLocationModel model, Guid driverId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -240,6 +240,37 @@ public class DriverService : IDriverService
                 result.Succeed = false;
                 return result;
             }
+            var driver = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == driverId && !_.IsDeleted).FirstOrDefault();
+            if (driver == null)
+            {
+                result.ErrorMessage = "Driver not exists";
+                result.Succeed = false;
+                return result;
+            }
+            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
+            if (!checkDriver)
+            {
+                result.ErrorMessage = "The user must be a driver";
+                result.Succeed = false;
+                return result;
+            }
+
+            var driverLocation = driver.DriverLocations.FirstOrDefault();
+
+            if (driverLocation == null)
+            {
+                driverLocation = _mapper.Map<TrackingDriverLocationModel, DriverLocation>(model);
+                driverLocation.DriverId = driver.Id;
+                _dbContext.DriverLocations.Add(driverLocation);
+            }
+            else
+            {
+                driverLocation.Latitude = model.Latitude;
+                driverLocation.Longitude = model.Longitude;
+                driverLocation.DateUpdated = DateTime.Now;
+                _dbContext.DriverLocations.Update(driverLocation);
+            }
+            await _dbContext.SaveChangesAsync();
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { model.CustomerId }, Payload = model };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
