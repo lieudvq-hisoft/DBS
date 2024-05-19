@@ -43,14 +43,6 @@ namespace Services.Utils
               signingCredentials: creds);
 
             var serializedToken = new JwtSecurityTokenHandler().WriteToken(token);
-            string Avatar = "";
-            if (user.Avatar != null)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + user.Avatar;
-                byte[] imageBytes = File.ReadAllBytes(stringPath);
-                Avatar = Convert.ToBase64String(imageBytes);
-            }
             return new Token
             {
                 Access_token = serializedToken,
@@ -60,7 +52,7 @@ namespace Services.Utils
                 UserName = user.UserName!,
                 PhoneNumber = user.PhoneNumber!,
                 Email = user.Email!,
-                Avatar = user.Avatar != null ? Avatar : user.Avatar,
+                Avatar = user.Avatar!,
                 Name = user.Name!,
                 Roles = role
             };

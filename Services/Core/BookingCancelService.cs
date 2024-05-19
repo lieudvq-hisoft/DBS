@@ -101,8 +101,8 @@ public class BookingCancelService : IBookingCancelService
                 var imgUrlsList = bookingCancel.ImageUrls.ToList();
                 foreach (var file in model.Files)
                 {
-                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingCancelImage", bookingCancel.Id.ToString(), DateTime.Now.Ticks.ToString());
-                    var ImgUrl = await MyFunction.UploadFileAsync(file, dirPath, "/app/Storage");
+                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "BookingCancelImage", bookingCancel.Id.ToString(), DateTime.Now.Ticks.ToString());
+                    var ImgUrl = await MyFunction.UploadImageAsync(file, dirPath);
                     imgUrlsList.Add(ImgUrl);
                 }
                 bookingCancel.ImageUrls = imgUrlsList.ToArray();
@@ -195,8 +195,8 @@ public class BookingCancelService : IBookingCancelService
                 var imgUrlsList = bookingCancel.ImageUrls.ToList();
                 foreach (var file in model.Files)
                 {
-                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingCancelImage", bookingCancel.Id.ToString(), DateTime.Now.ToString());
-                    var ImgUrl = await MyFunction.UploadFileAsync(file, dirPath, "/app/Storage");
+                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "BookingCancelImage", bookingCancel.Id.ToString(), DateTime.Now.ToString());
+                    var ImgUrl = await MyFunction.UploadImageAsync(file, dirPath);
                     imgUrlsList.Add(ImgUrl);
                 }
                 bookingCancel.ImageUrls = imgUrlsList.ToArray();
@@ -250,20 +250,6 @@ public class BookingCancelService : IBookingCancelService
             bookingCancels = bookingCancels.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
             var viewModels = _mapper.Map<List<BookingCancelModel>>(bookingCancels);
 
-            foreach (var item in viewModels)
-            {
-                if (item.ImageUrls != null && item.ImageUrls.Length > 0)
-                {
-                    for (int j = 0; j < item.ImageUrls.Length; j++)
-                    {
-                        string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                        string stringPath = dirPath + item.ImageUrls[j];
-                        byte[] imageBytes = File.ReadAllBytes(stringPath);
-                        item.ImageUrls[j] = Convert.ToBase64String(imageBytes);
-                    }
-                }
-            }
-
             paging.Data = viewModels;
             result.Data = paging;
             result.Succeed = true;
@@ -301,17 +287,6 @@ public class BookingCancelService : IBookingCancelService
                 return result;
             }
             var data = _mapper.Map<BookingCancelModel>(bookingCancel);
-
-            if (data.ImageUrls != null && data.ImageUrls.Length > 0)
-            {
-                for (int i = 0; i < data.ImageUrls.Length; i++)
-                {
-                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                    string stringPath = dirPath + data.ImageUrls[i];
-                    byte[] imageBytes = File.ReadAllBytes(stringPath);
-                    data.ImageUrls[i] = Convert.ToBase64String(imageBytes);
-                }
-            }
 
             result.Data = data;
             result.Succeed = true;
@@ -356,20 +331,6 @@ public class BookingCancelService : IBookingCancelService
 
             var viewModels = _mapper.Map<List<BookingCancelModel>>(bookingCancels);
 
-            foreach (var item in viewModels)
-            {
-                if (item.ImageUrls != null && item.ImageUrls.Length > 0)
-                {
-                    for (int j = 0; j < item.ImageUrls.Length; j++)
-                    {
-                        string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                        string stringPath = dirPath + item.ImageUrls[j];
-                        byte[] imageBytes = File.ReadAllBytes(stringPath);
-                        item.ImageUrls[j] = Convert.ToBase64String(imageBytes);
-                    }
-                }
-            }
-
             paging.Data = viewModels;
             result.Data = paging;
             result.Succeed = true;
@@ -410,17 +371,6 @@ public class BookingCancelService : IBookingCancelService
                 .FirstOrDefault();
 
             var data = _mapper.Map<BookingCancelModel>(bookingCancel);
-
-            if (data.ImageUrls != null && data.ImageUrls.Length > 0)
-            {
-                for (int i = 0; i < data.ImageUrls.Length; i++)
-                {
-                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                    string stringPath = dirPath + data.ImageUrls[i];
-                    byte[] imageBytes = File.ReadAllBytes(stringPath);
-                    data.ImageUrls[i] = Convert.ToBase64String(imageBytes);
-                }
-            }
 
             result.Data = data;
             result.Succeed = true;

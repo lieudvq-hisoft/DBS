@@ -230,16 +230,7 @@ public class UserService : IUserService
             var uses = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
             uses = uses.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
             var viewData = uses.ToList();
-            foreach (var item in viewData)
-            {
-                if (item.Avatar != null)
-                {
-                    string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                    string stringPath = dirPath + item.Avatar;
-                    byte[] imageBytes = File.ReadAllBytes(stringPath);
-                    item.Avatar = Convert.ToBase64String(imageBytes);
-                }
-            }
+
             paging.Data = viewData;
             result.Data = paging;
             result.Succeed = true;
@@ -343,8 +334,8 @@ public class UserService : IUserService
                 return result;
             }
 
-            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Avatar", user.Id.ToString());
-            user.Avatar = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Avatar", user.Id.ToString());
+            user.Avatar = await MyFunction.UploadImageAsync(model.File, dirPath);
             user.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
@@ -370,7 +361,7 @@ public class UserService : IUserService
                 result.ErrorMessage = "User not exist!";
                 return result;
             }
-            string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+            string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             MyFunction.DeleteFile(dirPathDelete + user.Avatar);
 
             user.Avatar = null;
@@ -406,14 +397,6 @@ public class UserService : IUserService
             }
 
             var dataView = _mapper.Map<ProfileModel>(data);
-
-            if (dataView.Avatar != null)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + dataView.Avatar;
-                byte[] imageBytes = File.ReadAllBytes(stringPath);
-                dataView.Avatar = Convert.ToBase64String(imageBytes);
-            }
 
             dataView.Name = data.Name;
             result.Succeed = true;
@@ -470,14 +453,6 @@ public class UserService : IUserService
 
             var dataView = _mapper.Map<ProfileModel>(user);
 
-            if (dataView.Avatar != null)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + dataView.Avatar;
-                byte[] imageBytes = File.ReadAllBytes(stringPath);
-                dataView.Avatar = Convert.ToBase64String(imageBytes);
-            }
-
             result.Succeed = true;
             result.Data = dataView;
         }
@@ -532,14 +507,6 @@ public class UserService : IUserService
 
             var dataView = _mapper.Map<ProfileModel>(user);
 
-            if (dataView.Avatar != null)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + dataView.Avatar;
-                byte[] imageBytes = File.ReadAllBytes(stringPath);
-                dataView.Avatar = Convert.ToBase64String(imageBytes);
-            }
-
             result.Succeed = true;
             result.Data = dataView;
         }
@@ -579,14 +546,6 @@ public class UserService : IUserService
             await _dbContext.SaveChangesAsync();
 
             var dataView = _mapper.Map<ProfileModel>(driver);
-
-            if (dataView.Avatar != null)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + dataView.Avatar;
-                byte[] imageBytes = File.ReadAllBytes(stringPath);
-                dataView.Avatar = Convert.ToBase64String(imageBytes);
-            }
 
             result.Succeed = true;
             result.Data = dataView;
@@ -812,8 +771,8 @@ public class UserService : IUserService
             }
             if (model.File != null)
             {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Avatar", user.Id.ToString());
-                user.Avatar = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Avatar", user.Id.ToString());
+                user.Avatar = await MyFunction.UploadImageAsync(model.File, dirPath);
             }
             userRole.UserId = user.Id;
             _dbContext.UserRoles.Add(userRole);
