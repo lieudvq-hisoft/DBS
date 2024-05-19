@@ -249,6 +249,15 @@ public class VehicleService : IVehicleService
                 return result;
             }
             var data = _mapper.Map<List<VehicleModel>>(vehicles);
+            foreach (var item in data)
+            {
+                var vehicleImage = _dbContext.VehicleImages.Where(_ => _.VehicleId == item.Id && !_.IsDeleted).FirstOrDefault();
+                if (vehicleImage != null)
+                {
+                    item.ImagePath = vehicleImage.ImageUrl;
+                    item.ImageUrl = vehicleImage.ImageUrl;
+                }
+            }
 
             result.Data = data;
             result.Succeed = true;
@@ -310,6 +319,15 @@ public class VehicleService : IVehicleService
                 return result;
             }
             var data = _mapper.Map<List<VehicleModel>>(vehicles);
+            foreach (var item in data)
+            {
+                var vehicleImage = _dbContext.VehicleImages.Where(_ => _.VehicleId == item.Id && !_.IsDeleted).FirstOrDefault();
+                if (vehicleImage != null)
+                {
+                    item.ImagePath = vehicleImage.ImageUrl;
+                    item.ImageUrl = vehicleImage.ImageUrl;
+                }
+            }
 
             result.Data = data;
             result.Succeed = true;
