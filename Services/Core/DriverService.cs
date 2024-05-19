@@ -157,8 +157,8 @@ public class DriverService : IDriverService
             }
             if (model.File != null)
             {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "Avatar", user.Id.ToString());
-                user.Avatar = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Avatar", user.Id.ToString());
+                user.Avatar = await MyFunction.UploadImageAsync(model.File, dirPath);
             }
             userRole.UserId = user.Id;
             _dbContext.UserRoles.Add(userRole);

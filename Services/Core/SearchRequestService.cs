@@ -104,13 +104,7 @@ public class SearchRequestService : ISearchRequestService
 
             var data = _mapper.Map<SearchRequestModel>(searchRequest);
             data.Customer = _mapper.Map<UserModel>(customer);
-            if (data.Customer.Avatar != null)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + data.Customer.Avatar;
-                byte[] imageBytes = File.ReadAllBytes(stringPath);
-                data.Customer.Avatar = Convert.ToBase64String(imageBytes);
-            }
+
             data.BookingVehicle = _mapper.Map<BookingVehicleModel>(searchRequest.BookingVehicle);
             data.CustomerBookedOnBehalf = _mapper.Map<CustomerBookedOnBehalfModel>(searchRequest.CustomerBookedOnBehalf);
             data.DriverId = driver.Id;
@@ -317,7 +311,7 @@ public class SearchRequestService : ISearchRequestService
 
             await _dbContext.SaveChangesAsync();
 
-            var kafkaModelMiss = new KafkaModel { UserReceiveNotice = new List<Guid>() { customerId }, Payload = null };
+            var kafkaModelMiss = new KafkaModel { UserReceiveNotice = new List<Guid>() { customerId }, Payload = DriverId };
             var jsonMiss = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelMiss);
             await _producer.ProduceAsync("dbs-searchrequest-driver-miss", new Message<Null, string> { Value = jsonMiss });
             _producer.Flush();

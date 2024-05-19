@@ -220,7 +220,7 @@ public class MoMoService : IMoMoService
                         await _producer.ProduceAsync("dbs-wallet-addfunds-success", new Message<Null, string> { Value = jsonAddFunds });
                         _producer.Flush();
 
-                        return "srh://app.unilinks.com/viewWallet";
+                        return "srh://app.unilinks.com";
                         break;
                     case "Pay":
                         var admin = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)

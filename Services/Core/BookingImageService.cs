@@ -70,8 +70,8 @@ public class BookingImageService : IBookingImageService
             var bookingImage = _mapper.Map<BookingImageCreateModel, BookingImage>(model);
             _dbContext.BookingImages.Add(bookingImage);
             bookingImage.BookingImageTime = BookingImageTime.CheckIn;
-            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingImageCheckIn", bookingImage.Id.ToString());
-            bookingImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "BookingImageCheckIn", bookingImage.Id.ToString());
+            bookingImage.ImageUrl = await MyFunction.UploadImageAsync(model.File, dirPath);
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
@@ -111,8 +111,8 @@ public class BookingImageService : IBookingImageService
             var bookingImage = _mapper.Map<BookingImageCreateModel, BookingImage>(model);
             _dbContext.BookingImages.Add(bookingImage);
             bookingImage.BookingImageTime = BookingImageTime.CheckOut;
-            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingImageCheckIn", bookingImage.Id.ToString());
-            bookingImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "BookingImageCheckIn", bookingImage.Id.ToString());
+            bookingImage.ImageUrl = await MyFunction.UploadImageAsync(model.File, dirPath);
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
@@ -137,7 +137,7 @@ public class BookingImageService : IBookingImageService
                 result.ErrorMessage = "Booking Image not exist!";
                 return result;
             }
-            string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+            string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             MyFunction.DeleteFile(dirPathDelete + bookingImage.ImageUrl);
 
             _dbContext.BookingImages.Remove(bookingImage);
@@ -167,7 +167,7 @@ public class BookingImageService : IBookingImageService
             }
             else
             {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
                 if (bookingImage.ImageUrl == null || !bookingImage.ImageUrl.Contains(model.Path))
                 {
                     result.ErrorMessage = "Image does not exist";
@@ -201,13 +201,6 @@ public class BookingImageService : IBookingImageService
                 return result;
             }
             var data = _mapper.Map<List<BookingImageModel>>(bookingImages);
-            for (int i = 0; i < data.Count; i++)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + data[i].ImageUrl;
-                byte[] imageBytes = File.ReadAllBytes(stringPath);
-                data[i].ImageUrl = Convert.ToBase64String(imageBytes);
-            }
 
             result.Data = data;
             result.Succeed = true;
@@ -235,13 +228,6 @@ public class BookingImageService : IBookingImageService
                 return result;
             }
             var data = _mapper.Map<List<BookingImageModel>>(bookingImages);
-            for (int i = 0; i < data.Count; i++)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-                string stringPath = dirPath + data[i].ImageUrl;
-                byte[] imageBytes = File.ReadAllBytes(stringPath);
-                data[i].ImageUrl = Convert.ToBase64String(imageBytes);
-            }
 
             result.Data = data;
             result.Succeed = true;
@@ -269,20 +255,15 @@ public class BookingImageService : IBookingImageService
             }
             if (model.File != null)
             {
-                string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+                string dirPathDelete = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
                 MyFunction.DeleteFile(dirPathDelete + bookingImage.ImageUrl);
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "BookingImage", bookingImage.Id.ToString());
-                bookingImage.ImageUrl = await MyFunction.UploadFileAsync(model.File, dirPath, "/app/Storage");
+                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "BookingImage", bookingImage.Id.ToString());
+                bookingImage.ImageUrl = await MyFunction.UploadImageAsync(model.File, dirPath);
             }
             bookingImage.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingImageModel>(bookingImage);
-
-            string dirPathUpdate = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
-            string stringPath = dirPathUpdate + data.ImageUrl;
-            byte[] imageBytes = File.ReadAllBytes(stringPath);
-            data.ImageUrl = Convert.ToBase64String(imageBytes);
 
             result.Succeed = true;
             result.Data = data;
