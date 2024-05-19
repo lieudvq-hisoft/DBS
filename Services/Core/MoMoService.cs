@@ -239,7 +239,7 @@ public class MoMoService : IMoMoService
                         await _producer.ProduceAsync("dbs-payment-booking-success", new Message<Null, string> { Value = jsonPay });
                         _producer.Flush();
 
-                        return "srh://app.unilinks.com/viewWallet";
+                        return "srh://app.unilinks.com/mapCustomer";
                         break;
                 }
                 return "srh://app.unilinks.com/viewWallet";
