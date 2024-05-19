@@ -54,7 +54,7 @@ public class DriverController : ControllerBase
     [HttpPut("TrackingDriverLocation")]
     public async Task<ActionResult> TrackingDriverLocation([FromBody] TrackingDriverLocationModel model)
     {
-        var result = await _driverService.TrackingDriverLocation(model);
+        var result = await _driverService.TrackingDriverLocation(model, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
