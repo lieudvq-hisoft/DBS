@@ -18,7 +18,7 @@ public interface IVNPayService
 {
     Task<ResultModel> CreatePaymentBookingUrl(PaymentInformationModel model, HttpContext context, Guid userId);
     Task<ResultModel> CreatePaymentUrl(PaymentInformationModel model, HttpContext context, Guid userId);
-    Task<ResultModel> PaymentExecute(IQueryCollection collections);
+    Task<string> PaymentExecute(IQueryCollection collections);
 }
 
 public class VNPayService : IVNPayService
@@ -154,10 +154,9 @@ public class VNPayService : IVNPayService
         return result;
     }
 
-    public async Task<ResultModel> PaymentExecute(IQueryCollection collections)
+    public async Task<string> PaymentExecute(IQueryCollection collections)
     {
-        var result = new ResultModel();
-        result.Succeed = false;
+
         try
         {
             var pay = new VnPayLibrary();
@@ -166,11 +165,7 @@ public class VNPayService : IVNPayService
             var userId = response.OrderDescription.Split(',')[2];
             var data = _mapper.Map<PaymentResponseModel>(response);
             var wallet = _dbContext.Wallets.Where(_ => _.UserId == Guid.Parse(userId)).FirstOrDefault();
-            if (wallet == null)
-            {
-                result.ErrorMessage = "Wallet not exist";
-                return result;
-            }
+
             if (response.VnPayResponseCode == "00")
             {
                 switch (transactionType)
@@ -193,8 +188,7 @@ public class VNPayService : IVNPayService
                         await _producer.ProduceAsync("dbs-wallet-addfunds-success", new Message<Null, string> { Value = jsonAddFunds });
                         _producer.Flush();
 
-                        result.Data = response;
-                        result.Succeed = true;
+                        return "srh://app.unilinks.com/viewWallet";
                         break;
                     case "Pay":
                         var admin = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
@@ -213,8 +207,7 @@ public class VNPayService : IVNPayService
                         await _producer.ProduceAsync("dbs-payment-booking-success", new Message<Null, string> { Value = jsonPay });
                         _producer.Flush();
 
-                        result.Data = response;
-                        result.Succeed = true;
+                        return "srh://app.unilinks.com/viewWallet";
                         break;
                 }
             }
@@ -226,14 +219,14 @@ public class VNPayService : IVNPayService
                 await _producer.ProduceAsync("dbs-vnpay-transaction-fail", new Message<Null, string> { Value = json });
                 _producer.Flush();
 
-                result.ErrorMessage = "Something when wrong with VNPay";
+                return "Something when wrong with VNPay";
             }
         }
         catch (Exception ex)
         {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+            throw new Exception(ex.Message);
         }
 
-        return result;
+        return "srh://app.unilinks.com/viewWallet";
     }
 }

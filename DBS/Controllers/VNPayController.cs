@@ -42,6 +42,6 @@ public class VNPayController : ControllerBase
     {
         var response = await _vnPayService.PaymentExecute(Request.Query);
 
-        return Ok(response);
+        return Redirect(response);
     }
 }
