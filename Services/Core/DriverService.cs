@@ -7,6 +7,7 @@ using Data.Enums;
 using Data.Model;
 using Data.Models;
 using Data.Utils;
+using Data.Utils.Paging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +19,7 @@ public interface IDriverService
 {
     Task<ResultModel> RegisterDriver(RegisterModel model);
     Task<ResultModel> RegisterDriverByAdmin(RegisterDriverByAdminModel model, Guid UserId);
+    Task<ResultModel> GetDriver(PagingParam<DriverSortCriteria> paginationModel, SearchModel searchModel);
     Task<ResultModel> UpdateLocation(LocationModel model, Guid driverId);
     Task<ResultModel> TrackingDriverLocation(TrackingDriverLocationModel model, Guid driverId);
     Task<ResultModel> UpdateStatusOffline(Guid driverId);
@@ -169,6 +171,29 @@ public class DriverService : IDriverService
         catch (Exception ex)
         {
             result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> GetDriver(PagingParam<DriverSortCriteria> paginationModel, SearchModel searchModel)
+    {
+        ResultModel result = new ResultModel();
+        try
+        {
+            var data = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
+                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Driver) && !_.IsDeleted).AsQueryable();
+            var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
+            var uses = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
+            uses = uses.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
+            var viewModels = _mapper.ProjectTo<UserModel>(uses);
+            paging.Data = viewModels;
+            result.Data = paging;
+            result.Succeed = true;
+
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
         }
         return result;
     }
