@@ -22,8 +22,9 @@ public class AdminController : ControllerBase
     private readonly IDrivingLicenseService _drivingLicenseService;
     private readonly IIdentityCardService _identityCardService;
     private readonly IVehicleService _vehicleService;
+    private readonly IPriceConfigurationService _priceConfigurationService;
 
-    public AdminController(IUserService userService, IBookingCancelService bookingCancelService, IBookingService bookingService, IDriverService driverService, IDrivingLicenseService drivingLicenseService, IIdentityCardService identityCardService, IVehicleService vehicleService)
+    public AdminController(IUserService userService, IBookingCancelService bookingCancelService, IBookingService bookingService, IDriverService driverService, IDrivingLicenseService drivingLicenseService, IIdentityCardService identityCardService, IVehicleService vehicleService, IPriceConfigurationService priceConfigurationService)
     {
         _userService = userService;
         _bookingCancelService = bookingCancelService;
@@ -32,6 +33,7 @@ public class AdminController : ControllerBase
         _drivingLicenseService = drivingLicenseService;
         _identityCardService = identityCardService;
         _vehicleService = vehicleService;
+        _priceConfigurationService = priceConfigurationService;
     }
 
     [HttpPut("User/BanAccount")]
@@ -254,6 +256,14 @@ public class AdminController : ControllerBase
     public async Task<ActionResult> GetAllByAdmin(Guid CustomerId)
     {
         var result = await _vehicleService.GetAllByAdmin(Guid.Parse(User.GetId()), CustomerId);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPut("PriceConfiguration")]
+    public async Task<ActionResult> UpdatePriceConfiguration([FromBody] PriceConfigurationUpdateModel model)
+    {
+        var result = await _priceConfigurationService.UpdatePriceConfiguration(model, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

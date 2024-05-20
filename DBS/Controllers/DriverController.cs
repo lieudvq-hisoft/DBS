@@ -42,6 +42,15 @@ public class DriverController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpGet]
+    public async Task<ActionResult> GetDriver([FromQuery] PagingParam<DriverSortCriteria> paginationModel, [FromQuery] SearchModel searchModel)
+    {
+        var result = await _driverService.GetDriver(paginationModel, searchModel);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPut("Location")]
     public async Task<ActionResult> UpdateLocation([FromBody] LocationModel model)
     {
