@@ -28,6 +28,11 @@ public enum CustomerSortCriteria
     Email
 }
 
+public enum DriverSortCriteria
+{
+    Email
+}
+
 public enum UserSortByAdminCriteria
 {
     DateCreated,

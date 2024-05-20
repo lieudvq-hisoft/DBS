@@ -278,18 +278,18 @@ public class VehicleService : IVehicleService
             var admin = _dbContext.Users.Where(_ => _.Id == AdminId && !_.IsDeleted).FirstOrDefault();
             if (admin == null)
             {
-                result.ErrorMessage = "Customer not exist!";
+                result.ErrorMessage = "Admin not exist!";
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
             if (!checkAdmin)
             {
-                result.ErrorMessage = "The user must be a Customer";
+                result.ErrorMessage = "The user must be a Admin";
                 return result;
             }
             if (!admin.IsActive)
             {
-                result.ErrorMessage = "Customer has been deactivated";
+                result.ErrorMessage = "Admin has been deactivated";
                 return result;
             }
             var customer = _dbContext.Users.Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();

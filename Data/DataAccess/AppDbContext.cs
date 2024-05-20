@@ -62,6 +62,17 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
                 Name = "Admin",
                 NormalizedName = "ADMIN",
             });
+        modelBuilder.Entity<PriceConfiguration>(entity =>
+        {
+            entity.OwnsOne(e => e.BaseFareFirst3km);
+            entity.OwnsOne(e => e.FareFerAdditionalKm);
+            entity.OwnsOne(e => e.DriverProfit);
+            entity.OwnsOne(e => e.AppProfit);
+            entity.OwnsOne(e => e.PeakHours);
+            entity.OwnsOne(e => e.NightSurcharge);
+            entity.OwnsOne(e => e.WaitingSurcharge);
+            entity.OwnsOne(e => e.WeatherFee);
+        });
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
     }
     public DbSet<User> Users { get; set; }
@@ -88,4 +99,5 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<BrandVehicle> BrandVehicles { get; set; }
     public DbSet<ModelVehicle> ModelVehicles { get; set; }
     public DbSet<LinkedAccount> LinkedAccounts { get; set; }
+    public DbSet<PriceConfiguration> PriceConfigurations { get; set; }
 }
