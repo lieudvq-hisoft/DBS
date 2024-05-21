@@ -23,6 +23,7 @@ public interface IVehicleService
     Task<ResultModel> Delete(Guid vehicleId, Guid customerId);
     Task<ResultModel> AddImage(VehicleImageCreateModel model);
     Task<ResultModel> GetImagesByVehicleId(Guid VehicleId);
+    Task<ResultModel> CheckExistVehicleImage(CheckExistVehicleImageModel model, Guid customerId);
     Task<ResultModel> UpdateImage(VehicleImageUpdateModel model, Guid VehicleImageId);
     Task<ResultModel> DeleteImage(Guid VehicleImageId);
     Task<ResultModel> DownloadImage(FileModel model);
@@ -69,6 +70,12 @@ public class VehicleService : IVehicleService
             {
                 result.ErrorMessage = "Customer has been deactivated";
                 return result;
+            }
+            var checkExistLicensePlate = _dbContext.Vehicles
+                .Where(_ => _.LicensePlate == model.LicensePlate && !_.IsDeleted).FirstOrDefault();
+            if (checkExistLicensePlate != null)
+            {
+                result.ErrorMessage = $"Vehicle with License Plate {model.LicensePlate} existed";
             }
             var vehicle = _mapper.Map<VehicleCreateModel, Vehicle>(model);
             vehicle.CustomerId = customer.Id;
@@ -432,11 +439,15 @@ public class VehicleService : IVehicleService
             }
             var vehicle = _dbContext.Vehicles
                  .Include(_ => _.Customer)
-                .Where(_ => _.Id == vehicleId && !_.IsDeleted).FirstOrDefault();
+                .Where(_ => _.Id == vehicleId && _.CustomerId == customerId && !_.IsDeleted).FirstOrDefault();
             if (vehicle == null)
             {
                 result.ErrorMessage = "Vehicle not exist!";
                 return result;
+            }
+            if (model.LicensePlate != null && vehicle.LicensePlate != model.LicensePlate)
+            {
+                vehicle.LicensePlate = model.LicensePlate;
             }
             if (model.Brand != null)
             {
@@ -489,6 +500,51 @@ public class VehicleService : IVehicleService
 
             result.Succeed = true;
             result.Data = _mapper.Map<VehicleImageModel>(vehicleImage);
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> CheckExistVehicleImage(CheckExistVehicleImageModel model, Guid customerId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var customer = _dbContext.Users.Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();
+            if (customer == null)
+            {
+                result.ErrorMessage = "Customer not exist!";
+                return result;
+            }
+            var checkCustomer = await _userManager.IsInRoleAsync(customer, RoleNormalizedName.Customer);
+            if (!checkCustomer)
+            {
+                result.ErrorMessage = "The user must be a Customer";
+                return result;
+            }
+            if (!customer.IsActive)
+            {
+                result.ErrorMessage = "Customer has been deactivated";
+                return result;
+            }
+            var vehicle = _dbContext.Vehicles
+                .Include(_ => _.Customer)
+                .Where(_ => _.Id == model.VehicleId && _.CustomerId == customerId && !_.IsDeleted).FirstOrDefault();
+            if (vehicle == null)
+            {
+                result.ErrorMessage = "Vehicle not exist!";
+                return result;
+            }
+            var checkExistVehicleImage = _dbContext.VehicleImages
+                .Where(_ => _.VehicleId == vehicle.Id && _.VehicleImageType == model.VehicleImageType)
+                .FirstOrDefault();
+
+            result.Succeed = true;
+            result.Data = checkExistVehicleImage != null;
         }
         catch (Exception ex)
         {
