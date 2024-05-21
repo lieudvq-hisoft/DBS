@@ -23,4 +23,5 @@ public class BookingImageModel
     public string ImageUrl { get; set; }
     public BookingImageType BookingImageType { get; set; }
     public BookingImageTime BookingImageTime { get; set; }
+    public DateTime DateCreated { get; set; }
 }

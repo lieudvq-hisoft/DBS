@@ -31,4 +31,5 @@ public class RatingModel
     public int Star { get; set; }
     public string Comment { get; set; }
     public string ImageUrl { get; set; }
+    public DateTime DateCreated { get; set; }
 }

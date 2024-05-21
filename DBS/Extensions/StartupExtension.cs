@@ -20,6 +20,8 @@ using System.Data;
 using FirebaseAdmin;
 using FirebaseAdmin.Auth;
 using Google.Apis.Auth.OAuth2;
+using Quartz;
+using Services.Quartz;
 
 namespace DBS.Extensions;
 
@@ -257,5 +259,47 @@ public static class StartupExtension
             Credential = GoogleCredential.FromFile(Directory.GetCurrentDirectory() + "/" + "firebase-credential.json"),
         });
 
+    }
+
+    public static void ConfigureQuartzWalletServices(this IServiceCollection services)
+    {
+        services.AddQuartz(q =>
+        {
+            var jobKey = new JobKey("UpdateWalletTransactionStatusJob");
+            q.AddJob<UpdateWalletTransactionStatusJob>(opts => opts.WithIdentity(jobKey));
+
+            q.AddTrigger(opts => opts
+                .ForJob(jobKey)
+                .WithIdentity("UpdateWalletTransactionStatusJob-trigger")
+                .WithSimpleSchedule(x => x
+                    .WithIntervalInMinutes(5)
+                    .RepeatForever()));
+        });
+
+        services.AddQuartzHostedService(
+            q => q.WaitForJobsToComplete = true);
+
+        services.AddScoped<UpdateWalletTransactionStatusJob>();
+    }
+
+    public static void ConfigureQuartzDriverPriority(this IServiceCollection services)
+    {
+        services.AddQuartz(q =>
+        {
+            var jobKey = new JobKey("UpdateDriverPriorityJob");
+            q.AddJob<UpdateDriverPriorityJob>(opts => opts.WithIdentity(jobKey));
+
+            q.AddTrigger(opts => opts
+                .ForJob(jobKey)
+                .WithIdentity("UpdateDriverPriorityJob-trigger")
+                .WithSimpleSchedule(x => x
+                    .WithIntervalInMinutes(5)
+                    .RepeatForever()));
+        });
+
+        services.AddQuartzHostedService(
+            q => q.WaitForJobsToComplete = true);
+
+        services.AddScoped<UpdateDriverPriorityJob>();
     }
 }

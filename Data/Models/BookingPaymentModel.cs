@@ -14,4 +14,5 @@ public class BookingPaymentModel
     public BookingModel Booking { get; set; }
     public long Amount { get; set; }
     public bool IsPaid { get; set; }
+    public DateTime DateCreated { get; set; }
 }

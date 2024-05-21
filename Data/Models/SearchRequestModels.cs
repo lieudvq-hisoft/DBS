@@ -41,6 +41,7 @@ namespace Data.Model
         public BookingPaymentMethod BookingPaymentMethod { get; set; }
         public BookingType? BookingType { get; set; }
         public SearchRequestStatus Status { get; set; }
+        public DateTime DateCreated { get; set; }
     }
 
     public class NewDriverModel

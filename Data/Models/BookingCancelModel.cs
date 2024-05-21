@@ -32,6 +32,7 @@ namespace Data.Models
         public UserModel CancelPerson { get; set; }
         public string[]? ImageUrls { get; set; }
         public string CancelReason { get; set; }
+        public DateTime DateCreated { get; set; }
     }
 
 }
