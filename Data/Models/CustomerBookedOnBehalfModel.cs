@@ -11,4 +11,5 @@ public class CustomerBookedOnBehalfModel
     public string? Name { get; set; }
     public string? PhoneNumber { get; set; }
     public string? Note { get; set; }
+    public DateTime DateCreated { get; set; }
 }

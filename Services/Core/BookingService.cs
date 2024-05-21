@@ -636,6 +636,9 @@ public class BookingService : IBookingService
             driverStatus.DateUpdated = DateTime.Now;
             _dbContext.DriverStatuses.Update(driverStatus);
 
+            driver.LastTripTime = DateTime.Now;
+            _dbContext.Users.Update(driver);
+
             booking.Status = BookingStatus.Complete;
             booking.DateUpdated = DateTime.Now;
             booking.DropOffTime = DateTime.Now;

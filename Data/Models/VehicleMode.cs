@@ -31,6 +31,7 @@ public class VehicleModel
     public string Color { get; set; }
     public string ImageUrl { get; set; }
     public string ImagePath { get; set; }
+    public DateTime DateCreated { get; set; }
 }
 
 public class VehicleImageCreateModel
