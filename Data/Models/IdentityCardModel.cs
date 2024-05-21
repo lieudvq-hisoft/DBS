@@ -43,6 +43,7 @@ namespace Data.Models
         public string? PersonalIdentification { get; set; }
         public string? IdentityCardNumber { get; set; }
         public DateOnly? ExpiredDate { get; set; }
+        public DateTime DateCreated { get; set; }
     }
 
     public class IdentityCardImageCreateModel
@@ -63,5 +64,6 @@ namespace Data.Models
         public Guid Id { get; set; }
         public string ImageUrl { get; set; }
         public bool IsFront { get; set; }
+        public DateTime DateCreated { get; set; }
     }
 }

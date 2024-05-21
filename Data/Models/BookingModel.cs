@@ -36,6 +36,7 @@ namespace Data.Models
         public UserModel Customer { get; set; }
         public LocationModel DriverLocation { get; set; }
         public BookingCancelNotiModel? BookingCancel { get; set; }
+        public DateTime DateCreated { get; set; }
 
     }
 

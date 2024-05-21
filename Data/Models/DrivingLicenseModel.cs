@@ -28,6 +28,7 @@ namespace Data.Models
         public string Type { get; set; }
         public DateOnly IssueDate { get; set; }
         public DateOnly ExpiredDate { get; set; }
+        public DateTime DateCreated { get; set; }
     }
 
     public class DrivingLicenseImageCreateModel
@@ -48,5 +49,6 @@ namespace Data.Models
         public Guid DrivingLicenseId { get; set; }
         public bool IsFront { get; set; }
         public string ImageUrl { get; set; }
+        public DateTime DateCreated { get; set; }
     }
 }
