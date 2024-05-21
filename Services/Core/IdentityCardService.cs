@@ -259,18 +259,9 @@ public class IdentityCardService : IIdentityCardService
             {
                 identityCard.ExpiredDate = (DateOnly)model.ExpiredDate;
             }
-            if (model.IdentityCardNumber != null)
+            if (model.IdentityCardNumber != null && identityCard.IdentityCardNumber != model.IdentityCardNumber)
             {
-                var checkExist = _dbContext.IdentityCards.Where(_ => _.IdentityCardNumber == model.IdentityCardNumber && !_.IsDeleted).FirstOrDefault();
-                if (checkExist != null)
-                {
-                    result.ErrorMessage = "Identity Card Number has been existed";
-                    return result;
-                }
-                else
-                {
-                    identityCard.IdentityCardNumber = model.IdentityCardNumber;
-                }
+                identityCard.IdentityCardNumber = model.IdentityCardNumber;
             }
             identityCard.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
@@ -757,18 +748,9 @@ public class IdentityCardService : IIdentityCardService
             {
                 identityCard.ExpiredDate = (DateOnly)model.ExpiredDate;
             }
-            if (model.IdentityCardNumber != null)
+            if (model.IdentityCardNumber != null && identityCard.IdentityCardNumber != model.IdentityCardNumber)
             {
-                var checkExist = _dbContext.IdentityCards.Where(_ => _.IdentityCardNumber == model.IdentityCardNumber && !_.IsDeleted).FirstOrDefault();
-                if (checkExist != null)
-                {
-                    result.ErrorMessage = "Identity Card Number has been existed";
-                    return result;
-                }
-                else
-                {
-                    identityCard.IdentityCardNumber = model.IdentityCardNumber;
-                }
+                identityCard.IdentityCardNumber = model.IdentityCardNumber;
             }
             identityCard.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();

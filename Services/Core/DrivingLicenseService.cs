@@ -79,7 +79,12 @@ public class DrivingLicenseService : IDrivingLicenseService
                 result.ErrorMessage = "Driver has been deactivated";
                 return result;
             }
-
+            var checkExistDrivingLicenseNumber = _dbContext.DrivingLicenses
+                .Where(_ => _.DrivingLicenseNumber == model.DrivingLicenseNumber && !_.IsDeleted).FirstOrDefault();
+            if (checkExistDrivingLicenseNumber != null)
+            {
+                result.ErrorMessage = $"Driving License with Number {model.DrivingLicenseNumber} existed";
+            }
             var drivingLicense = _mapper.Map<DrivingLicenseCreateModel, DrivingLicense>(model);
             drivingLicense.DriverId = driver.Id;
             _dbContext.DrivingLicenses.Add(drivingLicense);
@@ -372,7 +377,7 @@ public class DrivingLicenseService : IDrivingLicenseService
                 result.ErrorMessage = "Driving License not exist!";
                 return result;
             }
-            if (model.DrivingLicenseNumber != null)
+            if (model.DrivingLicenseNumber != null && drivingLicense.DrivingLicenseNumber != model.DrivingLicenseNumber)
             {
                 drivingLicense.DrivingLicenseNumber = model.DrivingLicenseNumber;
             }
@@ -470,7 +475,12 @@ public class DrivingLicenseService : IDrivingLicenseService
                 result.ErrorMessage = "Driver has been deactivated";
                 return result;
             }
-
+            var checkExistDrivingLicenseNumber = _dbContext.DrivingLicenses
+                .Where(_ => _.DrivingLicenseNumber == model.DrivingLicenseNumber && !_.IsDeleted).FirstOrDefault();
+            if (checkExistDrivingLicenseNumber != null)
+            {
+                result.ErrorMessage = $"Driving License with Number {model.DrivingLicenseNumber} existed";
+            }
             var drivingLicense = _mapper.Map<DrivingLicenseCreateModel, DrivingLicense>(model);
             drivingLicense.DriverId = driver.Id;
             _dbContext.DrivingLicenses.Add(drivingLicense);
@@ -859,7 +869,7 @@ public class DrivingLicenseService : IDrivingLicenseService
                 result.ErrorMessage = "Driving License not exist!";
                 return result;
             }
-            if (model.DrivingLicenseNumber != null)
+            if (model.DrivingLicenseNumber != null && drivingLicense.DrivingLicenseNumber != model.DrivingLicenseNumber)
             {
                 drivingLicense.DrivingLicenseNumber = model.DrivingLicenseNumber;
             }
