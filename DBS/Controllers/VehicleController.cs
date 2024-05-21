@@ -84,6 +84,14 @@ public class VehicleController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpGet("VehicleImage/CheckExistVehicleImage")]
+    public async Task<ActionResult> CheckExistVehicleImage([FromBody] CheckExistVehicleImageModel model)
+    {
+        var result = await _vehicleService.CheckExistVehicleImage(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
     [HttpPut("VehicleImage/{VehicleImage}")]
     public async Task<ActionResult> UpdateImage([FromForm] VehicleImageUpdateModel model, Guid VehicleImage)
     {

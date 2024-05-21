@@ -15,9 +15,10 @@ public class VehicleCreateModel
 
 public class VehicleUpdateModel
 {
-    public string Brand { get; set; }
-    public string Model { get; set; }
-    public string Color { get; set; }
+    public string? LicensePlate { get; set; }
+    public string? Brand { get; set; }
+    public string? Model { get; set; }
+    public string? Color { get; set; }
 }
 
 public class VehicleModel
@@ -38,6 +39,12 @@ public class VehicleImageCreateModel
 {
     public Guid VehicleId { get; set; }
     public IFormFile File { get; set; }
+    public VehicleImageType VehicleImageType { get; set; }
+}
+
+public class CheckExistVehicleImageModel
+{
+    public Guid VehicleId { get; set; }
     public VehicleImageType VehicleImageType { get; set; }
 }
 
