@@ -79,7 +79,7 @@ namespace Services.Core
         {
             try
             {
-                var id = _backgroundJobClient.Schedule(() => CheckFailureWalletTransaction(walletTransactionId), TimeSpan.FromSeconds(20));
+                var id = _backgroundJobClient.Schedule(() => CheckFailureWalletTransaction(walletTransactionId), TimeSpan.FromMinutes(10));
             }
             catch (Exception ex)
             {
