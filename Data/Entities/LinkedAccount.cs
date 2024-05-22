@@ -16,4 +16,5 @@ public class LinkedAccount : BaseEntity
     public string AccountNumber { get; set; }
     public LinkedAccountType Type { get; set; }
     public string Brand { get; set; }
+    public string LinkedImgUrl { get; set; }
 }

@@ -3,6 +3,7 @@ using System;
 using Data.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DBS.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240521082546_Update-Priority")]
+    partial class UpdatePriority
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1343,25 +1346,6 @@ namespace DBS.Migrations
                                 .HasForeignKey("PriceConfigurationId");
                         });
 
-                    b.OwnsOne("Data.Models.CustomerCancelFee", "CustomerCancelFee", b1 =>
-                        {
-                            b1.Property<Guid>("PriceConfigurationId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<bool?>("IsPercent")
-                                .HasColumnType("boolean");
-
-                            b1.Property<long?>("Price")
-                                .HasColumnType("bigint");
-
-                            b1.HasKey("PriceConfigurationId");
-
-                            b1.ToTable("PriceConfigurations");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PriceConfigurationId");
-                        });
-
                     b.OwnsOne("Data.Models.DriverProfit", "DriverProfit", b1 =>
                         {
                             b1.Property<Guid>("PriceConfigurationId")
@@ -1490,8 +1474,6 @@ namespace DBS.Migrations
 
                     b.Navigation("BaseFareFirst3km")
                         .IsRequired();
-
-                    b.Navigation("CustomerCancelFee");
 
                     b.Navigation("DriverProfit")
                         .IsRequired();

@@ -139,6 +139,11 @@ public class PriceConfigurationService : IPriceConfigurationService
                 priceConfiguration.WeatherFee.Price = model.WeatherFee.Price != null ? model.WeatherFee.Price : priceConfiguration.WeatherFee.Price;
                 priceConfiguration.WeatherFee.IsPercent = model.WeatherFee.IsPercent != null ? model.WeatherFee.IsPercent : priceConfiguration.WeatherFee.IsPercent;
             }
+            if (model.CustomerCancelFee != null)
+            {
+                priceConfiguration.CustomerCancelFee.Price = model.CustomerCancelFee.Price != null ? model.CustomerCancelFee.Price : priceConfiguration.CustomerCancelFee.Price;
+                priceConfiguration.CustomerCancelFee.IsPercent = model.CustomerCancelFee.IsPercent != null ? model.CustomerCancelFee.IsPercent : priceConfiguration.CustomerCancelFee.IsPercent;
+            }
 
             priceConfiguration.DateUpdated = DateTime.Now;
             _dbContext.PriceConfigurations.Update(priceConfiguration);

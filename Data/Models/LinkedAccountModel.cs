@@ -15,6 +15,7 @@ namespace Data.Models
         public string AccountNumber { get; set; }
         public LinkedAccountType Type { get; set; }
         public string Brand { get; set; }
+        public string LinkedImgUrl { get; set; }
     }
 
     public class LinkedAccountModel
@@ -24,6 +25,7 @@ namespace Data.Models
         public string AccountNumber { get; set; }
         public LinkedAccountType Type { get; set; }
         public string Brand { get; set; }
+        public string LinkedImgUrl { get; set; }
         public DateTime DateCreated { get; set; }
     }
 }
