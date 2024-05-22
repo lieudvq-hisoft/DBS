@@ -52,6 +52,12 @@ namespace Data.Models
         public bool? IsPercent { get; set; }
     }
 
+    public class CustomerCancelFee
+    {
+        public long? Price { get; set; }
+        public bool? IsPercent { get; set; }
+    }
+
     public class PriceConfigurationUpdateModel
     {
         public BaseFareFirst3km? BaseFareFirst3km { get; set; }
@@ -62,6 +68,7 @@ namespace Data.Models
         public NightSurcharge? NightSurcharge { get; set; }
         public WaitingSurcharge? WaitingSurcharge { get; set; }
         public WeatherFee? WeatherFee { get; set; }
+        public CustomerCancelFee? CustomerCancelFee { get; set; }
     }
 
 }

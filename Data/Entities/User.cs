@@ -15,7 +15,7 @@ public class User : IdentityUser<Guid>
     public float? Star { get; set; }
     public long? Profit { get; set; }
     public bool IsDeleted { get; set; }
-    public int Priority { get; set; } = 3;
+    public float Priority { get; set; } = 2;
     public bool IsActive { get; set; } = true;
     public DateTime DateCreated { get; set; } = DateTime.Now;
     public DateTime DateUpdated { get; set; } = DateTime.Now;
