@@ -23,8 +23,6 @@ builder.Services.ConfigHangFire(builder.Configuration);
 builder.Services.AddJWTAuthentication(builder.Configuration["Jwt:Key"], builder.Configuration["Jwt:Issuer"]);
 builder.Services.Configure<MomoOptionModel>(builder.Configuration.GetSection("MomoAPI"));
 builder.Services.ConfigureFireBaseServices();
-builder.Services.ConfigureQuartzWalletServices();
-builder.Services.ConfigureQuartzDriverPriority();
 
 builder.Services.AddCors(o => o.AddPolicy("CorsPolicy", builder =>
 {

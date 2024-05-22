@@ -30,25 +30,21 @@ public class MoMoService : IMoMoService
     private readonly AppDbContext _dbContext;
     private readonly IMapper _mapper;
     private readonly IMailService _mailService;
+    private readonly IHangfireServices _hangfireServices;
     private readonly IConfiguration _configuration;
     private readonly IProducer<Null, string> _producer;
     private readonly UserManager<User> _userManager;
+    private readonly IOptions<MomoOptionModel> _options;
 
-    public MoMoService(AppDbContext dbContext, IMapper mapper, IMailService mailService, IConfiguration configuration, IProducer<Null, string> producer, UserManager<User> userManager, IOptions<MomoOptionModel> options)
+    public MoMoService(AppDbContext dbContext, IMapper mapper, IMailService mailService, IHangfireServices hangfireServices, IConfiguration configuration, IProducer<Null, string> producer, UserManager<User> userManager, IOptions<MomoOptionModel> options)
     {
         _dbContext = dbContext;
         _mapper = mapper;
         _mailService = mailService;
+        _hangfireServices = hangfireServices;
         _configuration = configuration;
         _producer = producer;
         _userManager = userManager;
-        _options = options;
-    }
-
-    private readonly IOptions<MomoOptionModel> _options;
-
-    public MoMoService(IOptions<MomoOptionModel> options)
-    {
         _options = options;
     }
 
@@ -173,6 +169,8 @@ public class MoMoService : IMoMoService
             request.AddParameter("application/json", JsonConvert.SerializeObject(requestData), ParameterType.RequestBody);
 
             var response = await client.ExecuteAsync(request);
+
+            _hangfireServices.ScheduleCheckFailureWalletTransaction(walletTransaction.Id);
 
             var data = _mapper.Map<MomoCreatePaymentResponseModel>(JsonConvert.DeserializeObject<MomoCreatePaymentResponseModel>(response.Content));
             result.Data = data;

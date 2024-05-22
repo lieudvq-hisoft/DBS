@@ -307,7 +307,8 @@ public class SearchRequestService : ISearchRequestService
             driverStatus.IsFree = false;
             _dbContext.DriverStatuses.Update(driverStatus);
 
-            //Todo: Thêm trừ priority ở đây
+            driver.Priority -= (float)0.1;
+            _dbContext.Users.Update(driver);
 
             await _dbContext.SaveChangesAsync();
 

@@ -3,7 +3,7 @@ using Services.Core;
 
 namespace Services.Hangfire
 {
-	public class HangfireJob : BackgroundService
+    public class HangfireJob : BackgroundService
     {
         private readonly IHangfireServices _hangfireServices;
 

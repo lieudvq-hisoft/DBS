@@ -27,19 +27,22 @@ public class VNPayService : IVNPayService
     private readonly AppDbContext _dbContext;
     private readonly IMapper _mapper;
     private readonly IMailService _mailService;
+    private readonly IHangfireServices _hangfireServices;
     private readonly IConfiguration _configuration;
     private readonly IProducer<Null, string> _producer;
     private readonly UserManager<User> _userManager;
 
-    public VNPayService(AppDbContext dbContext, IMapper mapper, IMailService mailService, IConfiguration configuration, IProducer<Null, string> producer, UserManager<User> userManager)
+    public VNPayService(AppDbContext dbContext, IMapper mapper, IMailService mailService, IHangfireServices hangfireServices, IConfiguration configuration, IProducer<Null, string> producer, UserManager<User> userManager)
     {
         _dbContext = dbContext;
         _mapper = mapper;
         _mailService = mailService;
+        _hangfireServices = hangfireServices;
         _configuration = configuration;
         _producer = producer;
         _userManager = userManager;
     }
+
     public async Task<ResultModel> CreatePaymentBookingUrl(PaymentInformationModel model, HttpContext context, Guid userId)
     {
         var result = new ResultModel();
@@ -141,6 +144,7 @@ public class VNPayService : IVNPayService
             var paymentUrl =
                 pay.CreateRequestUrl(_configuration["Vnpay:BaseUrl"], _configuration["Vnpay:HashSecret"]);
 
+            _hangfireServices.ScheduleCheckFailureWalletTransaction(walletTransaction.Id);
 
             result.Data = paymentUrl;
             result.Succeed = true;

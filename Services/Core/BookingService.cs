@@ -637,11 +637,17 @@ public class BookingService : IBookingService
             _dbContext.DriverStatuses.Update(driverStatus);
 
             driver.LastTripTime = DateTime.Now;
+            driver.Priority += (float)0.1;
             _dbContext.Users.Update(driver);
 
             booking.Status = BookingStatus.Complete;
             booking.DateUpdated = DateTime.Now;
             booking.DropOffTime = DateTime.Now;
+
+            var customer = booking.SearchRequest.Customer;
+            customer.Priority += (float)0.1;
+            _dbContext.Users.Update(customer);
+
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
@@ -787,6 +793,9 @@ public class BookingService : IBookingService
             booking.Status = BookingStatus.Cancel;
             booking.DateUpdated = DateTime.Now;
 
+            driver.Priority -= (float)0.2;
+            _dbContext.Users.Update(driver);
+
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
@@ -873,6 +882,12 @@ public class BookingService : IBookingService
                 }
             }
 
+            if (customer.Priority < 4)
+            {
+                customer.Priority -= (float)0.5;
+                _dbContext.Users.Update(customer);
+            }
+
             var wallet = _dbContext.Wallets.Where(_ => _.UserId == booking.SearchRequest.CustomerId).FirstOrDefault();
             if (wallet == null)
             {
@@ -895,9 +910,23 @@ public class BookingService : IBookingService
                 return result;
             }
 
+            var refundMoney = booking.SearchRequest.Price;
+            if (customer.Priority <= 1)
+            {
+                var priceConfiguration = _dbContext.PriceConfigurations.FirstOrDefault();
+                if ((bool)priceConfiguration.CustomerCancelFee.IsPercent)
+                {
+                    refundMoney -= (long)(refundMoney * (priceConfiguration.CustomerCancelFee.Price / 100));
+                }
+                else
+                {
+                    refundMoney -= (long)priceConfiguration.CustomerCancelFee.Price;
+                }
+            }
+
             var walletTransaction = new WalletTransaction
             {
-                TotalMoney = booking.SearchRequest.Price,
+                TotalMoney = refundMoney,
                 TypeWalletTransaction = TypeWalletTransaction.Refund,
                 WalletId = wallet.Id,
                 Status = WalletTransactionStatus.Success,
@@ -906,7 +935,7 @@ public class BookingService : IBookingService
 
             var walletAdminTransaction = new WalletTransaction
             {
-                TotalMoney = booking.SearchRequest.Price,
+                TotalMoney = refundMoney,
                 TypeWalletTransaction = TypeWalletTransaction.Refund,
                 WalletId = walletAdmin.Id,
                 Status = WalletTransactionStatus.Success,
@@ -931,6 +960,7 @@ public class BookingService : IBookingService
 
             booking.Status = BookingStatus.Cancel;
             booking.DateUpdated = DateTime.Now;
+
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
