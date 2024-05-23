@@ -65,6 +65,12 @@ public class WalletService : IWalletService
                 result.ErrorMessage = "User has been deactivated";
                 return result;
             }
+            var checkExist = _dbContext.Wallets.Where(_ => _.UserId == model.UserId).FirstOrDefault();
+            if (checkExist != null)
+            {
+                result.ErrorMessage = "User Wallet existed";
+                return result;
+            }
             var wallet = _mapper.Map<WalletCreateModel, Wallet>(model);
             _dbContext.Wallets.Add(wallet);
             await _dbContext.SaveChangesAsync();
