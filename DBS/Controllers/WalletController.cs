@@ -53,9 +53,9 @@ public class WalletController : ControllerBase
     }
 
     [HttpPost("WithdrawFunds")]
-    public async Task<ActionResult> WithdrawFunds([FromBody] WalletTransactionCreateModel model)
+    public async Task<ActionResult> WithdrawFunds([FromBody] WalletTransactionCreateModel model, [FromQuery] Guid LinkedAccountId)
     {
-        var result = await _walletService.WithdrawFunds(model, Guid.Parse(User.GetId()));
+        var result = await _walletService.WithdrawFunds(model, LinkedAccountId, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

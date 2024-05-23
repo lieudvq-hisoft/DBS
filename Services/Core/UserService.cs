@@ -36,6 +36,8 @@ public interface IUserService
     Task<ResultModel> ResetPassword(ResetPasswordModel model);
     Task<ResultModel> ForgotPassword(ForgotPasswordModel model);
     Task<ResultModel> RegisterStaffByAdmin(RegisterStaffByAdminModel model, Guid UserId);
+    Task<ResultModel> UpdateCustomerPriority();
+
 }
 public class UserService : IUserService
 {
@@ -779,6 +781,35 @@ public class UserService : IUserService
             await _dbContext.SaveChangesAsync();
             result.Succeed = true;
             result.Data = _mapper.Map<UserModel>(user);
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> UpdateCustomerPriority()
+    {
+        var result = new ResultModel();
+        try
+        {
+            var customers = await _dbContext.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .Where(u => u.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Customer)
+                    && u.Priority < 2
+                    && !u.IsDeleted)
+                .ToListAsync();
+
+            foreach (var customer in customers)
+            {
+                customer.Priority = 2;
+            }
+            await _dbContext.SaveChangesAsync();
+
+            result.Succeed = true;
+            result.Data = customers;
         }
         catch (Exception ex)
         {
