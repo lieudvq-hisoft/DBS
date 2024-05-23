@@ -12,9 +12,7 @@ namespace Services.Core
 {
     public interface IHangfireServices
     {
-        Task<ResultModel> CheckFailureWalletTransaction(Guid walletTransactionId);
         void ScheduleCheckFailureWalletTransaction(Guid walletTransactionId);
-        Task<ResultModel> UpdateCustomerPriority();
         void RecuringUpdateCustomerPriorityEveryMonday();
         void DeleteJobClient(string jobId);
     }
@@ -39,30 +37,6 @@ namespace Services.Core
             _logger = logger;
         }
 
-        public async Task<ResultModel> CheckFailureWalletTransaction(Guid walletTransactionId)
-        {
-            var result = new ResultModel();
-
-            try
-            {
-                var walletTransaction = await _dbContext.WalletTransactions
-                    .FirstOrDefaultAsync(wt => wt.Id == walletTransactionId);
-
-                if (walletTransaction != null && walletTransaction.Status == Data.Enums.WalletTransactionStatus.Waiting)
-                {
-                    walletTransaction.Status = Data.Enums.WalletTransactionStatus.Failure;
-                    await _dbContext.SaveChangesAsync();
-                }
-                result.Succeed = true;
-                result.Data = walletTransaction;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in CheckFailureWalletTransaction for WalletTransactionId: {WalletTransactionId}", walletTransactionId);
-            }
-            return result;
-        }
-
         public void DeleteJobClient(string jobId)
         {
             try
@@ -79,7 +53,7 @@ namespace Services.Core
         {
             try
             {
-                var id = _backgroundJobClient.Schedule(() => CheckFailureWalletTransaction(walletTransactionId), TimeSpan.FromMinutes(10));
+                _backgroundJobClient.Schedule<IWalletService>(methodCall: (_) => _.CheckFailureWalletTransaction(walletTransactionId), delay: TimeSpan.FromSeconds(30));
             }
             catch (Exception ex)
             {
@@ -87,40 +61,11 @@ namespace Services.Core
             }
         }
 
-        public async Task<ResultModel> UpdateCustomerPriority()
-        {
-            var result = new ResultModel();
-            try
-            {
-                var customers = await _dbContext.Users
-                    .Include(u => u.UserRoles)
-                        .ThenInclude(ur => ur.Role)
-                    .Where(u => u.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Customer)
-                        && u.Priority < 2
-                        && !u.IsDeleted)
-                    .ToListAsync();
-
-                foreach (var customer in customers)
-                {
-                    customer.Priority = 2;
-                }
-                await _dbContext.SaveChangesAsync();
-
-                result.Succeed = true;
-                result.Data = customers;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating customer priority");
-            }
-            return result;
-        }
-
         public void RecuringUpdateCustomerPriorityEveryMonday()
         {
             try
             {
-                _recurringJob.AddOrUpdate<IHangfireServices>("UpdateCustomerPriority", methodCall: (_) => _.UpdateCustomerPriority(), Cron.Weekly(DayOfWeek.Monday, 0, 0));
+                _recurringJob.AddOrUpdate<IUserService>("UpdateCustomerPriority", methodCall: (_) => _.UpdateCustomerPriority(), cronExpression: Cron.Minutely);
             }
             catch (Exception ex)
             {

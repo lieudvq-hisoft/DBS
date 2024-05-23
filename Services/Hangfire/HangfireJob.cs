@@ -25,6 +25,8 @@ namespace Services.Hangfire
                 e.Cancel = true;
                 cts.Cancel();
             };
+
+            _hangfireServices.RecuringUpdateCustomerPriorityEveryMonday();
         }
     }
 

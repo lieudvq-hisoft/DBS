@@ -20,11 +20,12 @@ public interface IWalletService
     Task<ResultModel> GetWallet(Guid userId);
     Task<ResultModel> CheckExistWallet(Guid userId);
     Task<ResultModel> AddFunds(WalletTransactionCreateModel model, Guid userId);
-    Task<ResultModel> WithdrawFunds(WalletTransactionCreateModel model, Guid userId);
+    Task<ResultModel> WithdrawFunds(WalletTransactionCreateModel model, Guid LinkedAccountId, Guid userId);
     Task<ResultModel> AcceptWithdrawFundsRequest(ResponeWithdrawFundsRequest model, Guid adminId);
     Task<ResultModel> RejectWithdrawFundsRequest(ResponeWithdrawFundsRequest model, Guid adminId);
     Task<ResultModel> Pay(WalletTransactionCreateModel model, Guid userId);
     Task<ResultModel> GetTransactions(PagingParam<SortWalletCriteria> paginationModel, Guid userId);
+    Task<ResultModel> CheckFailureWalletTransaction(Guid walletTransactionId);
 }
 
 public class WalletService : IWalletService
@@ -199,7 +200,7 @@ public class WalletService : IWalletService
         return result;
     }
 
-    public async Task<ResultModel> WithdrawFunds(WalletTransactionCreateModel model, Guid userId)
+    public async Task<ResultModel> WithdrawFunds(WalletTransactionCreateModel model, Guid LinkedAccountId, Guid userId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -223,6 +224,18 @@ public class WalletService : IWalletService
                 return result;
             }
 
+            var linkedAccount = _dbContext.LinkedAccounts.Where(_ => _.Id == LinkedAccountId).FirstOrDefault();
+            if (linkedAccount == null)
+            {
+                result.ErrorMessage = "Linked Account not exist";
+                return result;
+            }
+            if (linkedAccount.UserId != userId)
+            {
+                result.ErrorMessage = "You don't have permission with this Linked Account";
+                return result;
+            }
+
             var admin = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
                     .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Admin) && !_.IsDeleted).FirstOrDefault();
             if (admin == null)
@@ -234,6 +247,7 @@ public class WalletService : IWalletService
             var walletTransaction = _mapper.Map<WalletTransactionCreateModel, WalletTransaction>(model);
             walletTransaction.TypeWalletTransaction = TypeWalletTransaction.WithdrawFunds;
             walletTransaction.WalletId = wallet.Id;
+            walletTransaction.LinkedAccount = _mapper.Map<LinkedAccountModel>(linkedAccount);
             _dbContext.WalletTransactions.Add(walletTransaction);
 
             wallet.TotalMoney -= walletTransaction.TotalMoney;
@@ -478,6 +492,30 @@ public class WalletService : IWalletService
             result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
         }
 
+        return result;
+    }
+
+    public async Task<ResultModel> CheckFailureWalletTransaction(Guid walletTransactionId)
+    {
+        var result = new ResultModel();
+
+        try
+        {
+            var walletTransaction = await _dbContext.WalletTransactions
+                .FirstOrDefaultAsync(wt => wt.Id == walletTransactionId);
+
+            if (walletTransaction != null && walletTransaction.Status == Data.Enums.WalletTransactionStatus.Waiting)
+            {
+                walletTransaction.Status = Data.Enums.WalletTransactionStatus.Failure;
+                await _dbContext.SaveChangesAsync();
+            }
+            result.Succeed = true;
+            result.Data = walletTransaction;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
         return result;
     }
 }
