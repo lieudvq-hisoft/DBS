@@ -34,5 +34,6 @@ namespace Data.Models
         public WalletTransactionStatus Status { get; set; }
         public DateTime DateCreated { get; set; }
         public LinkedAccountModel? LinkedAccount { get; set; }
+        public Guid? LinkedAccountId { get; set; }
     }
 }

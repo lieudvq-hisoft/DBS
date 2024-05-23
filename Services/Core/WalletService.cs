@@ -25,6 +25,7 @@ public interface IWalletService
     Task<ResultModel> RejectWithdrawFundsRequest(ResponeWithdrawFundsRequest model, Guid adminId);
     Task<ResultModel> Pay(WalletTransactionCreateModel model, Guid userId);
     Task<ResultModel> GetTransactions(PagingParam<SortWalletCriteria> paginationModel, Guid userId);
+    Task<ResultModel> GetWithdrawFundsRequest(PagingParam<SortWalletCriteria> paginationModel, Guid adminId);
     Task<ResultModel> CheckFailureWalletTransaction(Guid walletTransactionId);
 }
 
@@ -247,7 +248,7 @@ public class WalletService : IWalletService
             var walletTransaction = _mapper.Map<WalletTransactionCreateModel, WalletTransaction>(model);
             walletTransaction.TypeWalletTransaction = TypeWalletTransaction.WithdrawFunds;
             walletTransaction.WalletId = wallet.Id;
-            walletTransaction.LinkedAccount = _mapper.Map<LinkedAccountModel>(linkedAccount);
+            walletTransaction.LinkedAccountId = linkedAccount.Id;
             _dbContext.WalletTransactions.Add(walletTransaction);
 
             wallet.TotalMoney -= walletTransaction.TotalMoney;
@@ -469,7 +470,8 @@ public class WalletService : IWalletService
                 result.ErrorMessage = "Wallet not exist";
                 return result;
             }
-            var data = _dbContext.WalletTransactions.Where(_ => _.WalletId == wallet.Id);
+            var data = _dbContext.WalletTransactions
+                .Where(_ => _.WalletId == wallet.Id);
 
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var walletTransactions = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
@@ -480,6 +482,62 @@ public class WalletService : IWalletService
             {
                 result.ErrorMessage = "Wallet Transactions not exist";
                 return result;
+            }
+
+            paging.Data = viewModels;
+            result.Data = paging;
+
+            result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+
+        return result;
+    }
+
+    public async Task<ResultModel> GetWithdrawFundsRequest(PagingParam<SortWalletCriteria> paginationModel, Guid adminId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var admin = _dbContext.Users.Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exist";
+                return result;
+            }
+            if (!admin.IsActive)
+            {
+                result.ErrorMessage = "Admin has been deactivated";
+                return result;
+            }
+            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
+            if (!checkAdmin)
+            {
+                result.ErrorMessage = "The user must be Admin";
+                return result;
+            }
+            var data = _dbContext.WalletTransactions
+                .Where(_ => _.TypeWalletTransaction == TypeWalletTransaction.WithdrawFunds);
+
+            var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
+            var walletTransactions = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
+            walletTransactions = walletTransactions.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
+            var viewModels = _mapper.Map<List<WalletTransactionModel>>(walletTransactions);
+
+            if (walletTransactions == null)
+            {
+                result.ErrorMessage = "Wallet Transactions not exist";
+                return result;
+            }
+
+            foreach (var item in viewModels)
+            {
+                var linkedAccount = _dbContext.LinkedAccounts.Where(_ => _.Id == item.LinkedAccountId).FirstOrDefault();
+                item.LinkedAccount = _mapper.Map<LinkedAccountModel>(linkedAccount);
             }
 
             paging.Data = viewModels;

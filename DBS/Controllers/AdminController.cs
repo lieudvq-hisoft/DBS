@@ -23,8 +23,9 @@ public class AdminController : ControllerBase
     private readonly IIdentityCardService _identityCardService;
     private readonly IVehicleService _vehicleService;
     private readonly IPriceConfigurationService _priceConfigurationService;
+    private readonly IWalletService _walletService;
 
-    public AdminController(IUserService userService, IBookingCancelService bookingCancelService, IBookingService bookingService, IDriverService driverService, IDrivingLicenseService drivingLicenseService, IIdentityCardService identityCardService, IVehicleService vehicleService, IPriceConfigurationService priceConfigurationService)
+    public AdminController(IUserService userService, IBookingCancelService bookingCancelService, IBookingService bookingService, IDriverService driverService, IDrivingLicenseService drivingLicenseService, IIdentityCardService identityCardService, IVehicleService vehicleService, IPriceConfigurationService priceConfigurationService, IWalletService walletService)
     {
         _userService = userService;
         _bookingCancelService = bookingCancelService;
@@ -34,6 +35,7 @@ public class AdminController : ControllerBase
         _identityCardService = identityCardService;
         _vehicleService = vehicleService;
         _priceConfigurationService = priceConfigurationService;
+        _walletService = walletService;
     }
 
     [HttpPut("User/BanAccount")]
@@ -264,6 +266,15 @@ public class AdminController : ControllerBase
     public async Task<ActionResult> UpdatePriceConfiguration([FromBody] PriceConfigurationUpdateModel model)
     {
         var result = await _priceConfigurationService.UpdatePriceConfiguration(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+
+    [HttpGet("WithdrawFundsRequest")]
+    public async Task<ActionResult> GetWithdrawFundsRequest([FromQuery] PagingParam<SortWalletCriteria> paginationModel)
+    {
+        var result = await _walletService.GetWithdrawFundsRequest(paginationModel, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
