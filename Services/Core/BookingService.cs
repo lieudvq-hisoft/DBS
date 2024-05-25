@@ -981,6 +981,7 @@ public class BookingService : IBookingService
 
             var driver = _dbContext.Users.Where(_ => _.Id == booking.DriverId)
                 .Include(_ => _.DriverStatuses)
+                .Include(_ => _.DriverLocations)
                 .FirstOrDefault();
             var driverStatus = driver.DriverStatuses.FirstOrDefault();
             driverStatus.IsFree = true;

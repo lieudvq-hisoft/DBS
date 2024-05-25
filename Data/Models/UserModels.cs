@@ -20,6 +20,7 @@ namespace Data.Model
         public string Email { get; set; }
         public string? Address { get; set; }
         public float? Star { get; set; }
+        public float? Priority { get; set; }
         public string? Avatar { get; set; }
         public Gender? Gender { get; set; }
         public DateOnly? Dob { get; set; }

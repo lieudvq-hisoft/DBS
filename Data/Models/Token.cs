@@ -18,6 +18,7 @@ public class Token
     public string? Email { get; set; }
     public string? Name { get; set; }
     public string Avatar { get; set; }
+    public float? Priority { get; set; }
     public int CurrenNoticeCount { get; set; }
     public List<string> Roles { get; set; } = new List<string>();
 }

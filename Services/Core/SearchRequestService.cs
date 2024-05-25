@@ -255,34 +255,31 @@ public class SearchRequestService : ISearchRequestService
             await _producer.ProduceAsync("dbs-searchrequest-customer-cancel", new Message<Null, string> { Value = json });
             _producer.Flush();
 
-            if (searchRequest.BookingPaymentMethod == BookingPaymentMethod.MoMo || searchRequest.BookingPaymentMethod == BookingPaymentMethod.VNPay)
+            var wallet = _dbContext.Wallets.Where(_ => _.UserId == searchRequest.CustomerId).FirstOrDefault();
+            if (wallet == null)
             {
-                var wallet = _dbContext.Wallets.Where(_ => _.UserId == searchRequest.CustomerId).FirstOrDefault();
-                if (wallet == null)
-                {
-                    result.ErrorMessage = "Wallet not exist";
-                    return result;
-                }
-
-                var walletTransaction = new WalletTransaction
-                {
-                    TotalMoney = searchRequest.Price,
-                    TypeWalletTransaction = TypeWalletTransaction.Refund,
-                    WalletId = wallet.Id,
-                    Status = WalletTransactionStatus.Success,
-                };
-                _dbContext.WalletTransactions.Add(walletTransaction);
-
-                wallet.TotalMoney += walletTransaction.TotalMoney;
-                wallet.DateUpdated = DateTime.Now;
-                _dbContext.Wallets.Update(wallet);
-
-                var payloadWallet = _mapper.Map<WalletModel>(wallet);
-                var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { searchRequest.CustomerId }, Payload = payloadWallet };
-                var jsonWallet = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWallet);
-                await _producer.ProduceAsync("dbs-wallet-refund-customer", new Message<Null, string> { Value = jsonWallet });
-                _producer.Flush();
+                result.ErrorMessage = "Wallet not exist";
+                return result;
             }
+
+            var walletTransaction = new WalletTransaction
+            {
+                TotalMoney = searchRequest.Price,
+                TypeWalletTransaction = TypeWalletTransaction.Refund,
+                WalletId = wallet.Id,
+                Status = WalletTransactionStatus.Success,
+            };
+            _dbContext.WalletTransactions.Add(walletTransaction);
+
+            wallet.TotalMoney += walletTransaction.TotalMoney;
+            wallet.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(wallet);
+
+            var payloadWallet = _mapper.Map<WalletModel>(wallet);
+            var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { searchRequest.CustomerId }, Payload = payloadWallet };
+            var jsonWallet = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWallet);
+            await _producer.ProduceAsync("dbs-wallet-refund-customer", new Message<Null, string> { Value = jsonWallet });
+            _producer.Flush();
 
             await _dbContext.SaveChangesAsync();
 
@@ -331,34 +328,33 @@ public class SearchRequestService : ISearchRequestService
 
             var data = _mapper.Map<SearchRequestModel>(searchRequest);
 
-            if (searchRequest.BookingPaymentMethod == BookingPaymentMethod.MoMo || searchRequest.BookingPaymentMethod == BookingPaymentMethod.VNPay)
+
+            var wallet = _dbContext.Wallets.Where(_ => _.UserId == searchRequest.CustomerId).FirstOrDefault();
+            if (wallet == null)
             {
-                var wallet = _dbContext.Wallets.Where(_ => _.UserId == searchRequest.CustomerId).FirstOrDefault();
-                if (wallet == null)
-                {
-                    result.ErrorMessage = "Wallet not exist";
-                    return result;
-                }
-
-                var walletTransaction = new WalletTransaction
-                {
-                    TotalMoney = searchRequest.Price,
-                    TypeWalletTransaction = TypeWalletTransaction.Refund,
-                    WalletId = wallet.Id,
-                    Status = WalletTransactionStatus.Success,
-                };
-                _dbContext.WalletTransactions.Add(walletTransaction);
-
-                wallet.TotalMoney += walletTransaction.TotalMoney;
-                wallet.DateUpdated = DateTime.Now;
-                _dbContext.Wallets.Update(wallet);
-
-                var payloadWallet = _mapper.Map<WalletModel>(wallet);
-                var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { searchRequest.CustomerId }, Payload = payloadWallet };
-                var jsonWallet = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWallet);
-                await _producer.ProduceAsync("dbs-wallet-refund-customer", new Message<Null, string> { Value = jsonWallet });
-                _producer.Flush();
+                result.ErrorMessage = "Wallet not exist";
+                return result;
             }
+
+            var walletTransaction = new WalletTransaction
+            {
+                TotalMoney = searchRequest.Price,
+                TypeWalletTransaction = TypeWalletTransaction.Refund,
+                WalletId = wallet.Id,
+                Status = WalletTransactionStatus.Success,
+            };
+            _dbContext.WalletTransactions.Add(walletTransaction);
+
+            wallet.TotalMoney += walletTransaction.TotalMoney;
+            wallet.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(wallet);
+
+            var payloadWallet = _mapper.Map<WalletModel>(wallet);
+            var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { searchRequest.CustomerId }, Payload = payloadWallet };
+            var jsonWallet = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWallet);
+            await _producer.ProduceAsync("dbs-wallet-refund-customer", new Message<Null, string> { Value = jsonWallet });
+            _producer.Flush();
+
 
             await _dbContext.SaveChangesAsync();
 
