@@ -98,6 +98,12 @@ public class ExternalAuthService : IExternalAuthService
 
 
             }
+            if (!user.IsActive)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "User has been deactivated";
+                return result;
+            }
             var userRoles = _dbContext.UserRoles.Where(ur => ur.UserId == user.Id).ToList();
             var roles = new List<string>();
             foreach (var userRole in userRoles)
