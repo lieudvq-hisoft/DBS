@@ -44,6 +44,14 @@ public class SearchRequestController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpPut("UpdateStatusToCancel")]
+    public async Task<ActionResult> UpdateStatusToCancelWithoutDriverNoti(string SearchRequestId)
+    {
+        var result = await _searchRequestService.UpdateStatusToCancel(Guid.Parse(SearchRequestId), Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
     [HttpPut("UpdateStatusToCancel/{SearchRequestId}")]
     public async Task<ActionResult> UpdateStatusToCancel(string SearchRequestId, [FromQuery] Guid? DriverId = null)
     {
@@ -51,6 +59,7 @@ public class SearchRequestController : ControllerBase
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
+
 
     [HttpPut("SearchRequestDriverMiss")]
     public async Task<ActionResult> DriverMissSearchRequest([FromQuery] Guid? CustomerId = null)

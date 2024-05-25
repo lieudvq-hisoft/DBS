@@ -6,6 +6,7 @@ using Data.Enums;
 using Data.Model;
 using Data.Models;
 using Data.Utils;
+using MailKit.Search;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ namespace Services.Core;
 public interface IVNPayService
 {
     Task<ResultModel> CreatePaymentBookingUrl(PaymentInformationModel model, HttpContext context, Guid userId);
+    Task<ResultModel> CreatePaymentAddFundsBookingUrl(PaymentInformationModel model, HttpContext context, Guid userId);
     Task<ResultModel> CreatePaymentUrl(PaymentInformationModel model, HttpContext context, Guid userId);
     Task<string> PaymentExecute(IQueryCollection collections);
 }
@@ -158,6 +160,81 @@ public class VNPayService : IVNPayService
         return result;
     }
 
+    public async Task<ResultModel> CreatePaymentAddFundsBookingUrl(PaymentInformationModel model, HttpContext context, Guid userId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var user = _dbContext.Users.Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            if (!user.IsActive)
+            {
+                result.ErrorMessage = "User has been deactivated";
+                return result;
+            }
+            if (model.Amount < 100000 || model.Amount > 10000000)
+            {
+                result.ErrorMessage = "Ammont between 100000 and 10000000";
+                return result;
+            }
+
+            var wallet = _dbContext.Wallets.Where(_ => _.UserId == user.Id).FirstOrDefault();
+            if (wallet == null)
+            {
+                result.ErrorMessage = "Wallet not exist";
+                return result;
+            }
+
+            var walletTransaction = new WalletTransaction
+            {
+                WalletId = wallet.Id,
+                TotalMoney = (int)model.Amount * 100,
+                TypeWalletTransaction = TypeWalletTransaction.AddFunds,
+                PaymentType = PaymentType.VNPay,
+            };
+            _dbContext.WalletTransactions.Add(walletTransaction);
+            await _dbContext.SaveChangesAsync();
+
+            var timeNow = DateTime.Now;
+            var tick = DateTime.Now.Ticks.ToString();
+            var pay = new VnPayLibrary();
+            var urlCallBack = _configuration["PaymentCallBack:ReturnUrl"];
+
+            pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"]);
+            pay.AddRequestData("vnp_Command", _configuration["Vnpay:Command"]);
+            pay.AddRequestData("vnp_TmnCode", _configuration["Vnpay:TmnCode"]);
+            pay.AddRequestData("vnp_Amount", ((int)model.Amount * 100).ToString());
+            pay.AddRequestData("vnp_CreateDate", timeNow.ToString("yyyyMMddHHmmss"));
+            pay.AddRequestData("vnp_CurrCode", _configuration["Vnpay:CurrCode"]);
+            pay.AddRequestData("vnp_IpAddr", pay.GetIpAddress(context));
+            pay.AddRequestData("vnp_Locale", _configuration["Vnpay:Locale"]);
+            pay.AddRequestData("vnp_OrderInfo", $"AddFundsBooking,{DateTime.UtcNow.Ticks},{userId},{walletTransaction.Id}");
+            pay.AddRequestData("vnp_OrderType", "Nạp tiền vào SecureWallet");
+            pay.AddRequestData("vnp_ReturnUrl", urlCallBack);
+            pay.AddRequestData("vnp_TxnRef", tick);
+
+            var paymentUrl =
+                pay.CreateRequestUrl(_configuration["Vnpay:BaseUrl"], _configuration["Vnpay:HashSecret"]);
+
+            _hangfireServices.ScheduleCheckFailureWalletTransaction(walletTransaction.Id);
+
+            result.Data = paymentUrl;
+            result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+
+
+        return result;
+    }
+
     public async Task<string> PaymentExecute(IQueryCollection collections)
     {
 
@@ -193,7 +270,25 @@ public class VNPayService : IVNPayService
                         _producer.Flush();
 
                         return "srh://app.unilinks.com/viewWallet";
-                        break;
+                    case "AddFundsBooking":
+                        wallet.TotalMoney += (response.Amount / 100);
+                        wallet.DateUpdated = DateTime.Now;
+                        _dbContext.Wallets.Update(wallet);
+
+                        var walletBookingTransactionId = response.OrderDescription.Split(',')[3];
+                        var walletTransactionAddFundsBooking = _dbContext.WalletTransactions.Where(_ => _.Id == Guid.Parse(walletBookingTransactionId)).FirstOrDefault();
+                        walletTransactionAddFundsBooking.Status = WalletTransactionStatus.Success;
+                        _dbContext.Wallets.Update(wallet);
+
+                        await _dbContext.SaveChangesAsync();
+
+                        var payloadAddFundsBooking = _mapper.Map<WalletModel>(wallet);
+                        var kafkaModelAddFundsBooking = new KafkaModel { UserReceiveNotice = new List<Guid>() { Guid.Parse(userId) }, Payload = payloadAddFundsBooking };
+                        var jsonAddFundsBooking = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelAddFundsBooking);
+                        await _producer.ProduceAsync("dbs-wallet-addfunds-booking", new Message<Null, string> { Value = jsonAddFundsBooking });
+                        _producer.Flush();
+
+                        return "srh://app.unilinks.com/selectedPaymentMethodInBooking";
                     case "Pay":
                         var admin = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
                         .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Admin) && !_.IsDeleted).FirstOrDefault();
@@ -212,7 +307,6 @@ public class VNPayService : IVNPayService
                         _producer.Flush();
 
                         return "srh://app.unilinks.com/mapCustomer";
-                        break;
                 }
             }
             else

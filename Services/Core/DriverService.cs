@@ -452,14 +452,16 @@ public class DriverService : IDriverService
                         + sin(radians({locationCustomer.Latitude}))
                         * sin(radians(dl.""Latitude""))
                     )
-                ) <= {locationCustomer.Radius}
-                ";
+                ) <= {locationCustomer.Radius} 
+                order by 
+                    anu.""Priority"" desc, 
+                    anu.""Star"" desc";
             }
             else
             {
                 fsQuery =
                     $@"
-                select distinct  anu.""Id"", anu.""Email"", ds.""IsOnline"", dl.""Latitude"", dl.""Longitude""
+                select distinct  anu.""Id"", anu.""Email"", ds.""IsOnline"", dl.""Latitude"", dl.""Longitude"", anu.""Priority"", anu.""Star""
                 from
                 ""AspNetUsers"" anu 
                 join ""DriverLocations"" dl on anu.""Id"" = dl.""DriverId"" 
@@ -474,8 +476,10 @@ public class DriverService : IDriverService
                         + sin(radians({locationCustomer.Latitude}))
                         * sin(radians(dl.""Latitude""))
                     )
-                ) <= {locationCustomer.Radius}
-                ";
+                ) <= {locationCustomer.Radius} 
+                order by 
+                    anu.""Priority"" desc,
+                    anu.""Star"" desc";
             }
             var data = _dbContext.Set<DriverOnlineModel>().FromSqlRaw(fsQuery.ToString()).AsQueryable();
             result.Data = data.ToList();

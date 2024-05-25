@@ -37,6 +37,15 @@ public class VNPayController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPost("CreatePaymentAddFundsBookingUrl")]
+    public async Task<ActionResult> CreatePaymentAddFundsBookingUrl(PaymentInformationModel model)
+    {
+        var result = await _vnPayService.CreatePaymentAddFundsBookingUrl(model, HttpContext, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
     [HttpGet("PaymentCallback")]
     public async Task<ActionResult> PaymentCallback()
     {
