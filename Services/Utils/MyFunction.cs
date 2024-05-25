@@ -54,6 +54,7 @@ namespace Services.Utils
                 Email = user.Email!,
                 Avatar = user.Avatar!,
                 Name = user.Name!,
+                Priority = user.Priority!,
                 Roles = role
             };
         }
