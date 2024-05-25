@@ -27,6 +27,14 @@ public class MoMoController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPost("CreatePaymentAddFundsBookingUrl")]
+    public async Task<ActionResult> CreatePaymentAddFundsBookingAsync(OrderInfoModel model)
+    {
+        var response = await _momoService.CreatePaymentAddFundsBookingAsync(model, Guid.Parse(User.GetId()));
+        return Ok(response);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPost("CreatePaymentBookingUrl")]
     public async Task<ActionResult> CreatePaymentBookingAsync(OrderInfoBookingModel model)
     {

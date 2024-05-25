@@ -604,9 +604,15 @@ public class BookingService : IBookingService
                 return result;
             }
 
+            var bookingPrice = booking.SearchRequest.Price;
+            var priceConfiguration = _dbContext.PriceConfigurations.FirstOrDefault();
+            var driverProfit = priceConfiguration.DriverProfit;
+
+            var driverProfitMoney = (long)(bookingPrice * (driverProfit.Price / 100.0));
+
             var walletTransaction = new WalletTransaction
             {
-                TotalMoney = booking.SearchRequest.Price,
+                TotalMoney = driverProfitMoney,
                 TypeWalletTransaction = TypeWalletTransaction.Income,
                 WalletId = wallet.Id,
                 Status = WalletTransactionStatus.Success,
@@ -615,18 +621,18 @@ public class BookingService : IBookingService
 
             var walletAdminTransaction = new WalletTransaction
             {
-                TotalMoney = booking.SearchRequest.Price,
+                TotalMoney = driverProfitMoney,
                 TypeWalletTransaction = TypeWalletTransaction.DriverIncome,
                 WalletId = walletAdmin.Id,
                 Status = WalletTransactionStatus.Success,
             };
             _dbContext.WalletTransactions.Add(walletAdminTransaction);
 
-            wallet.TotalMoney += (long)(walletTransaction.TotalMoney * 0.8);
+            wallet.TotalMoney += driverProfitMoney;
             wallet.DateUpdated = DateTime.Now;
             _dbContext.Wallets.Update(wallet);
 
-            walletAdmin.TotalMoney -= (long)(walletTransaction.TotalMoney * 0.8);
+            walletAdmin.TotalMoney -= driverProfitMoney;
             walletAdmin.DateUpdated = DateTime.Now;
             _dbContext.Wallets.Update(walletAdmin);
 
@@ -637,7 +643,10 @@ public class BookingService : IBookingService
             _dbContext.DriverStatuses.Update(driverStatus);
 
             driver.LastTripTime = DateTime.Now;
-            driver.Priority += (float)0.1;
+            if (driver.Priority < 4)
+            {
+                driver.Priority += 0.1f;
+            }
             _dbContext.Users.Update(driver);
 
             booking.Status = BookingStatus.Complete;
@@ -645,7 +654,10 @@ public class BookingService : IBookingService
             booking.DropOffTime = DateTime.Now;
 
             var customer = booking.SearchRequest.Customer;
-            customer.Priority += (float)0.1;
+            if (customer.Priority < 4)
+            {
+                customer.Priority += 0.1f;
+            }
             _dbContext.Users.Update(customer);
 
             await _dbContext.SaveChangesAsync();
@@ -793,7 +805,27 @@ public class BookingService : IBookingService
             booking.Status = BookingStatus.Cancel;
             booking.DateUpdated = DateTime.Now;
 
-            driver.Priority -= (float)0.2;
+            if (driver.Priority >= 0.2)
+            {
+                driver.Priority -= 0.2f;
+            }
+
+            if (driver.Priority == 0)
+            {
+                driver.IsActive = false;
+                var driverBan = _mapper.Map<UserModel>(driver);
+                var kafkaModelBan = new KafkaModel { UserReceiveNotice = new List<Guid>() { DriverId }, Payload = driverBan };
+                var jsonBan = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelBan);
+                await _producer.ProduceAsync("dbs-driver-status-ban", new Message<Null, string> { Value = jsonBan });
+                _producer.Flush();
+            }
+            else if (driver.Priority <= 1)
+            {
+                var kafkaModelWarning = new KafkaModel { UserReceiveNotice = new List<Guid>() { DriverId }, Payload = "" };
+                var jsonWarning = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWarning);
+                await _producer.ProduceAsync("dbs-driver-status-warning", new Message<Null, string> { Value = jsonWarning });
+                _producer.Flush();
+            }
             _dbContext.Users.Update(driver);
 
             await _dbContext.SaveChangesAsync();
@@ -882,12 +914,6 @@ public class BookingService : IBookingService
                 }
             }
 
-            if (customer.Priority < 4)
-            {
-                customer.Priority -= (float)0.5;
-                _dbContext.Users.Update(customer);
-            }
-
             var wallet = _dbContext.Wallets.Where(_ => _.UserId == booking.SearchRequest.CustomerId).FirstOrDefault();
             if (wallet == null)
             {
@@ -914,13 +940,16 @@ public class BookingService : IBookingService
             if (customer.Priority <= 1)
             {
                 var priceConfiguration = _dbContext.PriceConfigurations.FirstOrDefault();
-                if ((bool)priceConfiguration.CustomerCancelFee.IsPercent)
+
+                var cancelFee = priceConfiguration.CustomerCancelFee;
+
+                if (cancelFee.IsPercent.HasValue && cancelFee.IsPercent.Value)
                 {
-                    refundMoney -= (long)(refundMoney * (priceConfiguration.CustomerCancelFee.Price / 100));
+                    refundMoney -= (long)(refundMoney * (cancelFee.Price / 100.0));
                 }
                 else
                 {
-                    refundMoney -= (long)priceConfiguration.CustomerCancelFee.Price;
+                    refundMoney -= (long)(cancelFee.Price);
                 }
             }
 
@@ -960,6 +989,12 @@ public class BookingService : IBookingService
 
             booking.Status = BookingStatus.Cancel;
             booking.DateUpdated = DateTime.Now;
+
+            if (customer.Priority >= 0.5)
+            {
+                customer.Priority -= 0.5f;
+                _dbContext.Users.Update(customer);
+            }
 
             await _dbContext.SaveChangesAsync();
 

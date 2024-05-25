@@ -20,6 +20,7 @@ public interface ISearchRequestService
     Task<ResultModel> GetOfCustomer(PagingParam<SortCriteria> paginationModel, Guid customerId);
     Task<ResultModel> UpdateStatusToComplete(Guid SearchRequestId, Guid customerId);
     Task<ResultModel> UpdateStatusToCancel(Guid SearchRequestId, Guid customerId, Guid DriverId);
+    Task<ResultModel> UpdateStatusToCancel(Guid SearchRequestId, Guid customerId);
     Task<ResultModel> DriverMissSearchRequest(Guid customerId, Guid DriverId);
     Task<ResultModel> NewDriver(NewDriverModel model);
 
@@ -247,16 +248,119 @@ public class SearchRequestService : ISearchRequestService
             }
             searchRequest.Status = SearchRequestStatus.Cancel;
             searchRequest.DateUpdated = DateTime.Now;
-            await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<SearchRequestModel>(searchRequest);
-            if (driver != null)
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { DriverId }, Payload = data };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            await _producer.ProduceAsync("dbs-searchrequest-customer-cancel", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
+            if (searchRequest.BookingPaymentMethod == BookingPaymentMethod.MoMo || searchRequest.BookingPaymentMethod == BookingPaymentMethod.VNPay)
             {
-                var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { DriverId }, Payload = data };
-                var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
-                await _producer.ProduceAsync("dbs-searchrequest-customer-cancel", new Message<Null, string> { Value = json });
+                var wallet = _dbContext.Wallets.Where(_ => _.UserId == searchRequest.CustomerId).FirstOrDefault();
+                if (wallet == null)
+                {
+                    result.ErrorMessage = "Wallet not exist";
+                    return result;
+                }
+
+                var walletTransaction = new WalletTransaction
+                {
+                    TotalMoney = searchRequest.Price,
+                    TypeWalletTransaction = TypeWalletTransaction.Refund,
+                    WalletId = wallet.Id,
+                    Status = WalletTransactionStatus.Success,
+                };
+                _dbContext.WalletTransactions.Add(walletTransaction);
+
+                wallet.TotalMoney += walletTransaction.TotalMoney;
+                wallet.DateUpdated = DateTime.Now;
+                _dbContext.Wallets.Update(wallet);
+
+                var payloadWallet = _mapper.Map<WalletModel>(wallet);
+                var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { searchRequest.CustomerId }, Payload = payloadWallet };
+                var jsonWallet = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWallet);
+                await _producer.ProduceAsync("dbs-wallet-refund-customer", new Message<Null, string> { Value = jsonWallet });
                 _producer.Flush();
             }
+
+            await _dbContext.SaveChangesAsync();
+
+            result.Data = data;
+            result.Succeed = true;
+            return result;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> UpdateStatusToCancel(Guid SearchRequestId, Guid customerId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var customer = _dbContext.Users.Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();
+            if (customer == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            var checkCustomer = await _userManager.IsInRoleAsync(customer, RoleNormalizedName.Customer);
+            if (!checkCustomer)
+            {
+                result.ErrorMessage = "The user must be a customer";
+                return result;
+            }
+            var searchRequest = _dbContext.SearchRequests.Where(_ => _.CustomerId == customerId && _.Id == SearchRequestId && !_.IsDeleted).FirstOrDefault();
+            if (searchRequest == null)
+            {
+                result.ErrorMessage = "SearchRequest not exist";
+                return result;
+            }
+            if (searchRequest.Status != SearchRequestStatus.Processing)
+            {
+                result.ErrorMessage = "SearchRequest status not suitable";
+                return result;
+            }
+            searchRequest.Status = SearchRequestStatus.Cancel;
+            searchRequest.DateUpdated = DateTime.Now;
+
+            var data = _mapper.Map<SearchRequestModel>(searchRequest);
+
+            if (searchRequest.BookingPaymentMethod == BookingPaymentMethod.MoMo || searchRequest.BookingPaymentMethod == BookingPaymentMethod.VNPay)
+            {
+                var wallet = _dbContext.Wallets.Where(_ => _.UserId == searchRequest.CustomerId).FirstOrDefault();
+                if (wallet == null)
+                {
+                    result.ErrorMessage = "Wallet not exist";
+                    return result;
+                }
+
+                var walletTransaction = new WalletTransaction
+                {
+                    TotalMoney = searchRequest.Price,
+                    TypeWalletTransaction = TypeWalletTransaction.Refund,
+                    WalletId = wallet.Id,
+                    Status = WalletTransactionStatus.Success,
+                };
+                _dbContext.WalletTransactions.Add(walletTransaction);
+
+                wallet.TotalMoney += walletTransaction.TotalMoney;
+                wallet.DateUpdated = DateTime.Now;
+                _dbContext.Wallets.Update(wallet);
+
+                var payloadWallet = _mapper.Map<WalletModel>(wallet);
+                var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { searchRequest.CustomerId }, Payload = payloadWallet };
+                var jsonWallet = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWallet);
+                await _producer.ProduceAsync("dbs-wallet-refund-customer", new Message<Null, string> { Value = jsonWallet });
+                _producer.Flush();
+            }
+
+            await _dbContext.SaveChangesAsync();
 
             result.Data = data;
             result.Succeed = true;
@@ -307,9 +411,29 @@ public class SearchRequestService : ISearchRequestService
             driverStatus.IsFree = false;
             _dbContext.DriverStatuses.Update(driverStatus);
 
-            driver.Priority -= (float)0.1;
-            _dbContext.Users.Update(driver);
+            if (driver.Priority > 0)
+            {
+                driver.Priority -= 0.1f;
+            }
 
+            if (driver.Priority == 0)
+            {
+                driver.IsActive = false;
+                var driverBan = _mapper.Map<UserModel>(driver);
+                var kafkaModelBan = new KafkaModel { UserReceiveNotice = new List<Guid>() { DriverId }, Payload = driverBan };
+                var jsonBan = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelBan);
+                await _producer.ProduceAsync("dbs-driver-status-ban", new Message<Null, string> { Value = jsonBan });
+                _producer.Flush();
+            }
+            else if (driver.Priority <= 1)
+            {
+                var kafkaModelWarning = new KafkaModel { UserReceiveNotice = new List<Guid>() { DriverId }, Payload = "" };
+                var jsonWarning = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWarning);
+                await _producer.ProduceAsync("dbs-driver-status-warning", new Message<Null, string> { Value = jsonWarning });
+                _producer.Flush();
+            }
+
+            _dbContext.Users.Update(driver);
             await _dbContext.SaveChangesAsync();
 
             var kafkaModelMiss = new KafkaModel { UserReceiveNotice = new List<Guid>() { customerId }, Payload = DriverId };
