@@ -234,6 +234,7 @@ public class IdentityCardService : IIdentityCardService
                     return result;
                 }
                 identityCard.Dob = (DateOnly)model.Dob;
+                user.Dob = model.Dob;
             }
             if (model.Gender != null)
             {

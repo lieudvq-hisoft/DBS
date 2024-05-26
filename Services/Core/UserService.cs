@@ -22,7 +22,9 @@ public interface IUserService
     Task<ResultModel> RegisterCustomer(RegisterModel model);
     Task<ResultModel> CheckExistUserWithPhoneNumber(CheckExistPhoneNumberModel model);
     Task<ResultModel> CheckExistUserWithEmail(ForgotPasswordModel model);
-    Task<ResultModel> Login(LoginModel model);
+    Task<ResultModel> LoginAsCustomer(LoginModel model);
+    Task<ResultModel> LoginAsDriver(LoginModel model);
+    Task<ResultModel> LoginAsManager(LoginModel model);
     Task<ResultModel> GetCustomer(PagingParam<CustomerSortCriteria> paginationModel, SearchModel searchModel);
     Task<ResultModel> GetUserByAdmin(PagingParam<UserSortByAdminCriteria> paginationModel, SearchModel searchModel, Guid AdminId, string Role);
     Task<ResultModel> UpdateProfile(ProfileUpdateModel model, Guid userId);
@@ -62,7 +64,7 @@ public class UserService : IUserService
         _producer = producer;
     }
 
-    public async Task<ResultModel> Login(LoginModel model)
+    public async Task<ResultModel> LoginAsCustomer(LoginModel model)
     {
 
         var result = new ResultModel();
@@ -95,7 +97,117 @@ public class UserService : IUserService
                 var role = await _dbContext.Roles.FindAsync(userRole.RoleId);
                 if (role != null) roles.Add(role.Name);
             }
+            if (!roles[0].Equals("Customer"))
+            {
+                result.ErrorMessage = "You are not Customer";
+                return result;
+            }
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(_mapper.Map<UserModel>(userByEmail));
+            await _producer.ProduceAsync("dbs-user-create-new", new Message<Null, string> { Value = json });
+            _producer.Flush();
 
+            var token = await MyFunction.GetAccessToken(userByEmail, roles, _configuration);
+            result.Succeed = true;
+            result.Data = token;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> LoginAsDriver(LoginModel model)
+    {
+
+        var result = new ResultModel();
+        try
+        {
+            var userByEmail = await _userManager.FindByEmailAsync(model.Email);
+            if (userByEmail == null)
+            {
+                result.ErrorMessage = "Email not exists";
+                result.Succeed = false;
+                return result;
+            }
+            if (!userByEmail.IsActive)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "User has been deactivated";
+                return result;
+            }
+            var check = await _signInManager.CheckPasswordSignInAsync(userByEmail, model.Password, false);
+            if (!check.Succeeded)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "Password isn't correct";
+                return result;
+            }
+            var userRoles = _dbContext.UserRoles.Where(ur => ur.UserId == userByEmail.Id).ToList();
+            var roles = new List<string>();
+            foreach (var userRole in userRoles)
+            {
+                var role = await _dbContext.Roles.FindAsync(userRole.RoleId);
+                if (role != null) roles.Add(role.Name);
+            }
+            if (!roles[0].Equals("Driver"))
+            {
+                result.ErrorMessage = "You are not Driver";
+                return result;
+            }
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(_mapper.Map<UserModel>(userByEmail));
+            await _producer.ProduceAsync("dbs-user-create-new", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
+            var token = await MyFunction.GetAccessToken(userByEmail, roles, _configuration);
+            result.Succeed = true;
+            result.Data = token;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> LoginAsManager(LoginModel model)
+    {
+
+        var result = new ResultModel();
+        try
+        {
+            var userByEmail = await _userManager.FindByEmailAsync(model.Email);
+            if (userByEmail == null)
+            {
+                result.ErrorMessage = "Email not exists";
+                result.Succeed = false;
+                return result;
+            }
+            if (!userByEmail.IsActive)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "User has been deactivated";
+                return result;
+            }
+            var check = await _signInManager.CheckPasswordSignInAsync(userByEmail, model.Password, false);
+            if (!check.Succeeded)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "Password isn't correct";
+                return result;
+            }
+            var userRoles = _dbContext.UserRoles.Where(ur => ur.UserId == userByEmail.Id).ToList();
+            var roles = new List<string>();
+            foreach (var userRole in userRoles)
+            {
+                var role = await _dbContext.Roles.FindAsync(userRole.RoleId);
+                if (role != null) roles.Add(role.Name);
+            }
+            if (!roles[0].Equals("Admin") && !roles[0].Equals("Staff"))
+            {
+                result.ErrorMessage = "You are not Manager";
+                return result;
+            }
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(_mapper.Map<UserModel>(userByEmail));
             await _producer.ProduceAsync("dbs-user-create-new", new Message<Null, string> { Value = json });
             _producer.Flush();
@@ -299,6 +411,12 @@ public class UserService : IUserService
                     return result;
                 }
                 data.Dob = model.Dob;
+                var identityCard = _dbContext.IdentityCards.Where(_ => _.UserId == userId).FirstOrDefault();
+                if (identityCard != null)
+                {
+                    identityCard.Dob = model.Dob;
+                    identityCard.DateUpdated = DateTime.Now;
+                }
             }
             data.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();

@@ -26,9 +26,9 @@ public class DriverController : ControllerBase
     }
 
     [HttpPost("Login")]
-    public async Task<ActionResult> Login([FromBody] LoginModel model)
+    public async Task<ActionResult> LoginAsDriver([FromBody] LoginModel model)
     {
-        var result = await _userService.Login(model);
+        var result = await _userService.LoginAsDriver(model);
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

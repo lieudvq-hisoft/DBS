@@ -111,6 +111,11 @@ public class ExternalAuthService : IExternalAuthService
                 var role = await _dbContext.Roles.FindAsync(userRole.RoleId);
                 if (role != null) roles.Add(role.Name);
             }
+            if (!roles[0].Equals("Customer"))
+            {
+                result.ErrorMessage = "You are not Customer";
+                return result;
+            }
             var token = await MyFunction.GetAccessToken(user, roles, _configuration);
             result.Succeed = true;
             result.Data = token;
