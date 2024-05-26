@@ -24,9 +24,9 @@ public class CustomerController : ControllerBase
     }
 
     [HttpPost("Login")]
-    public async Task<ActionResult> Login([FromBody] LoginModel model)
+    public async Task<ActionResult> LoginAsCustomer([FromBody] LoginModel model)
     {
-        var result = await _userService.Login(model);
+        var result = await _userService.LoginAsCustomer(model);
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
