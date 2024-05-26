@@ -12,7 +12,6 @@ namespace DBS.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize(AuthenticationSchemes = "Bearer")]
 public class AdminController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -38,6 +37,15 @@ public class AdminController : ControllerBase
         _walletService = walletService;
     }
 
+    [HttpPost("Login")]
+    public async Task<ActionResult> LoginAsManager([FromBody] LoginModel model)
+    {
+        var result = await _userService.LoginAsManager(model);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPut("User/BanAccount")]
     public async Task<ActionResult> BanAccount([FromBody] BanAccountModel model)
     {
@@ -46,6 +54,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPut("User/UnBanAccount")]
     public async Task<ActionResult> UnBanAccount([FromBody] BanAccountModel model)
     {
@@ -54,6 +63,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("BookingCancel/All/{UserId}")]
     public async Task<ActionResult> GetByAdmin([FromQuery] PagingParam<SortCriteria> paginationModel, Guid UserId)
     {
@@ -62,6 +72,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("BookingCancel/{BookingCancelId}")]
     public async Task<ActionResult> GetByIdByAdmin(Guid BookingCancelId)
     {
@@ -70,7 +81,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("Booking/All")]
     public async Task<ActionResult> GetBookingsForAdmin([FromQuery] PagingParam<SortBookingCriteria> paginationModel)
     {
@@ -79,7 +90,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("User/All")]
     public async Task<ActionResult> GetUserByAdmin(
         [FromQuery] PagingParam<UserSortByAdminCriteria> paginationModel,
@@ -90,7 +101,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPost("Driver/Register")]
     public async Task<ActionResult> RegisterDriverByAdmin([FromForm] RegisterDriverByAdminModel model)
     {
@@ -99,6 +110,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPost("DrivingLicense/{DriverId}")]
     public async Task<ActionResult> AddDrivingLicenseByAdmin([FromBody] DrivingLicenseCreateModel model, Guid DriverId)
     {
@@ -107,6 +119,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("DrivingLicense/{DriverId}")]
     public async Task<ActionResult> GetByAdmin(Guid DriverId)
     {
@@ -115,6 +128,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("DrivingLicense/{DriverId}/{DrivingLicenseId}")]
     public async Task<ActionResult> GetByIdByAdmin(Guid DrivingLicenseId, Guid DriverId)
     {
@@ -123,6 +137,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPut("DrivingLicense/{DriverId}/{DrivingLicenseId}")]
     public async Task<ActionResult> UpdateIdenttiyCard([FromBody] DrivingLicenseUpdateModel model, Guid DrivingLicenseId, Guid DriverId)
     {
@@ -131,6 +146,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpDelete("DrivingLicense/{DriverId}/{DrivingLicenseId}")]
     public async Task<ActionResult> DeleteDrivingLicenseByAdmin(Guid DrivingLicenseId, Guid DriverId)
     {
@@ -139,6 +155,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPost("DrivingLicense/DrivingLicenseImage")]
     public async Task<ActionResult> AddImageByAdmin([FromForm] DrivingLicenseImageCreateModel model)
     {
@@ -147,6 +164,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPost("DrivingLicense/DrivingLicenseImage/Download")]
     public async Task<ActionResult> DownloadImageByAdmin([FromBody] FileModel model)
     {
@@ -156,6 +174,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("DrivingLicense/DrivingLicenseImage/{DrivingLicenseId}")]
     public async Task<ActionResult> GetImagesByDrivingLicenseIdByAdmin(Guid DrivingLicenseId)
     {
@@ -164,6 +183,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPut("DrivingLicense/DrivingLicenseImage/{DrivingLicenseImage}")]
     public async Task<ActionResult> UpdateImageByAdmin([FromForm] DrivingLicenseImageUpdateModel model, Guid DrivingLicenseImage)
     {
@@ -172,6 +192,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpDelete("DrivingLicense/DrivingLicenseImage/{DrivingLicenseImage}")]
     public async Task<ActionResult> DeleteImageByAdmin(Guid DrivingLicenseImage)
     {
@@ -180,6 +201,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPost("IdentityCard/{DriverId}")]
     public async Task<ActionResult> AddByAdmin([FromBody] IdentityCardCreateModel model, Guid DriverId)
     {
@@ -188,6 +210,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("IdentityCard/{DriverId}")]
     public async Task<ActionResult> GetIdentitCardByAdmin(Guid DriverId)
     {
@@ -196,6 +219,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPut("IdentityCard/{DriverId}")]
     public async Task<ActionResult> UpdateByAdmin([FromBody] IdentityCardUpdateModel model, Guid DriverId)
     {
@@ -204,6 +228,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpDelete("IdentityCard/{DriverId}")]
     public async Task<ActionResult> DeleteByAdmin(Guid DriverId)
     {
@@ -212,6 +237,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPost("IdentityCard/IdentityCardImage")]
     public async Task<ActionResult> AddImageByAdmin([FromForm] IdentityCardImageCreateModel model)
     {
@@ -220,6 +246,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPost("IdentityCard/Image/Download")]
     public async Task<ActionResult> DownloadIdentityCardImageByAdmin([FromBody] FileModel model)
     {
@@ -229,6 +256,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("IdentityCard/IdentityCardImage/{IdentityCardId}")]
     public async Task<ActionResult> GetImagesByIdentityCardIdByAdmin(Guid IdentityCardId)
     {
@@ -237,6 +265,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPut("IdentityCard/IdentityCardImage/{IdentityCardImage}")]
     public async Task<ActionResult> UpdateImageByAdmin([FromForm] IdentityCardImageUpdateModel model, Guid IdentityCardImage)
     {
@@ -245,6 +274,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpDelete("IdentityCard/IdentityCardImage/{IdentityCardImage}")]
     public async Task<ActionResult> DeleteIdentityCardImageByAdmin(Guid IdentityCardImage)
     {
@@ -253,7 +283,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("Vehicle/{CustomerId}")]
     public async Task<ActionResult> GetAllByAdmin(Guid CustomerId)
     {
@@ -262,6 +292,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPut("PriceConfiguration")]
     public async Task<ActionResult> UpdatePriceConfiguration([FromBody] PriceConfigurationUpdateModel model)
     {
@@ -270,7 +301,7 @@ public class AdminController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("WithdrawFundsRequest")]
     public async Task<ActionResult> GetWithdrawFundsRequest([FromQuery] PagingParam<SortWalletCriteria> paginationModel)
     {
