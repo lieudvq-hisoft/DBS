@@ -91,6 +91,14 @@ public class BookingCancelService : IBookingCancelService
                 result.ErrorMessage = "Booking has already canceled";
                 return result;
             }
+            if (booking.Status == BookingStatus.CheckIn)
+            {
+                var images = _dbContext.BookingImages.Where(_ => _.BookingId == booking.Id).ToList();
+                if (images.Count > 0)
+                {
+                    _dbContext.BookingImages.RemoveRange(images);
+                }
+            }
             var bookingCancel = _mapper.Map<BookingCancelCreateModel, BookingCancel>(model);
             bookingCancel.CancelPersonId = CustomerId;
             _dbContext.BookingCancels.Add(bookingCancel);
@@ -108,6 +116,71 @@ public class BookingCancelService : IBookingCancelService
                 bookingCancel.ImageUrls = imgUrlsList.ToArray();
             }
 
+            var wallet = _dbContext.Wallets.Where(_ => _.UserId == booking.SearchRequest.CustomerId).FirstOrDefault();
+            if (wallet == null)
+            {
+                result.ErrorMessage = "Wallet not exist";
+                return result;
+            }
+
+            var admin = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
+                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Admin) && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exist";
+                return result;
+            }
+
+            var walletAdmin = _dbContext.Wallets.Where(_ => _.UserId == admin.Id).FirstOrDefault();
+            if (walletAdmin == null)
+            {
+                result.ErrorMessage = "Wallet Admin not exist";
+                return result;
+            }
+
+            var refundMoney = booking.SearchRequest.Price;
+            if (customer.Priority <= 1)
+            {
+                var priceConfiguration = _dbContext.PriceConfigurations.FirstOrDefault();
+
+                var cancelFee = priceConfiguration.CustomerCancelFee;
+
+                if (cancelFee.IsPercent.HasValue && cancelFee.IsPercent.Value)
+                {
+                    refundMoney -= (long)(refundMoney * (cancelFee.Price / 100.0));
+                }
+                else
+                {
+                    refundMoney -= (long)(cancelFee.Price);
+                }
+            }
+
+            var walletTransaction = new WalletTransaction
+            {
+                TotalMoney = refundMoney,
+                TypeWalletTransaction = TypeWalletTransaction.Refund,
+                WalletId = wallet.Id,
+                Status = WalletTransactionStatus.Success,
+            };
+            _dbContext.WalletTransactions.Add(walletTransaction);
+
+            var walletAdminTransaction = new WalletTransaction
+            {
+                TotalMoney = refundMoney,
+                TypeWalletTransaction = TypeWalletTransaction.Refund,
+                WalletId = walletAdmin.Id,
+                Status = WalletTransactionStatus.Success,
+            };
+            _dbContext.WalletTransactions.Add(walletAdminTransaction);
+
+            wallet.TotalMoney += walletTransaction.TotalMoney;
+            wallet.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(wallet);
+
+            walletAdmin.TotalMoney -= walletTransaction.TotalMoney;
+            walletAdmin.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(walletAdmin);
+
             var driver = _dbContext.Users.Where(_ => _.Id == booking.DriverId)
                 .Include(_ => _.DriverStatuses)
                 .FirstOrDefault();
@@ -119,6 +192,12 @@ public class BookingCancelService : IBookingCancelService
             booking.Status = BookingStatus.Cancel;
             booking.DateUpdated = DateTime.Now;
 
+            if (customer.Priority >= 0.5)
+            {
+                customer.Priority -= 0.5f;
+                _dbContext.Users.Update(customer);
+            }
+
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
@@ -127,6 +206,24 @@ public class BookingCancelService : IBookingCancelService
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.DriverId }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
             await _producer.ProduceAsync("dbs-booking-customer-cancel", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
+            var payloadWalletAdmin = _mapper.Map<WalletModel>(walletAdmin);
+            var kafkaModelWalletAdmin = new KafkaModel { UserReceiveNotice = new List<Guid>() { admin.Id }, Payload = payloadWalletAdmin };
+            var jsonWalletAdmin = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWalletAdmin);
+            await _producer.ProduceAsync("dbs-wallet-refund-admin", new Message<Null, string> { Value = jsonWalletAdmin });
+            _producer.Flush();
+
+            var payloadWallet = _mapper.Map<WalletModel>(wallet);
+            var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = payloadWallet };
+            var jsonWallet = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWallet);
+            await _producer.ProduceAsync("dbs-wallet-refund-customer", new Message<Null, string> { Value = jsonWallet });
+            _producer.Flush();
+
+            var driverLocations = _mapper.Map<LocationModel>(driver.DriverLocations.FirstOrDefault());
+            var kafkaModelLocation = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = driverLocations };
+            var jsonLocation = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelLocation);
+            await _producer.ProduceAsync("dbs-driver-status-free", new Message<Null, string> { Value = jsonLocation });
             _producer.Flush();
 
             result.Succeed = true;
@@ -147,6 +244,7 @@ public class BookingCancelService : IBookingCancelService
         {
             var driver = _dbContext.Users
                 .Include(_ => _.DriverStatuses)
+                .Include(_ => _.DriverLocations)
                 .Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
             {
@@ -179,6 +277,14 @@ public class BookingCancelService : IBookingCancelService
                 result.ErrorMessage = "Driver is not belong to Booking";
                 return result;
             }
+            if (booking.Status == BookingStatus.CheckIn)
+            {
+                var images = _dbContext.BookingImages.Where(_ => _.BookingId == booking.Id).ToList();
+                if (images.Count > 0)
+                {
+                    _dbContext.BookingImages.RemoveRange(images);
+                }
+            }
             var checkExist = _dbContext.BookingCancels.Where(_ => _.BookingId == model.BookingId && !_.IsDeleted).FirstOrDefault();
             if (checkExist != null)
             {
@@ -201,6 +307,53 @@ public class BookingCancelService : IBookingCancelService
                 }
                 bookingCancel.ImageUrls = imgUrlsList.ToArray();
             }
+            var wallet = _dbContext.Wallets.Where(_ => _.UserId == booking.SearchRequest.CustomerId).FirstOrDefault();
+            if (wallet == null)
+            {
+                result.ErrorMessage = "Wallet not exist";
+                return result;
+            }
+
+            var admin = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
+                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Admin) && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exist";
+                return result;
+            }
+
+            var walletAdmin = _dbContext.Wallets.Where(_ => _.UserId == admin.Id).FirstOrDefault();
+            if (walletAdmin == null)
+            {
+                result.ErrorMessage = "Wallet Admin not exist";
+                return result;
+            }
+
+            var walletTransaction = new WalletTransaction
+            {
+                TotalMoney = booking.SearchRequest.Price,
+                TypeWalletTransaction = TypeWalletTransaction.Refund,
+                WalletId = wallet.Id,
+                Status = WalletTransactionStatus.Success,
+            };
+            _dbContext.WalletTransactions.Add(walletTransaction);
+
+            var walletAdminTransaction = new WalletTransaction
+            {
+                TotalMoney = booking.SearchRequest.Price,
+                TypeWalletTransaction = TypeWalletTransaction.Refund,
+                WalletId = walletAdmin.Id,
+                Status = WalletTransactionStatus.Success,
+            };
+            _dbContext.WalletTransactions.Add(walletAdminTransaction);
+
+            wallet.TotalMoney += walletTransaction.TotalMoney;
+            wallet.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(wallet);
+
+            walletAdmin.TotalMoney -= walletTransaction.TotalMoney;
+            walletAdmin.DateUpdated = DateTime.Now;
+            _dbContext.Wallets.Update(walletAdmin);
 
             var driverStatus = driver.DriverStatuses.FirstOrDefault();
             driverStatus.IsFree = true;
@@ -210,6 +363,29 @@ public class BookingCancelService : IBookingCancelService
             booking.Status = BookingStatus.Cancel;
             booking.DateUpdated = DateTime.Now;
 
+            if (driver.Priority >= 0.2)
+            {
+                driver.Priority -= 0.2f;
+            }
+
+            if (driver.Priority == 0)
+            {
+                driver.IsActive = false;
+                var driverBan = _mapper.Map<UserModel>(driver);
+                var kafkaModelBan = new KafkaModel { UserReceiveNotice = new List<Guid>() { DriverId }, Payload = driverBan };
+                var jsonBan = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelBan);
+                await _producer.ProduceAsync("dbs-driver-status-ban", new Message<Null, string> { Value = jsonBan });
+                _producer.Flush();
+            }
+            else if (driver.Priority <= 1)
+            {
+                var kafkaModelWarning = new KafkaModel { UserReceiveNotice = new List<Guid>() { DriverId }, Payload = "" };
+                var jsonWarning = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWarning);
+                await _producer.ProduceAsync("dbs-driver-status-warning", new Message<Null, string> { Value = jsonWarning });
+                _producer.Flush();
+            }
+            _dbContext.Users.Update(driver);
+
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
@@ -218,6 +394,24 @@ public class BookingCancelService : IBookingCancelService
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
             await _producer.ProduceAsync("dbs-booking-driver-cancel", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
+            var payloadWalletAdmin = _mapper.Map<WalletModel>(walletAdmin);
+            var kafkaModelWalletAdmin = new KafkaModel { UserReceiveNotice = new List<Guid>() { admin.Id }, Payload = payloadWalletAdmin };
+            var jsonWalletAdmin = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWalletAdmin);
+            await _producer.ProduceAsync("dbs-wallet-refund-admin", new Message<Null, string> { Value = jsonWalletAdmin });
+            _producer.Flush();
+
+            var payloadWallet = _mapper.Map<WalletModel>(wallet);
+            var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = payloadWallet };
+            var jsonWallet = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWallet);
+            await _producer.ProduceAsync("dbs-wallet-refund-customer", new Message<Null, string> { Value = jsonWallet });
+            _producer.Flush();
+
+            var driverLocations = _mapper.Map<LocationModel>(driver.DriverLocations.FirstOrDefault());
+            var kafkaModelLocation = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = driverLocations };
+            var jsonLocation = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelLocation);
+            await _producer.ProduceAsync("dbs-driver-status-free", new Message<Null, string> { Value = jsonLocation });
             _producer.Flush();
 
             result.Succeed = true;
