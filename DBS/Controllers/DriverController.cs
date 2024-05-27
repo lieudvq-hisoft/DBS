@@ -86,6 +86,14 @@ public class DriverController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpPut("UpdateAllDriverStatusOffline")]
+    public async Task<ActionResult> UpdateAllDriverStatusOffline()
+    {
+        var result = await _driverService.UpdateAllDriverStatusOffline();
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
     [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("Online")]
     public async Task<ActionResult> GetDriverOnline([FromQuery] LocationCustomer locationCustomer)

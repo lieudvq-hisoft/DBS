@@ -65,6 +65,17 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "Search Request not exist";
                 return result;
             }
+            if (searchRequest.Status != SearchRequestStatus.Completed)
+            {
+                result.ErrorMessage = "Search Request is not Completed";
+                return result;
+            }
+            var checkExist = _dbContext.Bookings.Where(_ => _.SearchRequestId == searchRequest.Id).FirstOrDefault();
+            if (checkExist != null)
+            {
+                result.ErrorMessage = "Booking with Search Request is exist";
+                return result;
+            }
             var driver = _dbContext.Users
                 .Include(_ => _.DriverLocations)
                 .Include(_ => _.DriverStatuses)

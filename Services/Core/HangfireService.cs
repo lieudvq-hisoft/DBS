@@ -53,7 +53,9 @@ namespace Services.Core
         {
             try
             {
-                _backgroundJobClient.Schedule<IWalletService>(methodCall: (_) => _.CheckFailureWalletTransaction(walletTransactionId), delay: TimeSpan.FromSeconds(30));
+                _backgroundJobClient.Schedule<IWalletService>(
+                    methodCall: (_) => _.CheckFailureWalletTransaction(walletTransactionId),
+                    delay: TimeSpan.FromMinutes(10));
             }
             catch (Exception ex)
             {
@@ -65,7 +67,9 @@ namespace Services.Core
         {
             try
             {
-                _recurringJob.AddOrUpdate<IUserService>("UpdateCustomerPriority", methodCall: (_) => _.UpdateCustomerPriority(), cronExpression: Cron.Minutely);
+                _recurringJob.AddOrUpdate<IUserService>("UpdateCustomerPriority",
+                    methodCall: (_) => _.UpdateCustomerPriority(),
+                    cronExpression: Cron.Weekly(DayOfWeek.Monday, 0, 0));
             }
             catch (Exception ex)
             {
