@@ -80,6 +80,9 @@ namespace Services.Mapping
 
             CreateMap<LinkedAccountCreateModel, LinkedAccount>();
             CreateMap<LinkedAccount, LinkedAccountModel>();
+
+            CreateMap<EmergencyCreateModel, Emergency>();
+            CreateMap<Emergency, EmergencyModel>();
         }
     }
 }
