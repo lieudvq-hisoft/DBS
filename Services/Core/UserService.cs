@@ -39,6 +39,7 @@ public interface IUserService
     Task<ResultModel> ForgotPassword(ForgotPasswordModel model);
     Task<ResultModel> RegisterStaffByAdmin(RegisterStaffByAdminModel model, Guid UserId);
     Task<ResultModel> UpdateCustomerPriority();
+    Task<ResultModel> UpdateCustomerPriorityById(Guid userId);
 
 }
 public class UserService : IUserService
@@ -928,6 +929,34 @@ public class UserService : IUserService
 
             result.Succeed = true;
             result.Data = customers;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> UpdateCustomerPriorityById(Guid userId)
+    {
+        var result = new ResultModel();
+        try
+        {
+            var user = _dbContext.Users.Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            if (!user.IsActive)
+            {
+                user.IsActive = true;
+            }
+            user.Priority = 4;
+            await _dbContext.SaveChangesAsync();
+
+            result.Succeed = true;
+            result.Data = user;
         }
         catch (Exception ex)
         {

@@ -230,7 +230,11 @@ public class WalletService : IWalletService
                 result.ErrorMessage = "Wallet not exist";
                 return result;
             }
-
+            if (wallet.TotalMoney < model.TotalMoney)
+            {
+                result.ErrorMessage = "Your total money is less than the requested amount";
+                return result;
+            }
             var linkedAccount = _dbContext.LinkedAccounts.Where(_ => _.Id == LinkedAccountId).FirstOrDefault();
             if (linkedAccount == null)
             {

@@ -23,6 +23,7 @@ public interface IDriverService
     Task<ResultModel> UpdateLocation(LocationModel model, Guid driverId);
     Task<ResultModel> TrackingDriverLocation(TrackingDriverLocationModel model, Guid driverId);
     Task<ResultModel> UpdateStatusOffline(Guid driverId);
+    Task<ResultModel> UpdateAllDriverStatusOffline();
     Task<ResultModel> UpdateStatusOnline(Guid driverId);
     Task<ResultModel> GetDriverOnline(LocationCustomer locationCustomer, Guid userId);
 
@@ -416,6 +417,51 @@ public class DriverService : IDriverService
 
             result.Succeed = true;
             result.Data = driverStatus.Id;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> UpdateAllDriverStatusOffline()
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var drivers = _dbContext.Users
+                .Include(_ => _.DriverStatuses)
+                .Where(_ => !_.IsDeleted).ToList();
+            if (drivers == null)
+            {
+                result.ErrorMessage = "Driver not exists";
+                result.Succeed = false;
+                return result;
+            }
+
+            foreach (var driver in drivers)
+            {
+                var driverStatus = driver.DriverStatuses.FirstOrDefault();
+
+                if (driverStatus == null)
+                {
+                    driverStatus = new DriverStatus { DriverId = driver.Id, IsOnline = false, IsFree = false };
+                    _dbContext.DriverStatuses.Add(driverStatus);
+                }
+                else
+                {
+                    driverStatus.IsOnline = false;
+                    driverStatus.IsFree = false;
+                    _dbContext.DriverStatuses.Update(driverStatus);
+                }
+            }
+
+            await _dbContext.SaveChangesAsync();
+
+            result.Succeed = true;
+            result.Data = true;
         }
         catch (Exception ex)
         {

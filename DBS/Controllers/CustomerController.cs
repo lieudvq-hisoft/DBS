@@ -133,4 +133,13 @@ public class CustomerController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPut("UpdateCustomerPriority")]
+    public async Task<ActionResult> UpdateCustomerPriorityById()
+    {
+        var result = await _userService.UpdateCustomerPriorityById(Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
 }
