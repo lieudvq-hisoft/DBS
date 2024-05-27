@@ -101,4 +101,5 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
     public DbSet<ModelVehicle> ModelVehicles { get; set; }
     public DbSet<LinkedAccount> LinkedAccounts { get; set; }
     public DbSet<PriceConfiguration> PriceConfigurations { get; set; }
+    public DbSet<Emergency> Emergencies { get; set; }
 }

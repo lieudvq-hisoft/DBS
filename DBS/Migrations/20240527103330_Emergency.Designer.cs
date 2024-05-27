@@ -3,6 +3,7 @@ using System;
 using Data.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DBS.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240527103330_Emergency")]
+    partial class Emergency
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -722,9 +725,6 @@ namespace DBS.Migrations
 
                     b.Property<DateTime>("DateUpdated")
                         .HasColumnType("timestamp without time zone");
-
-                    b.Property<double>("Distance")
-                        .HasColumnType("double precision");
 
                     b.Property<string>("DropOffAddress")
                         .IsRequired()
