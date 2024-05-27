@@ -121,6 +121,12 @@ namespace Data.Model
         public string? SearchValue { get; set; } = "";
     }
 
+    public class UpdateUserPriorityModel
+    {
+        public Guid UserId { get; set; }
+        public float Priority { get; set; }
+    }
+
     public class UpLoadAvatarModel
     {
         public IFormFile File { get; set; }

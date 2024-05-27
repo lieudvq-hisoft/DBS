@@ -309,4 +309,13 @@ public class AdminController : ControllerBase
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPut("UpdateUserPriorityById")]
+    public async Task<ActionResult> UpdateUserPriorityById(UpdateUserPriorityModel model)
+    {
+        var result = await _userService.UpdateUserPriorityById(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
 }

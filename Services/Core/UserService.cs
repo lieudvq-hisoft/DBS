@@ -39,6 +39,7 @@ public interface IUserService
     Task<ResultModel> ForgotPassword(ForgotPasswordModel model);
     Task<ResultModel> RegisterStaffByAdmin(RegisterStaffByAdminModel model, Guid UserId);
     Task<ResultModel> UpdateCustomerPriority();
+    Task<ResultModel> UpdateUserPriorityById(UpdateUserPriorityModel model, Guid adminId);
     Task<ResultModel> UpdateCustomerPriorityById(Guid userId);
 
 }
@@ -929,6 +930,52 @@ public class UserService : IUserService
 
             result.Succeed = true;
             result.Data = customers;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> UpdateUserPriorityById(UpdateUserPriorityModel model, Guid adminId)
+    {
+        var result = new ResultModel();
+        try
+        {
+            var admin = _dbContext.Users.Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exist";
+                return result;
+            }
+            if (!admin.IsActive)
+            {
+                result.ErrorMessage = "Admin is deactivated";
+                return result;
+            }
+            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
+            if (!checkAdmin)
+            {
+                result.ErrorMessage = "The user must be Admin";
+                return result;
+            }
+            var user = _dbContext.Users.Where(_ => _.Id == model.UserId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            if (!user.IsActive)
+            {
+                result.ErrorMessage = "User is deactivated";
+                return result;
+            }
+            user.Priority = model.Priority;
+            await _dbContext.SaveChangesAsync();
+
+            result.Succeed = true;
+            result.Data = _mapper.Map<UserModel>(user);
         }
         catch (Exception ex)
         {
