@@ -118,7 +118,7 @@ public class VNPayService : IVNPayService
             var walletTransaction = new WalletTransaction
             {
                 WalletId = wallet.Id,
-                TotalMoney = (int)model.Amount * 100,
+                TotalMoney = (int)model.Amount,
                 TypeWalletTransaction = TypeWalletTransaction.AddFunds,
                 PaymentType = PaymentType.VNPay,
             };
@@ -193,7 +193,7 @@ public class VNPayService : IVNPayService
             var walletTransaction = new WalletTransaction
             {
                 WalletId = wallet.Id,
-                TotalMoney = (int)model.Amount * 100,
+                TotalMoney = (int)model.Amount,
                 TypeWalletTransaction = TypeWalletTransaction.AddFunds,
                 PaymentType = PaymentType.VNPay,
             };
