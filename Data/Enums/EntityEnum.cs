@@ -80,6 +80,12 @@ public enum SortBookingCriteria
     Status,
 }
 
+public enum SortEmergencyCriteria
+{
+    DateCreated,
+    Status,
+}
+
 public enum SortWalletCriteria
 {
     DateCreated,
@@ -258,4 +264,17 @@ public enum LinkedAccountType
 {
     Bank = 0,
     DigitalWallet = 1,
+}
+
+public enum EmergencyStatus
+{
+    Pending = 0,
+    Processing = 1,
+    Solved = 2,
+}
+
+public enum EmergencyType
+{
+    Chat = 0,
+    Call = 1
 }

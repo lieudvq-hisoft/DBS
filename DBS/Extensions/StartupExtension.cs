@@ -78,6 +78,7 @@ public static class StartupExtension
         services.AddScoped<ILinkedAccountService, LinkedAccountService>();
         services.AddScoped<IPriceConfigurationService, PriceConfigurationService>();
         services.AddScoped<IMailService, MailService>();
+        services.AddScoped<IEmergencyService, EmergencyService>();
         services.AddSingleton<IHangfireServices, HangfireServices>();
         services.AddHostedService<HangfireJob>();
 
