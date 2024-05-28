@@ -151,6 +151,7 @@ public class SupportService : ISupportService
             }
             var data = _dbContext.Supports
                 .Include(_ => _.Handler)
+                .Include(_ => _.Booking)
                 .Where(_ => !_.IsDeleted);
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var supports = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
