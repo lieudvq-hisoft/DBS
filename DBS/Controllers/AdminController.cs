@@ -327,4 +327,22 @@ public class AdminController : ControllerBase
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPut("UpdateStaffStatusOffline")]
+    public async Task<ActionResult> UpdateStaffStatusOffline()
+    {
+        var result = await _userService.UpdateStaffStatusOffline(Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPut("UpdateStaffStatusOnline")]
+    public async Task<ActionResult> UpdateStaffStatusOnline()
+    {
+        var result = await _userService.UpdateStaffStatusOnline(Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
 }
