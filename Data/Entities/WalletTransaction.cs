@@ -15,4 +15,6 @@ public class WalletTransaction : BaseEntity
     public PaymentType? PaymentType { get; set; }
     public WalletTransactionStatus Status { get; set; } = WalletTransactionStatus.Waiting;
     public Guid? LinkedAccountId { get; set; }
+    [ForeignKey("LinkedAccountId")]
+    public virtual LinkedAccount? LinkedAccount { get; set; }
 }
