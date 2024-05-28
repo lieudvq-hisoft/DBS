@@ -208,11 +208,11 @@ public class BookingCancelService : IBookingCancelService
             await _producer.ProduceAsync("dbs-booking-customer-cancel", new Message<Null, string> { Value = json });
             _producer.Flush();
 
-            var payloadWalletAdmin = _mapper.Map<WalletModel>(walletAdmin);
-            var kafkaModelWalletAdmin = new KafkaModel { UserReceiveNotice = new List<Guid>() { admin.Id }, Payload = payloadWalletAdmin };
-            var jsonWalletAdmin = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWalletAdmin);
-            await _producer.ProduceAsync("dbs-wallet-refund-admin", new Message<Null, string> { Value = jsonWalletAdmin });
-            _producer.Flush();
+            //var payloadWalletAdmin = _mapper.Map<WalletModel>(walletAdmin);
+            //var kafkaModelWalletAdmin = new KafkaModel { UserReceiveNotice = new List<Guid>() { admin.Id }, Payload = payloadWalletAdmin };
+            //var jsonWalletAdmin = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWalletAdmin);
+            //await _producer.ProduceAsync("dbs-wallet-refund-admin", new Message<Null, string> { Value = jsonWalletAdmin });
+            //_producer.Flush();
 
             var payloadWallet = _mapper.Map<WalletModel>(wallet);
             var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = payloadWallet };
@@ -396,11 +396,11 @@ public class BookingCancelService : IBookingCancelService
             await _producer.ProduceAsync("dbs-booking-driver-cancel", new Message<Null, string> { Value = json });
             _producer.Flush();
 
-            var payloadWalletAdmin = _mapper.Map<WalletModel>(walletAdmin);
-            var kafkaModelWalletAdmin = new KafkaModel { UserReceiveNotice = new List<Guid>() { admin.Id }, Payload = payloadWalletAdmin };
-            var jsonWalletAdmin = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWalletAdmin);
-            await _producer.ProduceAsync("dbs-wallet-refund-admin", new Message<Null, string> { Value = jsonWalletAdmin });
-            _producer.Flush();
+            //var payloadWalletAdmin = _mapper.Map<WalletModel>(walletAdmin);
+            //var kafkaModelWalletAdmin = new KafkaModel { UserReceiveNotice = new List<Guid>() { admin.Id }, Payload = payloadWalletAdmin };
+            //var jsonWalletAdmin = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWalletAdmin);
+            //await _producer.ProduceAsync("dbs-wallet-refund-admin", new Message<Null, string> { Value = jsonWalletAdmin });
+            //_producer.Flush();
 
             var payloadWallet = _mapper.Map<WalletModel>(wallet);
             var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = payloadWallet };

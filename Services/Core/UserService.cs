@@ -898,6 +898,11 @@ public class UserService : IUserService
             }
             userRole.UserId = user.Id;
             _dbContext.UserRoles.Add(userRole);
+
+            var staffStatus = new DriverStatus { DriverId = user.Id, IsOnline = true, IsFree = true };
+            _dbContext.DriverStatuses.Add(staffStatus);
+            user.DriverStatuses.Add(staffStatus);
+
             await _dbContext.SaveChangesAsync();
             result.Succeed = true;
             result.Data = _mapper.Map<UserModel>(user);
@@ -1003,7 +1008,7 @@ public class UserService : IUserService
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
-            result.Data = user;
+            result.Data = true;
         }
         catch (Exception ex)
         {
