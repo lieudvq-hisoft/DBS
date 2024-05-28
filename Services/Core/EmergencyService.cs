@@ -65,23 +65,6 @@ public class EmergencyService : IEmergencyService
                 result.ErrorMessage = "The sender is deactivated";
                 return result;
             }
-            var handler = _dbContext.Users.Where(_ => _.Id == model.HandlerId && !_.IsDeleted).FirstOrDefault();
-            if (handler == null)
-            {
-                result.ErrorMessage = "Handler is not exist";
-                return result;
-            }
-            var checkStaff = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Staff);
-            if (!checkStaff)
-            {
-                result.ErrorMessage = "Sender must be Staff";
-                return result;
-            }
-            if (!handler.IsActive)
-            {
-                result.ErrorMessage = "The handler is deactivated";
-                return result;
-            }
             var booking = _dbContext.Bookings
                 .Include(_ => _.SearchRequest)
                     .ThenInclude(sr => sr.Customer)
@@ -96,8 +79,48 @@ public class EmergencyService : IEmergencyService
             {
                 result.ErrorMessage = "You don't have permission to send Emergency";
             }
+            var handler = new User();
+            handler = _dbContext.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .Include(_ => _.DriverStatuses)
+                .Where(u => u.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Staff)
+                    && u.DriverStatuses.Any(ds => ds.IsFree == true && ds.IsOnline == true)
+                    && !u.IsDeleted)
+                .GroupJoin(
+                    _dbContext.Emergencies,
+                    user => user.Id,
+                    emergency => emergency.HandlerId,
+                    (user, emergencies) => new
+                    {
+                        User = user,
+                        EmergencyCount = emergencies.Count()
+                    })
+                .OrderBy(x => x.EmergencyCount)
+                .Select(x => x.User)
+                .FirstOrDefault();
+            handler ??= _dbContext.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .Include(_ => _.DriverStatuses)
+                .Where(u => u.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Staff)
+                    && u.DriverStatuses.Any(ds => ds.IsOnline == true)
+                    && !u.IsDeleted)
+                .GroupJoin(
+                    _dbContext.Emergencies,
+                    user => user.Id,
+                    emergency => emergency.HandlerId,
+                    (user, emergencies) => new
+                    {
+                        User = user,
+                        EmergencyCount = emergencies.Count()
+                    })
+                .OrderBy(x => x.EmergencyCount)
+                .Select(x => x.User)
+                .FirstOrDefault();
             var emergency = _mapper.Map<EmergencyCreateModel, Emergency>(model);
             emergency.SenderId = customerId;
+            emergency.HandlerId = handler.Id;
             _dbContext.Emergencies.Add(emergency);
             await _dbContext.SaveChangesAsync();
 
@@ -141,23 +164,45 @@ public class EmergencyService : IEmergencyService
                 result.ErrorMessage = "The sender is deactivated";
                 return result;
             }
-            var handler = _dbContext.Users.Where(_ => _.Id == model.HandlerId && !_.IsDeleted).FirstOrDefault();
-            if (handler == null)
-            {
-                result.ErrorMessage = "Handler is not exist";
-                return result;
-            }
-            var checkStaff = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Staff);
-            if (!checkStaff)
-            {
-                result.ErrorMessage = "Sender must be Staff";
-                return result;
-            }
-            if (!handler.IsActive)
-            {
-                result.ErrorMessage = "The handler is deactivated";
-                return result;
-            }
+            var handler = new User();
+            handler = _dbContext.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .Include(_ => _.DriverStatuses)
+                .Where(u => u.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Staff)
+                    && u.DriverStatuses.Any(ds => ds.IsFree == true && ds.IsOnline == true)
+                    && !u.IsDeleted)
+                .GroupJoin(
+                    _dbContext.Emergencies,
+                    user => user.Id,
+                    emergency => emergency.HandlerId,
+                    (user, emergencies) => new
+                    {
+                        User = user,
+                        EmergencyCount = emergencies.Count()
+                    })
+                .OrderBy(x => x.EmergencyCount)
+                .Select(x => x.User)
+                .FirstOrDefault();
+            handler ??= _dbContext.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .Include(_ => _.DriverStatuses)
+                .Where(u => u.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Staff)
+                    && u.DriverStatuses.Any(ds => ds.IsOnline == true)
+                    && !u.IsDeleted)
+                .GroupJoin(
+                    _dbContext.Emergencies,
+                    user => user.Id,
+                    emergency => emergency.HandlerId,
+                    (user, emergencies) => new
+                    {
+                        User = user,
+                        EmergencyCount = emergencies.Count()
+                    })
+                .OrderBy(x => x.EmergencyCount)
+                .Select(x => x.User)
+                .FirstOrDefault();
             var booking = _dbContext.Bookings
                 .Include(_ => _.SearchRequest)
                     .ThenInclude(sr => sr.Customer)
@@ -174,6 +219,7 @@ public class EmergencyService : IEmergencyService
             }
             var emergency = _mapper.Map<EmergencyCreateModel, Emergency>(model);
             emergency.SenderId = driverId;
+            emergency.HandlerId = handler.Id;
             _dbContext.Emergencies.Add(emergency);
             await _dbContext.SaveChangesAsync();
 
@@ -295,7 +341,9 @@ public class EmergencyService : IEmergencyService
         result.Succeed = false;
         try
         {
-            var user = _dbContext.Users.Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
+            var user = _dbContext.Users
+                .Include(_ => _.DriverStatuses)
+                .Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
             if (user == null)
             {
                 result.ErrorMessage = "User not exist";
@@ -323,6 +371,18 @@ public class EmergencyService : IEmergencyService
                 result.ErrorMessage = "Emergency not exist";
                 return result;
             }
+            if (checkStaff && emergency.HandlerId != userId)
+            {
+                result.ErrorMessage = "You don't have permission to process this emergency";
+                return result;
+            }
+            else
+            {
+                var staffStatus = user.DriverStatuses.FirstOrDefault();
+                staffStatus.IsFree = false;
+                staffStatus.DateUpdated = DateTime.Now;
+                _dbContext.DriverStatuses.Update(staffStatus);
+            }
             emergency.Status = EmergencyStatus.Processing;
             emergency.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
@@ -344,7 +404,9 @@ public class EmergencyService : IEmergencyService
         result.Succeed = false;
         try
         {
-            var user = _dbContext.Users.Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
+            var user = _dbContext.Users
+                .Include(_ => _.DriverStatuses)
+                .Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
             if (user == null)
             {
                 result.ErrorMessage = "User not exist";
@@ -371,6 +433,18 @@ public class EmergencyService : IEmergencyService
             {
                 result.ErrorMessage = "Emergency not exist";
                 return result;
+            }
+            if (checkStaff && emergency.HandlerId != userId)
+            {
+                result.ErrorMessage = "You don't have permission to solve this emergency";
+                return result;
+            }
+            else
+            {
+                var staffStatus = user.DriverStatuses.FirstOrDefault();
+                staffStatus.IsFree = true;
+                staffStatus.DateUpdated = DateTime.Now;
+                _dbContext.DriverStatuses.Update(staffStatus);
             }
             emergency.Status = EmergencyStatus.Solved;
             emergency.DateUpdated = DateTime.Now;
