@@ -531,6 +531,7 @@ public class WalletService : IWalletService
                 return result;
             }
             var data = _dbContext.WalletTransactions
+                .Include(_ => _.LinkedAccount)
                 .Where(_ => _.TypeWalletTransaction == TypeWalletTransaction.WithdrawFunds);
 
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
@@ -542,12 +543,6 @@ public class WalletService : IWalletService
             {
                 result.ErrorMessage = "Wallet Transactions not exist";
                 return result;
-            }
-
-            foreach (var item in viewModels)
-            {
-                var linkedAccount = _dbContext.LinkedAccounts.Where(_ => _.Id == item.LinkedAccountId).FirstOrDefault();
-                item.LinkedAccount = _mapper.Map<LinkedAccountModel>(linkedAccount);
             }
 
             paging.Data = viewModels;
