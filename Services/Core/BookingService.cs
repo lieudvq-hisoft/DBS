@@ -681,11 +681,11 @@ public class BookingService : IBookingService
             await _producer.ProduceAsync("dbs-booking-status-complete", new Message<Null, string> { Value = json });
             _producer.Flush();
 
-            var payloadWalletAdmin = _mapper.Map<WalletModel>(walletAdmin);
-            var kafkaModelWalletAdmin = new KafkaModel { UserReceiveNotice = new List<Guid>() { admin.Id }, Payload = payloadWalletAdmin };
-            var jsonWalletAdmin = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWalletAdmin);
-            await _producer.ProduceAsync("dbs-wallet-driverincome-admin", new Message<Null, string> { Value = jsonWalletAdmin });
-            _producer.Flush();
+            //var payloadWalletAdmin = _mapper.Map<WalletModel>(walletAdmin);
+            //var kafkaModelWalletAdmin = new KafkaModel { UserReceiveNotice = new List<Guid>() { admin.Id }, Payload = payloadWalletAdmin };
+            //var jsonWalletAdmin = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelWalletAdmin);
+            //await _producer.ProduceAsync("dbs-wallet-driverincome-admin", new Message<Null, string> { Value = jsonWalletAdmin });
+            //_producer.Flush();
 
             var payloadWallet = _mapper.Map<WalletModel>(wallet);
             var kafkaModelWallet = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = payloadWallet };
