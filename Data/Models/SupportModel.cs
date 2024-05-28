@@ -25,6 +25,12 @@ public class SupportBookingIssueCreateModel
     public string MsgContent { get; set; }
 }
 
+public class UpdateCantSolveModel
+{
+    public Guid SupportId { get; set; }
+    public string Note { get; set; }
+}
+
 public class SupportModel
 {
     public Guid Id { get; set; }
@@ -38,6 +44,7 @@ public class SupportModel
     public string? DrivingLicenseNumber { get; set; }
     public string? DrivingLicenseType { get; set; }
     public string? MsgContent { get; set; }
+    public string? Note { get; set; }
     public SupportStatus SupportStatus { get; set; }
     public SupportType SupportType { get; set; }
     public DateTime DateCreated { get; set; }

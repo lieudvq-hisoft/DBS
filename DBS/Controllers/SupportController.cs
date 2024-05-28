@@ -73,10 +73,10 @@ public class SupportController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
-    [HttpPut("ChangeStatusToCantSolved/{SupportId}")]
-    public async Task<ActionResult> ChangeStatusToCantSolved(Guid SupportId)
+    [HttpPut("ChangeStatusToCantSolved")]
+    public async Task<ActionResult> ChangeStatusToCantSolved([FromBody] UpdateCantSolveModel model)
     {
-        var result = await _supportService.ChangeStatusToCantSolved(SupportId, Guid.Parse(User.GetId()));
+        var result = await _supportService.ChangeStatusToCantSolved(model, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

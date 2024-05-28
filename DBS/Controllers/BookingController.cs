@@ -126,4 +126,11 @@ public class BookingController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpPut("AddCheckOutNote")]
+    public async Task<ActionResult> AddBookingCheckOutNote([FromBody] AddCheckOutNoteModel model)
+    {
+        var result = await _bookingService.AddBookingCheckOutNote(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
 }

@@ -13,6 +13,7 @@ public class Booking : BaseEntity
     public DateTime? PickUpTime { get; set; }
     public DateTime? DropOffTime { get; set; }
     public string? CheckInNote { get; set; }
+    public string? CheckOutNote { get; set; }
     public BookingStatus Status { get; set; } = BookingStatus.Accept;
 
 }
