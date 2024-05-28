@@ -103,6 +103,7 @@ public class SupportService : ISupportService
         }
         return result;
     }
+
     public async Task<ResultModel> CreateBookingIssue(SupportBookingIssueCreateModel model)
     {
         var result = new ResultModel();
@@ -123,25 +124,33 @@ public class SupportService : ISupportService
         }
         return result;
     }
+
     public async Task<ResultModel> GetAll(PagingParam<SortSupportCriteria> paginationModel, Guid UserId)
     {
         var result = new ResultModel();
         result.Succeed = false;
         try
         {
-            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
-            if (user == null)
+            var handler = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (handler == null)
             {
-                result.ErrorMessage = "User not exist";
+                result.ErrorMessage = "Handler not exist";
                 return result;
             }
-            var checkAdmin = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            if (!handler.IsActive)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Handler is deactivated";
+                return result;
+            }
+            var checkStaff = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Staff);
+            var checkAdmin = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Admin);
+            if (!checkAdmin && !checkStaff)
+            {
+                result.ErrorMessage = "Handler must be Staff or Admin";
                 return result;
             }
             var data = _dbContext.Supports
+                .Include(_ => _.Handler)
                 .Where(_ => !_.IsDeleted);
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var supports = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
@@ -158,25 +167,34 @@ public class SupportService : ISupportService
         }
         return result;
     }
+
     public async Task<ResultModel> GetByID(Guid SupportId, Guid UserId)
     {
         var result = new ResultModel();
         result.Succeed = false;
         try
         {
-            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
-            if (user == null)
+            var handler = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (handler == null)
             {
-                result.ErrorMessage = "User not exist";
+                result.ErrorMessage = "Handler not exist";
                 return result;
             }
-            var checkAdmin = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            if (!handler.IsActive)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Handler is deactivated";
                 return result;
             }
-            var support = _dbContext.Supports.Where(_ => _.Id == SupportId && !_.IsDeleted).FirstOrDefault();
+            var checkStaff = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Staff);
+            var checkAdmin = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Admin);
+            if (!checkAdmin && !checkStaff)
+            {
+                result.ErrorMessage = "Handler must be Staff or Admin";
+                return result;
+            }
+            var support = _dbContext.Supports
+                .Include(_ => _.Handler)
+                .Where(_ => _.Id == SupportId && !_.IsDeleted).FirstOrDefault();
             if (support == null)
             {
                 result.ErrorMessage = "Support not exist";
@@ -192,22 +210,29 @@ public class SupportService : ISupportService
         }
         return result;
     }
+
     public async Task<ResultModel> ChangeStatusToCantSolved(UpdateCantSolveModel model, Guid UserId)
     {
         var result = new ResultModel();
         result.Succeed = false;
         try
         {
-            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
-            if (user == null)
+            var handler = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (handler == null)
             {
-                result.ErrorMessage = "User not exist";
+                result.ErrorMessage = "Handler not exist";
                 return result;
             }
-            var checkAdmin = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            if (!handler.IsActive)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Handler is deactivated";
+                return result;
+            }
+            var checkStaff = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Staff);
+            var checkAdmin = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Admin);
+            if (!checkAdmin && !checkStaff)
+            {
+                result.ErrorMessage = "Handler must be Staff or Admin";
                 return result;
             }
             var support = _dbContext.Supports.Where(_ => _.Id == model.SupportId && !_.IsDeleted).FirstOrDefault();
@@ -216,6 +241,12 @@ public class SupportService : ISupportService
                 result.ErrorMessage = "Support not exist";
                 return result;
             }
+            if (support.SupportStatus != SupportStatus.InProcess)
+            {
+                result.ErrorMessage = "Support Status is not suitable";
+                return result;
+            }
+            support.HandlerId = handler.Id;
             support.SupportStatus = SupportStatus.CantSolved;
             support.Note = model.Note;
             support.DateUpdated = DateTime.Now;
@@ -237,16 +268,22 @@ public class SupportService : ISupportService
         result.Succeed = false;
         try
         {
-            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
-            if (user == null)
+            var handler = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (handler == null)
             {
-                result.ErrorMessage = "User not exist";
+                result.ErrorMessage = "Handler not exist";
                 return result;
             }
-            var checkAdmin = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            if (!handler.IsActive)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Handler is deactivated";
+                return result;
+            }
+            var checkStaff = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Staff);
+            var checkAdmin = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Admin);
+            if (!checkAdmin && !checkStaff)
+            {
+                result.ErrorMessage = "Handler must be Staff or Admin";
                 return result;
             }
             var support = _dbContext.Supports.Where(_ => _.Id == SupportId && !_.IsDeleted).FirstOrDefault();
@@ -255,6 +292,12 @@ public class SupportService : ISupportService
                 result.ErrorMessage = "Support not exist";
                 return result;
             }
+            if (support.SupportStatus != SupportStatus.New)
+            {
+                result.ErrorMessage = "Support Status is not suitable";
+                return result;
+            }
+            support.HandlerId = handler.Id;
             support.SupportStatus = SupportStatus.InProcess;
             support.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
@@ -275,16 +318,22 @@ public class SupportService : ISupportService
         result.Succeed = false;
         try
         {
-            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
-            if (user == null)
+            var handler = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (handler == null)
             {
-                result.ErrorMessage = "User not exist";
+                result.ErrorMessage = "Handler not exist";
                 return result;
             }
-            var checkAdmin = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            if (!handler.IsActive)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Handler is deactivated";
+                return result;
+            }
+            var checkStaff = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Staff);
+            var checkAdmin = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Admin);
+            if (!checkAdmin && !checkStaff)
+            {
+                result.ErrorMessage = "Handler must be Staff or Admin";
                 return result;
             }
             var support = _dbContext.Supports.Where(_ => _.Id == SupportId && !_.IsDeleted).FirstOrDefault();
@@ -293,6 +342,12 @@ public class SupportService : ISupportService
                 result.ErrorMessage = "Support not exist";
                 return result;
             }
+            if (support.SupportStatus != SupportStatus.InProcess)
+            {
+                result.ErrorMessage = "Support Status is not suitable";
+                return result;
+            }
+            support.HandlerId = handler.Id;
             support.SupportStatus = SupportStatus.Solved;
             support.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
@@ -313,16 +368,22 @@ public class SupportService : ISupportService
         result.Succeed = false;
         try
         {
-            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
-            if (user == null)
+            var handler = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            if (handler == null)
             {
-                result.ErrorMessage = "User not exist";
+                result.ErrorMessage = "Handler not exist";
                 return result;
             }
-            var checkAdmin = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            if (!handler.IsActive)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Handler is deactivated";
+                return result;
+            }
+            var checkStaff = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Staff);
+            var checkAdmin = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Admin);
+            if (!checkAdmin && !checkStaff)
+            {
+                result.ErrorMessage = "Handler must be Staff or Admin";
                 return result;
             }
             var support = _dbContext.Supports.Where(_ => _.Id == SupportId && !_.IsDeleted).FirstOrDefault();
