@@ -1,6 +1,7 @@
 ﻿using Data.Enums;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,5 +23,9 @@ public class Support : BaseEntity
     public string? Note { get; set; }
     public SupportStatus SupportStatus { get; set; } = SupportStatus.New;
     public SupportType SupportType { get; set; }
+    public Guid? HandlerId { get; set; }
+
+    [ForeignKey("HandlerId")]
+    public virtual User? Handler { get; set; }
 
 }

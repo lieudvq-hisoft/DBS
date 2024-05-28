@@ -26,4 +26,6 @@ public class User : IdentityUser<Guid>
     public virtual ICollection<DriverLocation> DriverLocations { get; set; }
     public virtual ICollection<DriverStatus> DriverStatuses { get; set; }
 
+    public virtual ICollection<Support> Supports { get; set; }
+
 }
