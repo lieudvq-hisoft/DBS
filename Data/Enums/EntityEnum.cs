@@ -276,5 +276,6 @@ public enum EmergencyStatus
 public enum EmergencyType
 {
     Chat = 0,
-    Call = 1
+    Call = 1,
+    Police = 2
 }
