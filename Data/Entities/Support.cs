@@ -19,6 +19,7 @@ public class Support : BaseEntity
     public string? DrivingLicenseNumber { get; set; }
     public string? DrivingLicenseType { get; set; }
     public string? MsgContent { get; set; }
+    public string? Note { get; set; }
     public SupportStatus SupportStatus { get; set; } = SupportStatus.New;
     public SupportType SupportType { get; set; }
 

@@ -16,6 +16,12 @@ namespace Data.Models
         public string CheckInNote { get; set; }
     }
 
+    public class AddCheckOutNoteModel
+    {
+        public Guid BookingId { get; set; }
+        public string CheckOutNote { get; set; }
+    }
+
     public class BookingCreateModel
     {
         public Guid SearchRequestId { get; set; }
@@ -28,6 +34,7 @@ namespace Data.Models
         public Guid SearchRequestId { get; set; }
         public Guid DriverId { get; set; }
         public string CheckInNote { get; set; }
+        public string CheckOutNote { get; set; }
         public DateTime? PickUpTime { get; set; }
         public DateTime? DropOffTime { get; set; }
         public BookingStatus Status { get; set; }
