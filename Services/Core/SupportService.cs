@@ -22,7 +22,7 @@ public interface ISupportService
     Task<ResultModel> GetAll(PagingParam<SortSupportCriteria> paginationModel, Guid UserId);
     Task<ResultModel> ChangeStatusToInProcess(Guid SupportId, Guid UserId);
     Task<ResultModel> ChangeStatusToSolved(Guid SupportId, Guid UserId);
-    Task<ResultModel> ChangeStatusToCantSolved(Guid SupportId, Guid UserId);
+    Task<ResultModel> ChangeStatusToCantSolved(UpdateCantSolveModel model, Guid UserId);
     Task<ResultModel> Delete(Guid SupportId, Guid UserId);
 }
 
@@ -192,7 +192,7 @@ public class SupportService : ISupportService
         }
         return result;
     }
-    public async Task<ResultModel> ChangeStatusToCantSolved(Guid SupportId, Guid UserId)
+    public async Task<ResultModel> ChangeStatusToCantSolved(UpdateCantSolveModel model, Guid UserId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -210,13 +210,14 @@ public class SupportService : ISupportService
                 result.ErrorMessage = "The user must be Admin";
                 return result;
             }
-            var support = _dbContext.Supports.Where(_ => _.Id == SupportId && !_.IsDeleted).FirstOrDefault();
+            var support = _dbContext.Supports.Where(_ => _.Id == model.SupportId && !_.IsDeleted).FirstOrDefault();
             if (support == null)
             {
                 result.ErrorMessage = "Support not exist";
                 return result;
             }
             support.SupportStatus = SupportStatus.CantSolved;
+            support.Note = model.Note;
             support.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 

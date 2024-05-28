@@ -28,6 +28,7 @@ public interface IBookingService
     Task<ResultModel> DriverCancelBooking(ChangeBookingStatusModel model, Guid DriverId);
     Task<ResultModel> CustomerCancelBooking(ChangeBookingStatusModel model, Guid CustomerId);
     Task<ResultModel> AddBookingCheckInNote(AddCheckInNoteModel model, Guid DriverId);
+    Task<ResultModel> AddBookingCheckOutNote(AddCheckOutNoteModel model, Guid DriverId);
     Task<ResultModel> ResetBooking();
 
 }
@@ -1088,6 +1089,64 @@ public class BookingService : IBookingService
             }
 
             booking.CheckInNote = model.CheckInNote;
+            booking.DateUpdated = DateTime.Now;
+            await _dbContext.SaveChangesAsync();
+
+            var data = _mapper.Map<BookingModel>(booking);
+            data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
+
+            result.Data = data;
+            result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> AddBookingCheckOutNote(AddCheckOutNoteModel model, Guid DriverId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var driver = _dbContext.Users
+                .Include(_ => _.DriverStatuses)
+                .Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
+            if (driver == null)
+            {
+                result.ErrorMessage = "Driver not found";
+                return result;
+            }
+            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
+            if (!checkDriver)
+            {
+                result.ErrorMessage = "User must be a Driver";
+                return result;
+            }
+            var booking = _dbContext.Bookings
+                .Include(_ => _.Driver)
+                .Include(_ => _.SearchRequest)
+                 .ThenInclude(sr => sr.Customer)
+                .Where(_ => _.Id == model.BookingId && !_.IsDeleted).FirstOrDefault();
+            if (booking == null)
+            {
+                result.ErrorMessage = "Booking not exist";
+                return result;
+            }
+            if (booking.Status != BookingStatus.CheckOut)
+            {
+                result.ErrorMessage = "Booking Status must be CheckOut";
+                return result;
+            }
+            if (booking.DriverId != DriverId)
+            {
+                result.ErrorMessage = "Driver don't have permission";
+                return result;
+            }
+
+            booking.CheckOutNote = model.CheckOutNote;
             booking.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 
