@@ -111,6 +111,15 @@ public class AdminController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPost("Staff/Register")]
+    public async Task<ActionResult> RegisterStaffByAdmin([FromForm] RegisterStaffByAdminModel model)
+    {
+        var result = await _userService.RegisterStaffByAdmin(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPost("DrivingLicense/{DriverId}")]
     public async Task<ActionResult> AddDrivingLicenseByAdmin([FromBody] DrivingLicenseCreateModel model, Guid DriverId)
     {
