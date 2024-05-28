@@ -41,6 +41,8 @@ public interface IUserService
     Task<ResultModel> UpdateCustomerPriority();
     Task<ResultModel> UpdateUserPriorityById(UpdateUserPriorityModel model, Guid adminId);
     Task<ResultModel> UpdateCustomerPriorityById(Guid userId);
+    Task<ResultModel> UpdateStaffStatusOffline(Guid staffId);
+    Task<ResultModel> UpdateStaffStatusOnline(Guid staffId);
 
 }
 public class UserService : IUserService
@@ -1009,6 +1011,88 @@ public class UserService : IUserService
 
             result.Succeed = true;
             result.Data = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> UpdateStaffStatusOnline(Guid staffId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var staff = _dbContext.Users
+                .Include(_ => _.DriverStatuses)
+                .Where(_ => _.Id == staffId && !_.IsDeleted).FirstOrDefault();
+            if (staff == null)
+            {
+                result.ErrorMessage = "Staff not exists";
+                result.Succeed = false;
+                return result;
+            }
+            var checkStaff = await _userManager.IsInRoleAsync(staff, RoleNormalizedName.Staff);
+            if (!checkStaff)
+            {
+                result.ErrorMessage = "The user must be a Staff";
+                result.Succeed = false;
+                return result;
+            }
+
+            var staffStatus = staff.DriverStatuses.FirstOrDefault();
+
+            staffStatus.IsOnline = true;
+            staffStatus.IsFree = true;
+            staffStatus.DateUpdated = DateTime.Now;
+            _dbContext.DriverStatuses.Update(staffStatus);
+            await _dbContext.SaveChangesAsync();
+
+            result.Succeed = true;
+            result.Data = staffStatus.Id;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> UpdateStaffStatusOffline(Guid staffId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var staff = _dbContext.Users
+                .Include(_ => _.DriverStatuses)
+                .Where(_ => _.Id == staffId && !_.IsDeleted).FirstOrDefault();
+            if (staff == null)
+            {
+                result.ErrorMessage = "Staff not exists";
+                result.Succeed = false;
+                return result;
+            }
+            var checkStaff = await _userManager.IsInRoleAsync(staff, RoleNormalizedName.Staff);
+            if (!checkStaff)
+            {
+                result.ErrorMessage = "The user must be a Staff";
+                result.Succeed = false;
+                return result;
+            }
+
+            var staffStatus = staff.DriverStatuses.FirstOrDefault();
+
+            staffStatus.IsOnline = false;
+            staffStatus.IsFree = true;
+            staffStatus.DateUpdated = DateTime.Now;
+            _dbContext.DriverStatuses.Update(staffStatus);
+            await _dbContext.SaveChangesAsync();
+
+            result.Succeed = true;
+            result.Data = staffStatus.Id;
         }
         catch (Exception ex)
         {

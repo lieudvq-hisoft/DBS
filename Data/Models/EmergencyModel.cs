@@ -12,7 +12,6 @@ namespace Data.Models
 {
     public class EmergencyCreateModel
     {
-        public Guid HandlerId { get; set; }
         public Guid BookingId { get; set; }
         public string? Note { get; set; }
         public EmergencyType EmergencyType { get; set; }
