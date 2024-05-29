@@ -15,6 +15,7 @@ namespace Data.Models
         public Guid BookingId { get; set; }
         public string? Note { get; set; }
         public EmergencyType EmergencyType { get; set; }
+        public string? SenderAddress { get; set; }
     }
 
     public class EmergencyUpdateSolveModel
@@ -42,6 +43,7 @@ namespace Data.Models
         public StaffStatus StaffStatus { get; set; }
 
         //SenderLocation
+        public string? SenderAddress { get; set; }
         public double? SenderLatitude { get; set; }
         public double? SenderLongitude { get; set; }
     }
