@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
 using BarcodeLib;
+using Data.DataAccess;
 using Data.Entities;
 using Data.Model;
 using Data.Models;
@@ -30,7 +31,7 @@ namespace Services.Utils
             return "";
         }
 
-        public static async Task<Token> GetAccessToken(User user, List<string> role, IConfiguration _configuration)
+        public static async Task<Token> GetAccessToken(User user, List<string> role, IConfiguration _configuration, AppDbContext _dbContext)
         {
             List<Claim> claims = GetClaims(user, role);
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
@@ -41,8 +42,31 @@ namespace Services.Utils
               expires: DateTime.Now.AddHours(int.Parse(_configuration["Jwt:ExpireTimes"])),
               //int.Parse(_configuration["Jwt:ExpireTimes"]) * 3600
               signingCredentials: creds);
-
             var serializedToken = new JwtSecurityTokenHandler().WriteToken(token);
+            var userStatus = _dbContext.Users
+                .Include(_ => _.DriverStatuses)
+                .Where(_ => _.Id == user.Id).FirstOrDefault();
+            var status = userStatus.DriverStatuses.FirstOrDefault();
+            if (status != null)
+            {
+                return new Token
+                {
+                    Access_token = serializedToken,
+                    TokenType = "Bearer",
+                    ExpiresIn = int.Parse(_configuration["Jwt:ExpireTimes"]!) * 3600,
+                    UserID = user.Id.ToString(),
+                    UserName = user.UserName!,
+                    PhoneNumber = user.PhoneNumber!,
+                    Email = user.Email!,
+                    Avatar = user.Avatar!,
+                    Name = user.Name!,
+                    Priority = user.Priority!,
+                    IsFree = status.IsFree!,
+                    IsOnline = status.IsOnline!,
+                    Roles = role
+                };
+            }
+
             return new Token
             {
                 Access_token = serializedToken,

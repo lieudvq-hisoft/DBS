@@ -23,4 +23,8 @@ public class Emergency : BaseEntity
     public string? Solution { get; set; }
     public EmergencyStatus Status { get; set; } = EmergencyStatus.Pending;
     public EmergencyType EmergencyType { get; set; }
+
+    //SenderLocation
+    public double? SenderLatitude { get; set; }
+    public double? SenderLongitude { get; set; }
 }

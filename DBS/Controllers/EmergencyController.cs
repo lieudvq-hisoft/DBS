@@ -53,6 +53,14 @@ public class EmergencyController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [HttpGet("IsHaveEmergency/{BookingId}")]
+    public async Task<ActionResult> IsHaveEmergency(Guid BookingId)
+    {
+        var result = await _emergencyService.IsHaveEmergency(BookingId, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
     [HttpPut("Processing/{EmergencyId}")]
     public async Task<ActionResult> UpdateEmergencyStatusProcessing(Guid EmergencyId)
     {

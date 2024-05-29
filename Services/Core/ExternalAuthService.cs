@@ -116,7 +116,7 @@ public class ExternalAuthService : IExternalAuthService
                 result.ErrorMessage = "You are not Customer";
                 return result;
             }
-            var token = await MyFunction.GetAccessToken(user, roles, _configuration);
+            var token = await MyFunction.GetAccessToken(user, roles, _configuration, _dbContext);
             result.Succeed = true;
             result.Data = token;
         }

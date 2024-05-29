@@ -13,7 +13,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Services.Utils;
 using System.Data;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Services.Core;
 
@@ -43,6 +42,7 @@ public interface IUserService
     Task<ResultModel> UpdateCustomerPriorityById(Guid userId);
     Task<ResultModel> UpdateStaffStatusOffline(Guid staffId);
     Task<ResultModel> UpdateStaffStatusOnline(Guid staffId);
+    Task<ResultModel> UpdateLocation(LocationModel model, Guid customerId);
 
 }
 public class UserService : IUserService
@@ -110,7 +110,7 @@ public class UserService : IUserService
             await _producer.ProduceAsync("dbs-user-create-new", new Message<Null, string> { Value = json });
             _producer.Flush();
 
-            var token = await MyFunction.GetAccessToken(userByEmail, roles, _configuration);
+            var token = await MyFunction.GetAccessToken(userByEmail, roles, _configuration, _dbContext);
             result.Succeed = true;
             result.Data = token;
         }
@@ -163,7 +163,7 @@ public class UserService : IUserService
             await _producer.ProduceAsync("dbs-user-create-new", new Message<Null, string> { Value = json });
             _producer.Flush();
 
-            var token = await MyFunction.GetAccessToken(userByEmail, roles, _configuration);
+            var token = await MyFunction.GetAccessToken(userByEmail, roles, _configuration, _dbContext);
             result.Succeed = true;
             result.Data = token;
         }
@@ -216,7 +216,7 @@ public class UserService : IUserService
             await _producer.ProduceAsync("dbs-user-create-new", new Message<Null, string> { Value = json });
             _producer.Flush();
 
-            var token = await MyFunction.GetAccessToken(userByEmail, roles, _configuration);
+            var token = await MyFunction.GetAccessToken(userByEmail, roles, _configuration, _dbContext);
             result.Succeed = true;
             result.Data = token;
         }
@@ -1093,6 +1093,53 @@ public class UserService : IUserService
 
             result.Succeed = true;
             result.Data = staffStatus.Id;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> UpdateLocation(LocationModel model, Guid customerId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var customer = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();
+            if (customer == null)
+            {
+                result.ErrorMessage = "Driver not exists";
+                result.Succeed = false;
+                return result;
+            }
+            var checkCustomer = await _userManager.IsInRoleAsync(customer, RoleNormalizedName.Customer);
+            if (!checkCustomer)
+            {
+                result.ErrorMessage = "The user must be a Customer";
+                result.Succeed = false;
+                return result;
+            }
+
+            var driverLocation = customer.DriverLocations.FirstOrDefault();
+
+            if (driverLocation == null)
+            {
+                driverLocation = _mapper.Map<LocationModel, DriverLocation>(model);
+                driverLocation.DriverId = customer.Id;
+                _dbContext.DriverLocations.Add(driverLocation);
+            }
+            else
+            {
+                driverLocation.Latitude = model.Latitude;
+                driverLocation.Longitude = model.Longitude;
+                driverLocation.DateUpdated = DateTime.Now;
+                _dbContext.DriverLocations.Update(driverLocation);
+            }
+            await _dbContext.SaveChangesAsync();
+            result.Succeed = true;
+            result.Data = driverLocation.Id;
         }
         catch (Exception ex)
         {
