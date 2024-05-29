@@ -83,6 +83,8 @@ namespace Services.Mapping
 
             CreateMap<EmergencyCreateModel, Emergency>();
             CreateMap<Emergency, EmergencyModel>();
+
+            CreateMap<DriverStatus, StaffStatus>();
         }
     }
 }

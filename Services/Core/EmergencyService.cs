@@ -19,6 +19,7 @@ public interface IEmergencyService
     Task<ResultModel> DriverCreateEmergency(EmergencyCreateModel model, Guid driverId);
     Task<ResultModel> GetEmergencies(PagingParam<SortEmergencyCriteria> paginationModel, Guid userId);
     Task<ResultModel> GetEmergencyById(Guid emergencyId, Guid userId);
+    Task<ResultModel> IsHaveEmergency(Guid bookingId, Guid userId);
     Task<ResultModel> UpdateEmergencyStatusProcessing(Guid emergencyId, Guid userId);
     Task<ResultModel> UpdateEmergencyStatusSolved(EmergencyUpdateSolveModel model, Guid userId);
 }
@@ -48,7 +49,9 @@ public class EmergencyService : IEmergencyService
         result.Succeed = false;
         try
         {
-            var sender = _dbContext.Users.Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();
+            var sender = _dbContext.Users
+                .Include(_ => _.DriverLocations)
+                .Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();
             if (sender == null)
             {
                 result.ErrorMessage = "Sender is not exist";
@@ -121,10 +124,19 @@ public class EmergencyService : IEmergencyService
             var emergency = _mapper.Map<EmergencyCreateModel, Emergency>(model);
             emergency.SenderId = customerId;
             emergency.HandlerId = handler.Id;
+            var senderLocation = sender.DriverLocations.FirstOrDefault();
+            if (senderLocation != null)
+            {
+                emergency.SenderLatitude = senderLocation.Latitude;
+                emergency.SenderLongitude = senderLocation.Longitude;
+            }
             _dbContext.Emergencies.Add(emergency);
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<EmergencyModel>(emergency);
+            var staffStatus = handler.DriverStatuses.FirstOrDefault();
+            data.StaffStatus = _mapper.Map<StaffStatus>(staffStatus);
+
             var kafkaModelPay = new KafkaModel { UserReceiveNotice = new List<Guid>() { handler.Id }, Payload = data };
             var jsonPay = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelPay);
             await _producer.ProduceAsync("dbs-emergency-customer-send", new Message<Null, string> { Value = jsonPay });
@@ -147,7 +159,9 @@ public class EmergencyService : IEmergencyService
         result.Succeed = false;
         try
         {
-            var sender = _dbContext.Users.Where(_ => _.Id == driverId && !_.IsDeleted).FirstOrDefault();
+            var sender = _dbContext.Users
+                .Include(_ => _.DriverLocations)
+                .Where(_ => _.Id == driverId && !_.IsDeleted).FirstOrDefault();
             if (sender == null)
             {
                 result.ErrorMessage = "Sender is not exist";
@@ -220,10 +234,19 @@ public class EmergencyService : IEmergencyService
             var emergency = _mapper.Map<EmergencyCreateModel, Emergency>(model);
             emergency.SenderId = driverId;
             emergency.HandlerId = handler.Id;
+            var senderLocation = sender.DriverLocations.FirstOrDefault();
+            if (senderLocation != null)
+            {
+                emergency.SenderLatitude = senderLocation.Latitude;
+                emergency.SenderLongitude = senderLocation.Longitude;
+            }
             _dbContext.Emergencies.Add(emergency);
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<EmergencyModel>(emergency);
+            var staffStatus = handler.DriverStatuses.FirstOrDefault();
+            data.StaffStatus = _mapper.Map<StaffStatus>(staffStatus);
+
             var kafkaModelPay = new KafkaModel { UserReceiveNotice = new List<Guid>() { handler.Id }, Payload = data };
             var jsonPay = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModelPay);
             await _producer.ProduceAsync("dbs-emergency-driver-send", new Message<Null, string> { Value = jsonPay });
@@ -321,6 +344,53 @@ public class EmergencyService : IEmergencyService
             if (emergency == null)
             {
                 result.ErrorMessage = "Emergency not exist";
+                return result;
+            }
+
+            result.Data = _mapper.Map<EmergencyModel>(emergency);
+            result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+
+        return result;
+    }
+
+    public async Task<ResultModel> IsHaveEmergency(Guid bookingId, Guid userId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var user = _dbContext.Users.Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
+            if (user == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            if (!user.IsActive)
+            {
+                result.ErrorMessage = "User is deactivated";
+                return result;
+            }
+            var checkAdmin = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Admin);
+            var checkStaff = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
+            {
+                result.ErrorMessage = "You don't have permission";
+                return result;
+            }
+            var emergency = _dbContext.Emergencies
+                .Include(_ => _.Sender)
+                .Include(_ => _.Handler)
+                .Include(_ => _.Booking)
+                .Where(_ => _.BookingId == bookingId).FirstOrDefault();
+            if (emergency == null)
+            {
+                result.Data = false;
+                result.Succeed = true;
                 return result;
             }
 

@@ -142,4 +142,13 @@ public class CustomerController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPut("UpdateLocation")]
+    public async Task<ActionResult> UpdateLocation([FromBody] LocationModel model)
+    {
+        var result = await _userService.UpdateLocation(model, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
 }

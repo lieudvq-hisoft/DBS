@@ -20,5 +20,7 @@ public class Token
     public string Avatar { get; set; }
     public float? Priority { get; set; }
     public int CurrenNoticeCount { get; set; }
+    public bool? IsOnline { get; set; }
+    public bool? IsFree { get; set; }
     public List<string> Roles { get; set; } = new List<string>();
 }
