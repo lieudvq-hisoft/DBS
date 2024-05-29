@@ -23,6 +23,12 @@ namespace Data.Models
         public string Solution { get; set; }
     }
 
+    public class StaffStatus
+    {
+        public bool IsOnline { get; set; }
+        public bool IsFree { get; set; }
+    }
+
     public class EmergencyModel
     {
         public Guid Id { get; set; }
@@ -33,5 +39,10 @@ namespace Data.Models
         public string? Solution { get; set; }
         public EmergencyStatus Status { get; set; }
         public EmergencyType EmergencyType { get; set; }
+        public StaffStatus StaffStatus { get; set; }
+
+        //SenderLocation
+        public double? SenderLatitude { get; set; }
+        public double? SenderLongitude { get; set; }
     }
 }
