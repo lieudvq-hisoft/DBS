@@ -25,6 +25,7 @@ public class Emergency : BaseEntity
     public EmergencyType EmergencyType { get; set; }
 
     //SenderLocation
+    public string? SenderAddress { get; set; }
     public double? SenderLatitude { get; set; }
     public double? SenderLongitude { get; set; }
 }

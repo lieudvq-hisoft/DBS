@@ -82,6 +82,11 @@ public class EmergencyService : IEmergencyService
             {
                 result.ErrorMessage = "You don't have permission to send Emergency";
             }
+            if (booking.Status != BookingStatus.OnGoing && booking.Status != BookingStatus.CheckOut)
+            {
+                result.ErrorMessage = "Booking Status is not suitable for Emergency";
+                return result;
+            }
             var handler = new User();
             handler = _dbContext.Users
                 .Include(u => u.UserRoles)
@@ -178,6 +183,25 @@ public class EmergencyService : IEmergencyService
                 result.ErrorMessage = "The sender is deactivated";
                 return result;
             }
+            var booking = _dbContext.Bookings
+                .Include(_ => _.SearchRequest)
+                    .ThenInclude(sr => sr.Customer)
+                .Include(_ => _.Driver)
+                .Where(_ => _.Id == model.BookingId).FirstOrDefault();
+            if (booking == null)
+            {
+                result.ErrorMessage = "Booking not exist";
+                return result;
+            }
+            if (booking.SearchRequest.Customer.Id != sender.Id)
+            {
+                result.ErrorMessage = "You don't have permission to send Emergency";
+            }
+            if (booking.Status != BookingStatus.OnGoing && booking.Status != BookingStatus.CheckOut)
+            {
+                result.ErrorMessage = "Booking Status is not suitable for Emergency";
+                return result;
+            }
             var handler = new User();
             handler = _dbContext.Users
                 .Include(u => u.UserRoles)
@@ -217,20 +241,6 @@ public class EmergencyService : IEmergencyService
                 .OrderBy(x => x.EmergencyCount)
                 .Select(x => x.User)
                 .FirstOrDefault();
-            var booking = _dbContext.Bookings
-                .Include(_ => _.SearchRequest)
-                    .ThenInclude(sr => sr.Customer)
-                .Include(_ => _.Driver)
-                .Where(_ => _.Id == model.BookingId).FirstOrDefault();
-            if (booking == null)
-            {
-                result.ErrorMessage = "Booking not exist";
-                return result;
-            }
-            if (booking.SearchRequest.Customer.Id != sender.Id)
-            {
-                result.ErrorMessage = "You don't have permission to send Emergency";
-            }
             var emergency = _mapper.Map<EmergencyCreateModel, Emergency>(model);
             emergency.SenderId = driverId;
             emergency.HandlerId = handler.Id;
