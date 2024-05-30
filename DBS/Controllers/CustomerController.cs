@@ -82,6 +82,15 @@ public class CustomerController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpGet("GetForChat")]
+    public async Task<ActionResult> GetForChat()
+    {
+        var result = await _userService.GetForChat(Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpPut("Profile")]
     public async Task<ActionResult> UpdateProfile([FromBody] ProfileUpdateModel model)
     {

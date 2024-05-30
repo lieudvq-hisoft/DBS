@@ -15,6 +15,7 @@ namespace Services.Mapping
             CreateMap<User, UserModel>();
             CreateMap<User, UserModelByAdmin>();
             CreateMap<User, ProfileModel>();
+            CreateMap<User, UserForChatModel>();
 
             CreateMap<SearchRequestCreateModel, SearchRequest>();
             CreateMap<SearchRequest, SearchRequestModel>();
