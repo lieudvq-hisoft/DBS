@@ -142,6 +142,12 @@ namespace Data.Model
         public Guid UserId { get; set; }
     }
 
+    public class UserForChatModel
+    {
+        public string? Name { get; set; }
+        public string? Address { get; set; }
+    }
+
     public class ProfileModel
     {
         public Guid Id { get; set; }

@@ -31,6 +31,7 @@ public interface IUserService
     Task<ResultModel> DeleteImage(Guid userId);
     Task<ResultModel> ChangePublicGender(ChangePublicGenderModel model, Guid userId);
     Task<ResultModel> GetProfile(Guid id);
+    Task<ResultModel> GetForChat(Guid id);
     Task<ResultModel> BanAccount(BanAccountModel model, Guid adminId);
     Task<ResultModel> UnBanAccount(BanAccountModel model, Guid adminId);
     Task<ResultModel> ChangePassword(ChangePasswordModel model, Guid userId);
@@ -521,6 +522,38 @@ public class UserService : IUserService
             }
 
             var dataView = _mapper.Map<ProfileModel>(data);
+
+            dataView.Name = data.Name;
+            result.Succeed = true;
+            result.Data = dataView;
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> GetForChat(Guid id)
+    {
+        ResultModel result = new ResultModel();
+        try
+        {
+            var data = _dbContext.Users.Where(_ => _.Id == id && !_.IsDeleted).FirstOrDefault();
+            if (data == null)
+            {
+                result.ErrorMessage = "User not exists";
+                result.Succeed = false;
+                return result;
+            }
+            if (!data.IsActive)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "User has been deactivated";
+                return result;
+            }
+
+            var dataView = _mapper.Map<UserForChatModel>(data);
 
             dataView.Name = data.Name;
             result.Succeed = true;
