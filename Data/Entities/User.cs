@@ -20,12 +20,13 @@ public class User : IdentityUser<Guid>
     public DateTime DateCreated { get; set; } = DateTime.Now;
     public DateTime DateUpdated { get; set; } = DateTime.Now;
     public DateTime? LastTripTime { get; set; }
+    public int TotalRequest { get; set; } = 0;
+    public int DeclineRequest { get; set; } = 0;
     public virtual ICollection<UserRole> UserRoles { get; set; }
 
     //Driver
     public virtual ICollection<DriverLocation> DriverLocations { get; set; }
     public virtual ICollection<DriverStatus> DriverStatuses { get; set; }
-
     public virtual ICollection<Support> Supports { get; set; }
 
 }

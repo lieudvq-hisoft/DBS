@@ -37,4 +37,28 @@ namespace Data.Model
         public double Radius { get; set; }
         public List<Guid> ListDrivers { get; set; } = new List<Guid>();
     }
+
+    public class DriverStatisticModel
+    {
+        public string BookingAcceptanceRate { get; set; }
+        public string BookingCancellationRate { get; set; }
+        public string BookingCompletionRate { get; set; }
+        public List<int> OperationalMonths { get; set; } = new List<int>();
+    }
+
+    public class DriverStatisticMonthlyModel
+    {
+        public int Month { get; set; }
+        public long TotalMoney { get; set; }
+        public string TotalOperatingTime { get; set; }
+        public List<DriverStatisticDaylyModel> DriverStatisticDayly { get; set; } = new List<DriverStatisticDaylyModel>();
+    }
+
+    public class DriverStatisticDaylyModel
+    {
+        public int Day { get; set; }
+        public int TotalTrip { get; set; }
+        public long TotalIncome { get; set; }
+        public string TotalOperatiingTime { get; set; }
+    }
 }
