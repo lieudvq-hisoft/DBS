@@ -98,6 +98,8 @@ public class BookingService : IBookingService
             driverStatus.DateUpdated = DateTime.Now;
             _dbContext.DriverStatuses.Update(driverStatus);
 
+            driver.TotalRequest += 1;
+
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
