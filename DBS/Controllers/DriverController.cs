@@ -173,4 +173,22 @@ public class DriverController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpGet("DriverStatistics/{Year}")]
+    public async Task<ActionResult> ChangePublicGender(int Year)
+    {
+        var result = await _driverService.GetDriverStatistics(Guid.Parse(User.GetId()), Year);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpGet("DriverMonthlyStatistics/{Month}/{Year}")]
+    public async Task<ActionResult> GetDriverMonthlyStatistics(int Month, int Year)
+    {
+        var result = await _driverService.GetDriverMonthlyStatistics(Guid.Parse(User.GetId()), Month, Year);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
 }
