@@ -428,7 +428,8 @@ public class SearchRequestService : ISearchRequestService
                 await _producer.ProduceAsync("dbs-driver-status-warning", new Message<Null, string> { Value = jsonWarning });
                 _producer.Flush();
             }
-
+            driver.DeclineRequest += 1;
+            driver.TotalRequest += 1;
             _dbContext.Users.Update(driver);
             await _dbContext.SaveChangesAsync();
 

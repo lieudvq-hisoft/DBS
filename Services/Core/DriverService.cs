@@ -26,6 +26,8 @@ public interface IDriverService
     Task<ResultModel> UpdateAllDriverStatusOffline();
     Task<ResultModel> UpdateStatusOnline(Guid driverId);
     Task<ResultModel> GetDriverOnline(LocationCustomer locationCustomer, Guid userId);
+    Task<ResultModel> GetDriverStatistics(Guid driverId, int year);
+    Task<ResultModel> GetDriverMonthlyStatistics(Guid driverId, int month, int year);
 
 
 }
@@ -556,4 +558,120 @@ public class DriverService : IDriverService
         }
         return result;
     }
+
+    public async Task<ResultModel> GetDriverStatistics(Guid driverId, int year)
+    {
+        ResultModel result = new ResultModel();
+        try
+        {
+            var driver = _dbContext.Users.Where(d => d.Id == driverId && !d.IsDeleted).FirstOrDefault();
+            if (driver == null)
+            {
+                result.ErrorMessage = "Driver not exists";
+                result.Succeed = false;
+                return result;
+            }
+            if (!driver.IsActive)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "Driver has been deactivated";
+                return result;
+            }
+            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
+            if (!checkDriver)
+            {
+                result.ErrorMessage = "The user must be Driver";
+                return result;
+            }
+
+            var bookings = _dbContext.Bookings.Where(_ => _.DriverId == driverId && _.DateCreated.Year == year).ToList();
+
+            int totalBookings = bookings.Count;
+            int canceledBookings = bookings.Count(b => b.Status == BookingStatus.Cancel);
+            int completedBookings = bookings.Count(b => b.Status == BookingStatus.Complete);
+
+            DriverStatisticModel driverStatistics = new()
+            {
+                BookingAcceptanceRate = driver.TotalRequest == 0 ? "100%" : ((float)(driver.TotalRequest - driver.DeclineRequest) / driver.TotalRequest * 100).ToString("0.##") + "%",
+                BookingCancellationRate = totalBookings == 0 ? "0%" : ((float)canceledBookings / totalBookings * 100).ToString("0.##") + "%",
+                BookingCompletionRate = totalBookings == 0 ? "0%" : ((float)completedBookings / totalBookings * 100).ToString("0.##") + "%",
+                OperationalMonths = bookings.Select(_ => _.DateCreated.Month).Distinct().ToList()
+            };
+
+            result.Succeed = true;
+            result.Data = driverStatistics;
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+        return result;
+    }
+
+
+    public async Task<ResultModel> GetDriverMonthlyStatistics(Guid driverId, int month, int year)
+    {
+        ResultModel result = new ResultModel();
+        try
+        {
+            var driver = await _dbContext.Users
+                .Where(d => d.Id == driverId && !d.IsDeleted)
+                .FirstOrDefaultAsync();
+
+            if (driver == null)
+            {
+                result.ErrorMessage = "Driver not exists";
+                result.Succeed = false;
+                return result;
+            }
+
+            if (!driver.IsActive)
+            {
+                result.Succeed = false;
+                result.ErrorMessage = "Driver has been deactivated";
+                return result;
+            }
+
+            var monthlyBookings = await _dbContext.Bookings
+                .Include(_ => _.SearchRequest)
+                .Where(b => b.DriverId == driverId && b.DateCreated.Month == month && b.DateCreated.Year == year)
+                .ToListAsync();
+
+            long totalMoney = monthlyBookings.Sum(b => b.SearchRequest.Price);
+            var totalOperatingTimeSpan = monthlyBookings
+                .Select(b => b.DateUpdated - b.DateCreated)
+                .Aggregate(TimeSpan.Zero, (subtotal, t) => subtotal.Add(t));
+
+            string totalOperatingTime = $"{(int)totalOperatingTimeSpan.TotalHours} giờ {totalOperatingTimeSpan.Minutes} phút";
+
+            var dailyStatistics = monthlyBookings
+                .GroupBy(b => b.DateCreated.Day)
+                .Select(g => new DriverStatisticDaylyModel
+                {
+                    Day = g.Key,
+                    TotalTrip = g.Count(),
+                    TotalIncome = g.Sum(b => b.SearchRequest.Price),
+                    TotalOperatiingTime = $"{(int)g.Select(b => b.DateUpdated - b.DateCreated).Aggregate(TimeSpan.Zero, (subtotal, t) => subtotal.Add(t)).TotalHours} giờ {g.Select(b => b.DateUpdated - b.DateCreated).Aggregate(TimeSpan.Zero, (subtotal, t) => subtotal.Add(t)).Minutes} phút"
+                })
+                .ToList();
+
+            DriverStatisticMonthlyModel driverMonthlyStatistics = new DriverStatisticMonthlyModel
+            {
+                Month = month,
+                TotalMoney = totalMoney,
+                TotalOperatingTime = totalOperatingTime,
+                DriverStatisticDayly = dailyStatistics
+            };
+
+            result.Succeed = true;
+            result.Data = driverMonthlyStatistics;
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+        return result;
+    }
+
+
 }
