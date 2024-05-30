@@ -82,10 +82,10 @@ public class CustomerController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
-    [HttpGet("GetForChat")]
-    public async Task<ActionResult> GetForChat()
+    [HttpGet("GetForChat/{UserId}")]
+    public async Task<ActionResult> GetForChat(Guid UserId)
     {
-        var result = await _userService.GetForChat(Guid.Parse(User.GetId()));
+        var result = await _userService.GetForChat(UserId);
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
