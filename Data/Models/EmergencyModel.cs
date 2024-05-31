@@ -41,6 +41,7 @@ namespace Data.Models
         public string? Note { get; set; }
         public string? Solution { get; set; }
         public bool IsStopTrip { get; set; }
+        public string? BookingCancelReason { get; set; }
         public EmergencyStatus Status { get; set; }
         public EmergencyType EmergencyType { get; set; }
         public StaffStatus StaffStatus { get; set; }

@@ -44,6 +44,9 @@ public interface IUserService
     Task<ResultModel> UpdateStaffStatusOffline(Guid staffId);
     Task<ResultModel> UpdateStaffStatusOnline(Guid staffId);
     Task<ResultModel> UpdateLocation(LocationModel model, Guid customerId);
+    Task<ResultModel> GetAdminOverview(Guid adminId);
+    Task<ResultModel> GetAdminRevenueMonthlyIncome(Guid adminId, int year);
+    Task<ResultModel> GetAdminProfitMonthlyIncome(Guid adminId, int year);
 
 }
 public class UserService : IUserService
@@ -1180,4 +1183,196 @@ public class UserService : IUserService
         }
         return result;
     }
+
+    public async Task<ResultModel> GetAdminOverview(Guid adminId)
+    {
+        ResultModel result = new ResultModel();
+        try
+        {
+            var admin = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exists";
+                result.Succeed = false;
+                return result;
+            }
+            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
+            if (!checkAdmin)
+            {
+                result.ErrorMessage = "The user must be a Admin";
+                result.Succeed = false;
+                return result;
+            }
+            // Tổng số tài khoản (trừ admin)
+            var totalAccounts = await _dbContext.Users
+                .Include(_ => _.UserRoles)
+                    .ThenInclude(_ => _.Role)
+                .CountAsync(u => !u.IsDeleted && u.UserRoles.Any(ur => ur.Role.Name != RoleNormalizedName.Admin));
+
+            // Số lượng chuyến đi
+            var totalTrips = await _dbContext.Bookings.CountAsync();
+
+            // Số lượng hỗ trợ
+            var totalSupportRequests = await _dbContext.Supports.CountAsync();
+
+            // Số lượng yêu cầu khẩn cấp
+            var totalEmergencyRequests = await _dbContext.Emergencies.CountAsync();
+
+            // Chi tiết số lượng tài khoản theo vai trò
+            var drivers = await _userManager.GetUsersInRoleAsync(RoleNormalizedName.Driver);
+            var customers = await _userManager.GetUsersInRoleAsync(RoleNormalizedName.Customer);
+            var staff = await _userManager.GetUsersInRoleAsync(RoleNormalizedName.Staff);
+
+            var driverCount = drivers.Count;
+            var customerCount = customers.Count;
+            var staffCount = staff.Count;
+
+            // Thống kê chuyến đi
+            var canceledTrips = await _dbContext.Bookings.CountAsync(b => b.Status == BookingStatus.Cancel);
+            var completedTrips = await _dbContext.Bookings.CountAsync(b => b.Status == BookingStatus.Complete);
+
+            var canceledTripsRate = Math.Round(totalTrips == 0 ? 0 : ((double)canceledTrips / totalTrips * 100), 2);
+            var completedTripsRate = Math.Round(totalTrips == 0 ? 0 : ((double)completedTrips / totalTrips * 100), 2);
+            var orderTripsRate = Math.Round(100.00 - canceledTripsRate - completedTripsRate, 2);
+
+            // Chi tiết trạng thái hỗ trợ
+            var newSupportRequests = await _dbContext.Supports.CountAsync(s => s.SupportStatus == SupportStatus.New);
+            var inProcessSupportRequests = await _dbContext.Supports.CountAsync(s => s.SupportStatus == SupportStatus.InProcess);
+            var solvedSupportRequests = await _dbContext.Supports.CountAsync(s => s.SupportStatus == SupportStatus.Solved);
+            var cantSolvedSupportRequests = await _dbContext.Supports.CountAsync(s => s.SupportStatus == SupportStatus.CantSolved);
+
+            // Chi tiết trạng thái khẩn cấp
+            var pendingEmergencyRequests = await _dbContext.Emergencies.CountAsync(e => e.Status == EmergencyStatus.Pending);
+            var processingEmergencyRequests = await _dbContext.Emergencies.CountAsync(e => e.Status == EmergencyStatus.Processing);
+            var solvedEmergencyRequests = await _dbContext.Emergencies.CountAsync(e => e.Status == EmergencyStatus.Solved);
+
+            AdminOverviewModel adminOverview = new AdminOverviewModel
+            {
+                TotalAccounts = totalAccounts,
+                TotalTrips = totalTrips,
+                TotalSupportRequests = totalSupportRequests,
+                TotalEmergencyRequests = totalEmergencyRequests,
+                AccountDetails = new List<int> { driverCount, customerCount, staffCount },
+                TripStatistics = new List<double>
+            {
+                canceledTripsRate,
+                completedTripsRate,
+                orderTripsRate
+            },
+                SupportStatusDetails = new List<int> { newSupportRequests, inProcessSupportRequests, solvedSupportRequests, cantSolvedSupportRequests },
+                EmergencyStatusDetails = new List<int> { pendingEmergencyRequests, processingEmergencyRequests, solvedEmergencyRequests }
+            };
+
+            result.Succeed = true;
+            result.Data = adminOverview;
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> GetAdminRevenueMonthlyIncome(Guid adminId, int year)
+    {
+        ResultModel result = new ResultModel();
+        try
+        {
+            var admin = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exists";
+                result.Succeed = false;
+                return result;
+            }
+            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
+            if (!checkAdmin)
+            {
+                result.ErrorMessage = "The user must be a Admin";
+                result.Succeed = false;
+                return result;
+            }
+            var monthlyIncome = new List<long>(new long[12]);
+
+            var bookings = await _dbContext.Bookings
+                .Where(b => b.DateCreated.Year == year)
+                .Include(b => b.SearchRequest)
+                .ToListAsync();
+
+            foreach (var booking in bookings)
+            {
+                int month = booking.DateCreated.Month - 1;
+                monthlyIncome[month] += booking.SearchRequest.Price;
+            }
+
+            AdminLineChartModel adminLineChart = new AdminLineChartModel
+            {
+                MonthlyIncome = monthlyIncome
+            };
+
+            result.Succeed = true;
+            result.Data = adminLineChart;
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> GetAdminProfitMonthlyIncome(Guid adminId, int year)
+    {
+        ResultModel result = new ResultModel();
+        try
+        {
+            var admin = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exists";
+                result.Succeed = false;
+                return result;
+            }
+            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
+            if (!checkAdmin)
+            {
+                result.ErrorMessage = "The user must be a Admin";
+                result.Succeed = false;
+                return result;
+            }
+            var monthlyIncome = new List<long>(new long[12]);
+
+            var wallet = await _dbContext.Wallets
+                .Where(_ => _.UserId == admin.Id).FirstOrDefaultAsync();
+
+            var walletTransactions = await _dbContext.WalletTransactions
+                .Where(_ => _.WalletId == wallet.Id).ToListAsync();
+
+            foreach (var walletTransaction in walletTransactions)
+            {
+                int month = walletTransaction.DateCreated.Month - 1;
+                if (walletTransaction.TypeWalletTransaction == TypeWalletTransaction.Income)
+                {
+                    monthlyIncome[month] += walletTransaction.TotalMoney;
+                }
+                else
+                {
+                    monthlyIncome[month] -= walletTransaction.TotalMoney;
+                }
+            }
+
+            AdminLineChartModel adminLineChart = new AdminLineChartModel
+            {
+                MonthlyIncome = monthlyIncome
+            };
+
+            result.Succeed = true;
+            result.Data = adminLineChart;
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+        return result;
+    }
+
 }

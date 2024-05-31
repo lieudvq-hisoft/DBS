@@ -440,6 +440,15 @@ public class WalletService : IWalletService
             wallet.DateUpdated = DateTime.Now;
             _dbContext.Wallets.Update(wallet);
 
+            var walletAdminTransaction = new WalletTransaction
+            {
+                TotalMoney = walletTransaction.TotalMoney,
+                TypeWalletTransaction = TypeWalletTransaction.Income,
+                WalletId = walletAdmin.Id,
+                Status = WalletTransactionStatus.Success,
+            };
+            _dbContext.WalletTransactions.Add(walletAdminTransaction);
+
             walletAdmin.TotalMoney += walletTransaction.TotalMoney;
             walletAdmin.DateUpdated = DateTime.Now;
             _dbContext.Wallets.Update(walletAdmin);
@@ -481,6 +490,7 @@ public class WalletService : IWalletService
                 return result;
             }
             var data = _dbContext.WalletTransactions
+                .Include(_ => _.LinkedAccount)
                 .Where(_ => _.WalletId == wallet.Id);
 
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
