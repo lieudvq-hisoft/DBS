@@ -345,4 +345,31 @@ public class AdminController : ControllerBase
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpGet("Statistic/GetAdminOverview")]
+    public async Task<ActionResult> GetAdminOverview()
+    {
+        var result = await _userService.GetAdminOverview(Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPut("Statistic/GetAdminRevenueMonthlyIncome/{Year}")]
+    public async Task<ActionResult> GetAdminRevenueMonthlyIncome(int Year)
+    {
+        var result = await _userService.GetAdminRevenueMonthlyIncome(Guid.Parse(User.GetId()), Year);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPut("Statistic/GetAdminProfitMonthlyIncome/{Year}")]
+    public async Task<ActionResult> GetAdminProfitMonthlyIncome(int Year)
+    {
+        var result = await _userService.GetAdminProfitMonthlyIncome(Guid.Parse(User.GetId()), Year);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
 }

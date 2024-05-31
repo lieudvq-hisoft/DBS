@@ -30,7 +30,7 @@ namespace Data.Models
         public Guid Id { get; set; }
         public long TotalMoney { get; set; }
         public TypeWalletTransaction TypeWalletTransaction { get; set; }
-        public PaymentType PaymentType { get; set; }
+        public PaymentType? PaymentType { get; set; }
         public WalletTransactionStatus Status { get; set; }
         public DateTime DateCreated { get; set; }
         public LinkedAccountModel? LinkedAccount { get; set; }

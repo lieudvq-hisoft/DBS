@@ -533,6 +533,8 @@ public class EmergencyService : IEmergencyService
             }
             if (model.IsStopTrip)
             {
+                emergency.BookingCancelReason = model.BookingCancelReason;
+                emergency.IsStopTrip = model.IsStopTrip;
                 var booking = _dbContext.Bookings
                     .Include(_ => _.Driver)
                     .Include(_ => _.SearchRequest)
