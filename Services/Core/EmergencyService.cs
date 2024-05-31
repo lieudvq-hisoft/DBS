@@ -453,7 +453,7 @@ public class EmergencyService : IEmergencyService
             }
             if (checkStaff && emergency.HandlerId != userId)
             {
-                result.ErrorMessage = "You don't have permission to process this emergency";
+                result.ErrorMessage = "Chỉ Staff đảm nhiệm emergency này mới được chuyển trạng thái!";
                 return result;
             }
             else
@@ -521,7 +521,7 @@ public class EmergencyService : IEmergencyService
             }
             if (checkStaff && emergency.HandlerId != userId)
             {
-                result.ErrorMessage = "You don't have permission to solve this emergency";
+                result.ErrorMessage = "Chỉ Staff đảm nhiệm emergency này mới được chuyển trạng thái!";
                 return result;
             }
             else
