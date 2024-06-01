@@ -177,7 +177,7 @@ public class BookingService : IBookingService
             var checkStaff = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Staff);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin Or Staff";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var data = _dbContext.Bookings
