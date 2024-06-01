@@ -324,9 +324,10 @@ public class UserService : IUserService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "The user must be Admin Or Staff";
                 return result;
             }
             var data = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
