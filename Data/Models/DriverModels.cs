@@ -51,6 +51,8 @@ namespace Data.Model
         public int Month { get; set; }
         public long TotalMoney { get; set; }
         public string TotalOperatingTime { get; set; }
+        public int TotalTrips { get; set; }
+        public int TotalTripsCompleted { get; set; }
         public List<DriverStatisticDaylyModel> DriverStatisticDayly { get; set; } = new List<DriverStatisticDaylyModel>();
     }
 
@@ -58,6 +60,7 @@ namespace Data.Model
     {
         public int Day { get; set; }
         public int TotalTrip { get; set; }
+        public int TotalTripCompleted { get; set; }
         public long TotalIncome { get; set; }
         public string TotalOperatiingTime { get; set; }
     }

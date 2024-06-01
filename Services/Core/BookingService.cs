@@ -173,10 +173,11 @@ public class BookingService : IBookingService
                 result.ErrorMessage = "User not exist";
                 return result;
             }
-            var checkAdmin = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "The user must be Admin Or Staff";
                 return result;
             }
             var data = _dbContext.Bookings
