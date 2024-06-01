@@ -179,7 +179,8 @@ public class SearchRequestService : ISearchRequestService
                 result.ErrorMessage = "The user must be a customer";
                 return result;
             }
-            var data = _dbContext.SearchRequests.Where(_ => _.CustomerId == customerId && _.Id == SearchRequestId && _.Id == SearchRequestId && !_.IsDeleted).FirstOrDefault();
+            var data = _dbContext.SearchRequests
+                .Where(_ => _.CustomerId == customerId && _.Id == SearchRequestId && !_.IsDeleted).FirstOrDefault();
             if (data == null)
             {
                 result.ErrorMessage = "SearchRequest not exist";
@@ -235,7 +236,8 @@ public class SearchRequestService : ISearchRequestService
                 result.ErrorMessage = "The user must be a driver";
                 return result;
             }
-            var searchRequest = _dbContext.SearchRequests.Where(_ => _.CustomerId == customerId && _.Id == SearchRequestId && !_.IsDeleted).FirstOrDefault();
+            var searchRequest = _dbContext.SearchRequests
+                .Where(_ => _.CustomerId == customerId && _.Id == SearchRequestId && !_.IsDeleted).FirstOrDefault();
             if (searchRequest == null)
             {
                 result.ErrorMessage = "SearchRequest not exist";
@@ -312,7 +314,8 @@ public class SearchRequestService : ISearchRequestService
                 result.ErrorMessage = "The user must be a customer";
                 return result;
             }
-            var searchRequest = _dbContext.SearchRequests.Where(_ => _.CustomerId == customerId && _.Id == SearchRequestId && !_.IsDeleted).FirstOrDefault();
+            var searchRequest = _dbContext.SearchRequests
+                .Where(_ => _.CustomerId == customerId && _.Id == SearchRequestId && !_.IsDeleted).FirstOrDefault();
             if (searchRequest == null)
             {
                 result.ErrorMessage = "SearchRequest not exist";

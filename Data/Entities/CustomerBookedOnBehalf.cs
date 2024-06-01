@@ -9,6 +9,7 @@ namespace Data.Entities;
 public class CustomerBookedOnBehalf : BaseEntity
 {
     public string? Name { get; set; }
+    public string? ImageUrl { get; set; }
     public string? PhoneNumber { get; set; }
     public string? Note { get; set; }
 }
