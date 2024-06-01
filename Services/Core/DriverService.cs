@@ -636,30 +636,41 @@ public class DriverService : IDriverService
                 .Include(_ => _.SearchRequest)
                 .Where(b => b.DriverId == driverId && b.DateCreated.Month == month && b.DateCreated.Year == year)
                 .ToListAsync();
+            var totalTrips = monthlyBookings.Count;
+            var totalTripsCompleted = monthlyBookings.Count(_ => _.Status == BookingStatus.Complete);
 
-            long totalMoney = monthlyBookings.Sum(b => b.SearchRequest.Price);
             var totalOperatingTimeSpan = monthlyBookings
                 .Select(b => b.DateUpdated - b.DateCreated)
                 .Aggregate(TimeSpan.Zero, (subtotal, t) => subtotal.Add(t));
 
             string totalOperatingTime = $"{(int)totalOperatingTimeSpan.TotalHours} giờ {totalOperatingTimeSpan.Minutes} phút";
 
-            var dailyStatistics = monthlyBookings
-                .GroupBy(b => b.DateCreated.Day)
-                .Select(g => new DriverStatisticDaylyModel
-                {
-                    Day = g.Key,
-                    TotalTrip = g.Count(),
-                    TotalIncome = g.Sum(b => b.SearchRequest.Price),
-                    TotalOperatiingTime = $"{(int)g.Select(b => b.DateUpdated - b.DateCreated).Aggregate(TimeSpan.Zero, (subtotal, t) => subtotal.Add(t)).TotalHours} giờ {g.Select(b => b.DateUpdated - b.DateCreated).Aggregate(TimeSpan.Zero, (subtotal, t) => subtotal.Add(t)).Minutes} phút"
-                })
-                .ToList();
+            var wallet = _dbContext.Wallets.Where(_ => _.UserId == driver.Id).FirstOrDefault();
+            var walletTransactions = await _dbContext.WalletTransactions
+                .Where(_ => _.WalletId == wallet.Id && _.TypeWalletTransaction == TypeWalletTransaction.Income && _.DateCreated.Month == month && _.DateCreated.Year == year)
+                .ToListAsync();
+
+            long totalMoney = walletTransactions.Sum(b => b.TotalMoney);
+
+            var dailyStatistics = walletTransactions
+            .GroupBy(wt => wt.DateCreated.Day)
+            .Select(g => new DriverStatisticDaylyModel
+            {
+                Day = g.Key,
+                TotalTrip = monthlyBookings.Count(b => b.DateCreated.Day == g.Key),
+                TotalTripCompleted = monthlyBookings.Count(b => b.DateCreated.Day == g.Key && b.Status == BookingStatus.Complete),
+                TotalIncome = g.Sum(wt => wt.TotalMoney),
+                TotalOperatiingTime = $"{(int)monthlyBookings.Where(b => b.DateCreated.Day == g.Key).Select(b => b.DateUpdated - b.DateCreated).Aggregate(TimeSpan.Zero, (subtotal, t) => subtotal.Add(t)).TotalHours} giờ {monthlyBookings.Where(b => b.DateCreated.Day == g.Key).Select(b => b.DateUpdated - b.DateCreated).Aggregate(TimeSpan.Zero, (subtotal, t) => subtotal.Add(t)).Minutes} phút"
+            })
+            .ToList();
 
             DriverStatisticMonthlyModel driverMonthlyStatistics = new DriverStatisticMonthlyModel
             {
                 Month = month,
                 TotalMoney = totalMoney,
                 TotalOperatingTime = totalOperatingTime,
+                TotalTrips = totalTrips,
+                TotalTripsCompleted = totalTripsCompleted,
                 DriverStatisticDayly = dailyStatistics
             };
 
