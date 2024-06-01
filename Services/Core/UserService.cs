@@ -344,7 +344,9 @@ public class UserService : IUserService
                         Gender = user.Gender,
                         Dob = user.Dob,
                         DateCreated = user.DateCreated,
-                        Role = user.UserRoles.FirstOrDefault().Role.Name
+                        Role = user.UserRoles.FirstOrDefault().Role.Name,
+                        IsActive = user.IsActive,
+                        IsPublicGender = user.IsPublicGender
                     })
                     .AsQueryable();
 
@@ -1345,7 +1347,7 @@ public class UserService : IUserService
                 .Where(_ => _.UserId == admin.Id).FirstOrDefaultAsync();
 
             var walletTransactions = await _dbContext.WalletTransactions
-                .Where(_ => _.WalletId == wallet.Id).ToListAsync();
+                .Where(_ => _.WalletId == wallet.Id && _.DateCreated.Year == year).ToListAsync();
 
             foreach (var walletTransaction in walletTransactions)
             {
