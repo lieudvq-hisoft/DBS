@@ -294,7 +294,7 @@ public class EmergencyService : IEmergencyService
             var checkStaff = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Staff);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "You don't have permission";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var data = _dbContext.Emergencies.OrderByDescending(_ => _.DateCreated);
@@ -343,7 +343,7 @@ public class EmergencyService : IEmergencyService
             var checkStaff = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Staff);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "You don't have permission";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var emergency = _dbContext.Emergencies
@@ -389,7 +389,7 @@ public class EmergencyService : IEmergencyService
             var checkStaff = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Staff);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "You don't have permission";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var emergency = _dbContext.Emergencies
@@ -438,7 +438,7 @@ public class EmergencyService : IEmergencyService
             var checkStaff = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Staff);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "You don't have permission";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var emergency = _dbContext.Emergencies
@@ -506,7 +506,7 @@ public class EmergencyService : IEmergencyService
             var checkStaff = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Staff);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "You don't have permission";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var emergency = _dbContext.Emergencies
