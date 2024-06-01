@@ -60,7 +60,7 @@ public class ModelVehicleService : IModelVehicleService
             var checkStaff = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Staff);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin or Staff";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var brandVehicle = _dbContext.BrandVehicles.Where(_ => _.Id == model.BrandVehicleId).FirstOrDefault();
@@ -112,7 +112,7 @@ public class ModelVehicleService : IModelVehicleService
             var checkStaff = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Staff);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin or Staff";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var modelVehicle = _dbContext.ModelVehicles.Where(_ => _.Id == modelVehicleId).FirstOrDefault();
@@ -204,7 +204,7 @@ public class ModelVehicleService : IModelVehicleService
             var checkStaff = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Staff);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin or Staff";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var modelVehicle = _dbContext.ModelVehicles.Where(_ => _.Id == model.ModelVehicleId).FirstOrDefault();

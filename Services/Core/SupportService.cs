@@ -146,7 +146,7 @@ public class SupportService : ISupportService
             var checkAdmin = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Admin);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "Handler must be Staff or Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var data = _dbContext.Supports
@@ -190,7 +190,7 @@ public class SupportService : ISupportService
             var checkAdmin = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Admin);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "Handler must be Staff or Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var support = _dbContext.Supports
@@ -233,7 +233,7 @@ public class SupportService : ISupportService
             var checkAdmin = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Admin);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "Handler must be Staff or Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var support = _dbContext.Supports.Where(_ => _.Id == model.SupportId && !_.IsDeleted).FirstOrDefault();
@@ -284,7 +284,7 @@ public class SupportService : ISupportService
             var checkAdmin = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Admin);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "Handler must be Staff or Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var support = _dbContext.Supports.Where(_ => _.Id == SupportId && !_.IsDeleted).FirstOrDefault();
@@ -334,7 +334,7 @@ public class SupportService : ISupportService
             var checkAdmin = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Admin);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "Handler must be Staff or Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var support = _dbContext.Supports.Where(_ => _.Id == SupportId && !_.IsDeleted).FirstOrDefault();
@@ -384,7 +384,7 @@ public class SupportService : ISupportService
             var checkAdmin = await _userManager.IsInRoleAsync(handler, RoleNormalizedName.Admin);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "Handler must be Staff or Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var support = _dbContext.Supports.Where(_ => _.Id == SupportId && !_.IsDeleted).FirstOrDefault();
