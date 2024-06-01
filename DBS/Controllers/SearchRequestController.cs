@@ -76,4 +76,20 @@ public class SearchRequestController : ControllerBase
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
+
+    [HttpGet("CheckExistSearchRequestProcessing")]
+    public async Task<ActionResult> CheckExistSearchRequestProcessing()
+    {
+        var result = await _searchRequestService.CheckExistSearchRequestProcessing(Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [HttpGet("SendSearchRequestToDriver/{SearchRequestId}/{DriverId}")]
+    public async Task<ActionResult> SendSearchRequestToDriver(Guid SearchRequestId, Guid DriverId)
+    {
+        var result = await _searchRequestService.SendSearchRequestToDriver(SearchRequestId, DriverId);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
 }
