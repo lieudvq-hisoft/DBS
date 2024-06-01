@@ -662,12 +662,6 @@ public class UserService : IUserService
                 result.Succeed = false;
                 return result;
             }
-            if (!user.IsActive)
-            {
-                result.Succeed = false;
-                result.ErrorMessage = "User has been deactivated";
-                return result;
-            }
 
             user.IsActive = true;
             user.DateUpdated = DateTime.Now;
