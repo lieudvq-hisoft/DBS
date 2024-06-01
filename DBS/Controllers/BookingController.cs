@@ -133,4 +133,12 @@ public class BookingController : ControllerBase
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
+
+    [HttpGet("CheckExistBookingNotComplete")]
+    public async Task<ActionResult> CheckExistBookingNotComplete()
+    {
+        var result = await _bookingService.CheckExistBookingNotComplete(Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
 }

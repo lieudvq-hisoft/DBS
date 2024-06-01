@@ -11,6 +11,7 @@ using Data.Utils.Paging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 
 namespace Services.Core;
 public interface IBookingService
@@ -30,6 +31,7 @@ public interface IBookingService
     Task<ResultModel> AddBookingCheckInNote(AddCheckInNoteModel model, Guid DriverId);
     Task<ResultModel> AddBookingCheckOutNote(AddCheckOutNoteModel model, Guid DriverId);
     Task<ResultModel> ResetBooking();
+    Task<ResultModel> CheckExistBookingNotComplete(Guid customerId);
 
 }
 public class BookingService : IBookingService
@@ -1155,6 +1157,64 @@ public class BookingService : IBookingService
 
             var data = _mapper.Map<BookingModel>(booking);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
+
+            result.Data = data;
+            result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> CheckExistBookingNotComplete(Guid customerId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var customer = _dbContext.Users.Where(_ => _.Id == customerId).FirstOrDefault();
+
+            var booking = _dbContext.Bookings
+                .Include(_ => _.Driver)
+                .Include(_ => _.SearchRequest)
+                 .ThenInclude(sr => sr.Customer)
+                .Where(_ => _.SearchRequest.CustomerId == customerId && _.Status != BookingStatus.Complete && _.Status != BookingStatus.Cancel)
+                .OrderByDescending(_ => _.DateCreated)
+                .FirstOrDefault();
+            if (booking == null)
+            {
+                result.Succeed = true;
+                result.Data = false;
+                return result;
+            }
+            var data = _mapper.Map<BookingModel>(booking);
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { customerId }, Payload = data };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            switch (booking.Status)
+            {
+                case BookingStatus.Accept:
+                    await _producer.ProduceAsync("dbs-booking-create", new Message<Null, string> { Value = json });
+                    _producer.Flush();
+                    break;
+                case BookingStatus.Arrived:
+                    await _producer.ProduceAsync("dbs-booking-status-arrived", new Message<Null, string> { Value = json });
+                    _producer.Flush();
+                    break;
+                case BookingStatus.CheckIn:
+                    await _producer.ProduceAsync("dbs-booking-status-checkin", new Message<Null, string> { Value = json });
+                    _producer.Flush();
+                    break;
+                case BookingStatus.OnGoing:
+                    await _producer.ProduceAsync("dbs-booking-status-ongoing", new Message<Null, string> { Value = json });
+                    _producer.Flush();
+                    break;
+                case BookingStatus.CheckOut:
+                    await _producer.ProduceAsync("dbs-booking-status-checkout", new Message<Null, string> { Value = json });
+                    _producer.Flush();
+                    break;
+            }
 
             result.Data = data;
             result.Succeed = true;

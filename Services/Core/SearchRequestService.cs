@@ -11,6 +11,7 @@ using Data.Utils.Paging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Services.Core;
 
@@ -23,6 +24,8 @@ public interface ISearchRequestService
     Task<ResultModel> UpdateStatusToCancel(Guid SearchRequestId, Guid customerId);
     Task<ResultModel> DriverMissSearchRequest(Guid customerId, Guid DriverId);
     Task<ResultModel> NewDriver(NewDriverModel model);
+    Task<ResultModel> CheckExistSearchRequestProcessing(Guid customerId);
+    Task<ResultModel> SendSearchRequestToDriver(Guid searchRequestId, Guid driverId);
 
 }
 public class SearchRequestService : ISearchRequestService
@@ -525,4 +528,96 @@ public class SearchRequestService : ISearchRequestService
         }
         return result;
     }
+
+    public async Task<ResultModel> CheckExistSearchRequestProcessing(Guid customerId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var customer = _dbContext.Users.Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();
+            if (customer == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            var checkCustomer = await _userManager.IsInRoleAsync(customer, RoleNormalizedName.Customer);
+            if (!checkCustomer)
+            {
+                result.ErrorMessage = "The user must be a customer";
+                return result;
+            }
+            var searchRequest = _dbContext.SearchRequests
+                .Include(_ => _.CustomerBookedOnBehalf)
+                .Include(_ => _.BookingVehicle)
+                .Where(_ => _.CustomerId == customerId && _.Status == SearchRequestStatus.Processing)
+                .OrderByDescending(_ => _.DateCreated)
+                .FirstOrDefault();
+
+            if (searchRequest == null)
+            {
+                result.Succeed = true;
+                result.Data = false;
+                return result;
+            }
+
+            result.Data = _mapper.Map<SearchRequestModel>(searchRequest);
+            result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> SendSearchRequestToDriver(Guid searchRequestId, Guid driverId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var searchRequest = _dbContext.SearchRequests
+               .Where(_ => _.Id == searchRequestId).FirstOrDefault();
+            if (searchRequest == null)
+            {
+                result.ErrorMessage = "SearchRequest not exist";
+                return result;
+            }
+            if (searchRequest.Status != SearchRequestStatus.Processing)
+            {
+                result.ErrorMessage = "SearchRequest status not suitable";
+                return result;
+            }
+            var driver = _dbContext.Users
+                .Where(_ => _.Id == driverId && !_.IsDeleted).FirstOrDefault();
+            if (driver == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
+            if (!checkDriver)
+            {
+                result.ErrorMessage = "The user must be a driver";
+                return result;
+            }
+
+            var data = _mapper.Map<SearchRequestModel>(searchRequest);
+
+            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = data };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+            await _producer.ProduceAsync("dbs-search-request-create", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
+            result.Data = true;
+            result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
 }
