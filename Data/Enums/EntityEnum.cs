@@ -35,8 +35,11 @@ public enum DriverSortCriteria
 
 public enum UserSortByAdminCriteria
 {
-    DateCreated,
-    Email
+    Name,
+    Gender,
+    IsActive,
+    Role,
+    DateCreated
 }
 
 public enum SupplierSortCriteria
@@ -83,14 +86,23 @@ public enum SortBookingCriteria
 public enum SortEmergencyCriteria
 {
     DateCreated,
+    EmergencyType,
     Status,
 }
 
-public enum SortWalletCriteria
+public enum SortWithdrawFundsTransactionCriteria
 {
     DateCreated,
-    TypeWalletTransaction,
-    PaymentType
+    Status,
+    TotalMoney
+}
+
+public enum SortWalletTransactionCriteria
+{
+    DateCreated,
+    Status,
+    TotalMoney,
+    TypeWalletTransaction
 }
 
 public enum RackSortCriteria
@@ -220,7 +232,7 @@ public enum SupportStatus
     New = 0,
     InProcess = 1,
     Solved = 2,
-    CantSolved = 3,
+    Pause = 3,
 }
 
 public enum BookingType

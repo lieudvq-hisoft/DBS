@@ -1,5 +1,6 @@
 ﻿using Data.Common.PaginationModel;
 using Data.Enums;
+using Data.Model;
 using Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -85,9 +86,13 @@ public class WalletController : ControllerBase
     }
 
     [HttpGet("WalletTransaction")]
-    public async Task<ActionResult> GetTransactions([FromQuery] PagingParam<SortWalletCriteria> paginationModel)
+    public async Task<ActionResult> GetTransactions(
+        [FromQuery] PagingParam<SortWalletTransactionCriteria> paginationModel,
+        [FromQuery] SearchModel searchModel,
+        [FromQuery] TransactionFilterModel filterModel
+        )
     {
-        var result = await _walletService.GetTransactions(paginationModel, Guid.Parse(User.GetId()));
+        var result = await _walletService.GetTransactions(paginationModel, searchModel, filterModel, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
