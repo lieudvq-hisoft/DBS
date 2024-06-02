@@ -509,9 +509,10 @@ public class IdentityCardService : IIdentityCardService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
 
@@ -587,9 +588,10 @@ public class IdentityCardService : IIdentityCardService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
@@ -635,9 +637,10 @@ public class IdentityCardService : IIdentityCardService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
@@ -680,9 +683,10 @@ public class IdentityCardService : IIdentityCardService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
@@ -779,9 +783,10 @@ public class IdentityCardService : IIdentityCardService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var identityCard = _dbContext.IdentityCards.Where(_ => _.Id == model.IdentityCardId && !_.IsDeleted).FirstOrDefault();
@@ -850,9 +855,10 @@ public class IdentityCardService : IIdentityCardService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
 
@@ -897,9 +903,10 @@ public class IdentityCardService : IIdentityCardService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
 
@@ -940,9 +947,10 @@ public class IdentityCardService : IIdentityCardService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var identityCardImage = _dbContext.IdentityCardImages.Where(_ => _.Id == IdentityCardImageId && !_.IsDeleted).FirstOrDefault();
