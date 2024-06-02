@@ -83,9 +83,13 @@ public class AdminController : ControllerBase
 
     [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("Booking/All")]
-    public async Task<ActionResult> GetBookingsForAdmin([FromQuery] PagingParam<SortBookingCriteria> paginationModel)
+    public async Task<ActionResult> GetBookingsForAdmin(
+        [FromQuery] PagingParam<SortBookingCriteria> paginationModel,
+        [FromQuery] SearchModel searchModel,
+        [FromQuery] BookingFilterModel filterModel
+        )
     {
-        var result = await _bookingService.GetBookingsForAdmin(paginationModel, Guid.Parse(User.GetId()));
+        var result = await _bookingService.GetBookingsForAdmin(paginationModel, searchModel, filterModel, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
@@ -94,9 +98,10 @@ public class AdminController : ControllerBase
     [HttpGet("User/All")]
     public async Task<ActionResult> GetUserByAdmin(
         [FromQuery] PagingParam<UserSortByAdminCriteria> paginationModel,
-        [FromQuery] SearchModel searchModel, [FromQuery] string? Role = null)
+        [FromQuery] SearchModel searchModel,
+        [FromQuery] AccountFilterModel filterModel)
     {
-        var result = await _userService.GetUserByAdmin(paginationModel, searchModel, Guid.Parse(User.GetId()), Role);
+        var result = await _userService.GetUserByAdmin(paginationModel, searchModel, filterModel, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
@@ -312,9 +317,13 @@ public class AdminController : ControllerBase
 
     [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet("WithdrawFundsRequest")]
-    public async Task<ActionResult> GetWithdrawFundsRequest([FromQuery] PagingParam<SortWalletCriteria> paginationModel)
+    public async Task<ActionResult> GetWithdrawFundsRequest(
+        [FromQuery] PagingParam<SortWithdrawFundsTransactionCriteria> paginationModel,
+        [FromQuery] SearchModel searchModel,
+        [FromQuery] WithdrawFundsRequestFilterModel filterModel
+        )
     {
-        var result = await _walletService.GetWithdrawFundsRequest(paginationModel, Guid.Parse(User.GetId()));
+        var result = await _walletService.GetWithdrawFundsRequest(paginationModel, searchModel, filterModel, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
@@ -369,6 +378,15 @@ public class AdminController : ControllerBase
     public async Task<ActionResult> GetAdminProfitMonthlyIncome(int Year)
     {
         var result = await _userService.GetAdminProfitMonthlyIncome(Guid.Parse(User.GetId()), Year);
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpPut("User/GetStaffList")]
+    public async Task<ActionResult> GetStaffList()
+    {
+        var result = await _userService.GetStaffList(Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

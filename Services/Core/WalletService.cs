@@ -24,8 +24,8 @@ public interface IWalletService
     Task<ResultModel> AcceptWithdrawFundsRequest(ResponeWithdrawFundsRequest model, Guid adminId);
     Task<ResultModel> RejectWithdrawFundsRequest(ResponeWithdrawFundsRequest model, Guid adminId);
     Task<ResultModel> Pay(WalletTransactionCreateModel model, Guid userId);
-    Task<ResultModel> GetTransactions(PagingParam<SortWalletCriteria> paginationModel, Guid userId);
-    Task<ResultModel> GetWithdrawFundsRequest(PagingParam<SortWalletCriteria> paginationModel, Guid adminId);
+    Task<ResultModel> GetTransactions(PagingParam<SortWalletTransactionCriteria> paginationModel, SearchModel searchModel, TransactionFilterModel filterModel, Guid userId);
+    Task<ResultModel> GetWithdrawFundsRequest(PagingParam<SortWithdrawFundsTransactionCriteria> paginationModel, SearchModel searchModel, WithdrawFundsRequestFilterModel filterModel, Guid adminId);
     Task<ResultModel> CheckFailureWalletTransaction(Guid walletTransactionId);
 }
 
@@ -466,7 +466,7 @@ public class WalletService : IWalletService
         return result;
     }
 
-    public async Task<ResultModel> GetTransactions(PagingParam<SortWalletCriteria> paginationModel, Guid userId)
+    public async Task<ResultModel> GetTransactions(PagingParam<SortWalletTransactionCriteria> paginationModel, SearchModel searchModel, TransactionFilterModel filterModel, Guid userId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -493,6 +493,21 @@ public class WalletService : IWalletService
                 .Include(_ => _.LinkedAccount)
                 .Where(_ => _.WalletId == wallet.Id);
 
+            // Apply search filter
+            if (searchModel != null && !string.IsNullOrEmpty(searchModel.SearchValue))
+            {
+                data = data.Where(transaction => transaction.Id.ToString().Contains(searchModel.SearchValue));
+            }
+
+            // Apply additional filters
+            if (filterModel != null)
+            {
+                if (filterModel.Status != null && filterModel.Status.Any())
+                {
+                    data = data.Where(transaction => filterModel.Status.Contains(transaction.Status));
+                }
+            }
+
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var walletTransactions = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
             walletTransactions = walletTransactions.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
@@ -517,7 +532,7 @@ public class WalletService : IWalletService
         return result;
     }
 
-    public async Task<ResultModel> GetWithdrawFundsRequest(PagingParam<SortWalletCriteria> paginationModel, Guid adminId)
+    public async Task<ResultModel> GetWithdrawFundsRequest(PagingParam<SortWithdrawFundsTransactionCriteria> paginationModel, SearchModel searchModel, WithdrawFundsRequestFilterModel filterModel, Guid adminId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -543,6 +558,21 @@ public class WalletService : IWalletService
             var data = _dbContext.WalletTransactions
                 .Include(_ => _.LinkedAccount)
                 .Where(_ => _.TypeWalletTransaction == TypeWalletTransaction.WithdrawFunds);
+
+            // Apply search filter
+            if (searchModel != null && !string.IsNullOrEmpty(searchModel.SearchValue))
+            {
+                data = data.Where(request => request.Id.ToString().Contains(searchModel.SearchValue));
+            }
+
+            // Apply additional filters
+            if (filterModel != null)
+            {
+                if (filterModel.Status != null && filterModel.Status.Any())
+                {
+                    data = data.Where(request => filterModel.Status.Contains(request.Status));
+                }
+            }
 
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var walletTransactions = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);

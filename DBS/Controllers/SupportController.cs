@@ -1,5 +1,6 @@
 ﻿using Data.Common.PaginationModel;
 using Data.Enums;
+using Data.Model;
 using Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -47,9 +48,12 @@ public class SupportController : ControllerBase
 
     [Authorize(AuthenticationSchemes = "Bearer")]
     [HttpGet]
-    public async Task<ActionResult> GetAll([FromQuery] PagingParam<SortSupportCriteria> paginationModel)
+    public async Task<ActionResult> GetAll(
+        [FromQuery] PagingParam<SortSupportCriteria> paginationModel,
+        [FromQuery] SupportFilterModel filterModel
+        )
     {
-        var result = await _supportService.GetAll(paginationModel, Guid.Parse(User.GetId()));
+        var result = await _supportService.GetAll(paginationModel, filterModel, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
@@ -73,10 +77,10 @@ public class SupportController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
-    [HttpPut("ChangeStatusToCantSolved")]
-    public async Task<ActionResult> ChangeStatusToCantSolved([FromBody] UpdateCantSolveModel model)
+    [HttpPut("ChangeStatusToPause")]
+    public async Task<ActionResult> ChangeStatusToPause([FromBody] UpdateCantSolveModel model)
     {
-        var result = await _supportService.ChangeStatusToCantSolved(model, Guid.Parse(User.GetId()));
+        var result = await _supportService.ChangeStatusToPause(model, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

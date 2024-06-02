@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Services.Utils;
 using System.Data;
+using System.Linq;
 
 namespace Services.Core;
 
@@ -25,7 +26,7 @@ public interface IUserService
     Task<ResultModel> LoginAsDriver(LoginModel model);
     Task<ResultModel> LoginAsManager(LoginModel model);
     Task<ResultModel> GetCustomer(PagingParam<CustomerSortCriteria> paginationModel, SearchModel searchModel);
-    Task<ResultModel> GetUserByAdmin(PagingParam<UserSortByAdminCriteria> paginationModel, SearchModel searchModel, Guid AdminId, string Role);
+    Task<ResultModel> GetUserByAdmin(PagingParam<UserSortByAdminCriteria> paginationModel, SearchModel searchModel, AccountFilterModel model, Guid AdminId);
     Task<ResultModel> UpdateProfile(ProfileUpdateModel model, Guid userId);
     Task<ResultModel> UploadAvatar(UpLoadAvatarModel model, Guid userId);
     Task<ResultModel> DeleteImage(Guid userId);
@@ -47,6 +48,7 @@ public interface IUserService
     Task<ResultModel> GetAdminOverview(Guid adminId);
     Task<ResultModel> GetAdminRevenueMonthlyIncome(Guid adminId, int year);
     Task<ResultModel> GetAdminProfitMonthlyIncome(Guid adminId, int year);
+    Task<ResultModel> GetStaffList(Guid adminId);
 
 }
 public class UserService : IUserService
@@ -312,7 +314,7 @@ public class UserService : IUserService
         return result;
     }
 
-    public async Task<ResultModel> GetUserByAdmin(PagingParam<UserSortByAdminCriteria> paginationModel, SearchModel searchModel, Guid AdminId, string Role)
+    public async Task<ResultModel> GetUserByAdmin(PagingParam<UserSortByAdminCriteria> paginationModel, SearchModel searchModel, AccountFilterModel filterModel, Guid AdminId)
     {
         ResultModel result = new ResultModel();
         result.Succeed = false;
@@ -331,8 +333,9 @@ public class UserService : IUserService
                 result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
+
             var data = _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
-                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName != RoleNormalizedName.Admin && (Role == null || ur.Role.NormalizedName == Role)) && !_.IsDeleted)
+                    .Where(_ => !_.IsDeleted)
                     .Select(user => new UserModelByAdmin
                     {
                         Id = user.Id,
@@ -352,6 +355,29 @@ public class UserService : IUserService
                     })
                     .AsQueryable();
 
+            // Apply search filter if searchModel is not null
+            if (searchModel != null && !string.IsNullOrEmpty(searchModel.SearchValue))
+            {
+                data = data.Where(user => user.Email.Contains(searchModel.SearchValue));
+            }
+
+            // Apply additional filters from AccountFilterModel
+            if (filterModel != null)
+            {
+                if (filterModel.Gender != null && filterModel.Gender.Any())
+                {
+                    data = data.Where(user => filterModel.Gender.Contains(user.Gender.Value));
+                }
+                if (filterModel.IsActive != null && filterModel.IsActive.Any())
+                {
+                    data = data.Where(user => filterModel.IsActive.Contains(user.IsActive));
+                }
+                if (filterModel.Role != null && filterModel.Role.Any())
+                {
+                    data = data.Where(user => filterModel.Role.Contains(user.Role));
+                }
+            }
+
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var uses = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
             uses = uses.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
@@ -360,7 +386,6 @@ public class UserService : IUserService
             paging.Data = viewData;
             result.Data = paging;
             result.Succeed = true;
-
         }
         catch (Exception e)
         {
@@ -1242,7 +1267,7 @@ public class UserService : IUserService
             var newSupportRequests = await _dbContext.Supports.CountAsync(s => s.SupportStatus == SupportStatus.New);
             var inProcessSupportRequests = await _dbContext.Supports.CountAsync(s => s.SupportStatus == SupportStatus.InProcess);
             var solvedSupportRequests = await _dbContext.Supports.CountAsync(s => s.SupportStatus == SupportStatus.Solved);
-            var cantSolvedSupportRequests = await _dbContext.Supports.CountAsync(s => s.SupportStatus == SupportStatus.CantSolved);
+            var pauseSupportRequests = await _dbContext.Supports.CountAsync(s => s.SupportStatus == SupportStatus.Pause);
 
             // Chi tiết trạng thái khẩn cấp
             var pendingEmergencyRequests = await _dbContext.Emergencies.CountAsync(e => e.Status == EmergencyStatus.Pending);
@@ -1262,7 +1287,7 @@ public class UserService : IUserService
                 completedTripsRate,
                 orderTripsRate
             },
-                SupportStatusDetails = new List<int> { newSupportRequests, inProcessSupportRequests, solvedSupportRequests, cantSolvedSupportRequests },
+                SupportStatusDetails = new List<int> { newSupportRequests, inProcessSupportRequests, solvedSupportRequests, pauseSupportRequests },
                 EmergencyStatusDetails = new List<int> { pendingEmergencyRequests, processingEmergencyRequests, solvedEmergencyRequests }
             };
 
@@ -1380,4 +1405,43 @@ public class UserService : IUserService
         return result;
     }
 
+    public async Task<ResultModel> GetStaffList(Guid adminId)
+    {
+        ResultModel result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var admin = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exists";
+                result.Succeed = false;
+                return result;
+            }
+            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
+            {
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
+                result.Succeed = false;
+                return result;
+            }
+            var staffList = await _dbContext.Users.Include(_ => _.UserRoles).ThenInclude(_ => _.Role)
+                    .Where(_ => _.UserRoles.Any(ur => ur.Role.NormalizedName == RoleNormalizedName.Staff) && !_.IsDeleted)
+                    .Select(user => new ListStaff
+                    {
+                        text = user.Name,
+                        HandlerId = user.Id
+                    })
+                    .ToListAsync();
+
+            result.Data = staffList;
+            result.Succeed = true;
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+        return result;
+    }
 }

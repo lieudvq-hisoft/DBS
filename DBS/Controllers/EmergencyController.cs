@@ -1,5 +1,6 @@
 ﻿using Data.Common.PaginationModel;
 using Data.Enums;
+using Data.Model;
 using Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -38,9 +39,13 @@ public class EmergencyController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult> GetEmergencies([FromQuery] PagingParam<SortEmergencyCriteria> paginationModel)
+    public async Task<ActionResult> GetEmergencies(
+        [FromQuery] PagingParam<SortEmergencyCriteria> paginationModel,
+        [FromQuery] SearchModel searchModel,
+        [FromQuery] EmergencyFilterModel filterModel
+        )
     {
-        var result = await _emergencyService.GetEmergencies(paginationModel, Guid.Parse(User.GetId()));
+        var result = await _emergencyService.GetEmergencies(paginationModel, searchModel, filterModel, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
