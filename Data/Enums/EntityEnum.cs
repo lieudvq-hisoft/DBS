@@ -35,11 +35,11 @@ public enum DriverSortCriteria
 
 public enum UserSortByAdminCriteria
 {
+    DateCreated,
     Name,
     Gender,
     IsActive,
-    Role,
-    DateCreated
+    Role
 }
 
 public enum SupplierSortCriteria
