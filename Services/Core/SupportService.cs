@@ -11,6 +11,7 @@ using Data.Utils;
 using Data.Common.PaginationModel;
 using Microsoft.EntityFrameworkCore;
 using Data.Utils.Paging;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace Services.Core;
 
@@ -19,10 +20,10 @@ public interface ISupportService
     Task<ResultModel> Create(SupportCreateModel model);
     Task<ResultModel> CreateBookingIssue(SupportBookingIssueCreateModel model);
     Task<ResultModel> GetByID(Guid SupportId, Guid UserId);
-    Task<ResultModel> GetAll(PagingParam<SortSupportCriteria> paginationModel, Guid UserId);
+    Task<ResultModel> GetAll(PagingParam<SortSupportCriteria> paginationModel, SupportFilterModel filterModel, Guid UserId);
     Task<ResultModel> ChangeStatusToInProcess(Guid SupportId, Guid UserId);
     Task<ResultModel> ChangeStatusToSolved(Guid SupportId, Guid UserId);
-    Task<ResultModel> ChangeStatusToCantSolved(UpdateCantSolveModel model, Guid UserId);
+    Task<ResultModel> ChangeStatusToPause(UpdateCantSolveModel model, Guid UserId);
     Task<ResultModel> Delete(Guid SupportId, Guid UserId);
 }
 
@@ -125,7 +126,7 @@ public class SupportService : ISupportService
         return result;
     }
 
-    public async Task<ResultModel> GetAll(PagingParam<SortSupportCriteria> paginationModel, Guid UserId)
+    public async Task<ResultModel> GetAll(PagingParam<SortSupportCriteria> paginationModel, SupportFilterModel filterModel, Guid UserId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -153,6 +154,19 @@ public class SupportService : ISupportService
                 .Include(_ => _.Handler)
                 .Include(_ => _.Booking)
                 .Where(_ => !_.IsDeleted);
+
+            if (filterModel != null)
+            {
+                if (filterModel.SupportStatus != null && filterModel.SupportStatus.Any())
+                {
+                    data = data.Where(support => filterModel.SupportStatus.Contains(support.SupportStatus));
+                }
+                if (filterModel.SupportType != null && filterModel.SupportType.Any())
+                {
+                    data = data.Where(support => filterModel.SupportType.Contains(support.SupportType));
+                }
+            }
+
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var supports = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
             supports = supports.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
@@ -212,7 +226,7 @@ public class SupportService : ISupportService
         return result;
     }
 
-    public async Task<ResultModel> ChangeStatusToCantSolved(UpdateCantSolveModel model, Guid UserId)
+    public async Task<ResultModel> ChangeStatusToPause(UpdateCantSolveModel model, Guid UserId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -248,7 +262,7 @@ public class SupportService : ISupportService
                 return result;
             }
             support.HandlerId = handler.Id;
-            support.SupportStatus = SupportStatus.CantSolved;
+            support.SupportStatus = SupportStatus.Pause;
             support.Note = model.Note;
             support.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
@@ -343,7 +357,7 @@ public class SupportService : ISupportService
                 result.ErrorMessage = "Support not exist";
                 return result;
             }
-            if (support.SupportStatus != SupportStatus.InProcess)
+            if (support.SupportStatus != SupportStatus.InProcess && support.SupportStatus != SupportStatus.Pause)
             {
                 result.ErrorMessage = "Support Status is not suitable";
                 return result;

@@ -18,7 +18,7 @@ public interface IBookingService
 {
     Task<ResultModel> CreateBooking(BookingCreateModel model);
     Task<ResultModel> GetBooking(Guid BookingId);
-    Task<ResultModel> GetBookingsForAdmin(PagingParam<SortBookingCriteria> paginationModel, Guid UserId);
+    Task<ResultModel> GetBookingsForAdmin(PagingParam<SortBookingCriteria> paginationModel, SearchModel searchModel, BookingFilterModel filterModel, Guid UserId);
     Task<ResultModel> GetBookingForCustomer(PagingParam<SortBookingCriteria> paginationModel, Guid CustomerId);
     Task<ResultModel> GetBookingForDriver(PagingParam<SortBookingCriteria> paginationModel, Guid DriverId);
     Task<ResultModel> ChangeStatusToArrived(ChangeBookingStatusModel model, Guid DriverId);
@@ -163,9 +163,9 @@ public class BookingService : IBookingService
         return result;
     }
 
-    public async Task<ResultModel> GetBookingsForAdmin(PagingParam<SortBookingCriteria> paginationModel, Guid UserId)
+    public async Task<ResultModel> GetBookingsForAdmin(PagingParam<SortBookingCriteria> paginationModel, SearchModel searchModel, BookingFilterModel filterModel, Guid UserId)
     {
-        var result = new ResultModel();
+        ResultModel result = new ResultModel();
         result.Succeed = false;
         try
         {
@@ -183,7 +183,24 @@ public class BookingService : IBookingService
                 return result;
             }
             var data = _dbContext.Bookings
-                .Where(_ => !_.IsDeleted);
+                    .Where(_ => !_.IsDeleted)
+                    .AsQueryable();
+
+            // Apply search filter
+            if (searchModel != null && !string.IsNullOrEmpty(searchModel.SearchValue))
+            {
+                data = data.Where(booking => booking.Id.ToString().Contains(searchModel.SearchValue));
+            }
+
+            // Apply additional filters
+            if (filterModel != null)
+            {
+                if (filterModel.Status != null && filterModel.Status.Any())
+                {
+                    data = data.Where(booking => filterModel.Status.Contains(booking.Status));
+                }
+            }
+
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var bookings = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
             bookings = bookings.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
@@ -193,12 +210,13 @@ public class BookingService : IBookingService
             result.Data = paging;
             result.Succeed = true;
         }
-        catch (Exception ex)
+        catch (Exception e)
         {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
         }
         return result;
     }
+
 
     public async Task<ResultModel> GetBookingForCustomer(PagingParam<SortBookingCriteria> paginationModel, Guid CustomerId)
     {

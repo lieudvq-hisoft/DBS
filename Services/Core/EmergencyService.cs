@@ -9,6 +9,7 @@ using Data.Models;
 using Data.Utils;
 using Data.Utils.Paging;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -17,7 +18,7 @@ public interface IEmergencyService
 {
     Task<ResultModel> CustomerCreateEmergency(EmergencyCreateModel model, Guid customerId);
     Task<ResultModel> DriverCreateEmergency(EmergencyCreateModel model, Guid driverId);
-    Task<ResultModel> GetEmergencies(PagingParam<SortEmergencyCriteria> paginationModel, Guid userId);
+    Task<ResultModel> GetEmergencies(PagingParam<SortEmergencyCriteria> paginationModel, SearchModel searchModel, EmergencyFilterModel filterModel, Guid userId);
     Task<ResultModel> GetEmergencyById(Guid emergencyId, Guid userId);
     Task<ResultModel> IsHaveEmergency(Guid bookingId, Guid userId);
     Task<ResultModel> UpdateEmergencyStatusProcessing(Guid emergencyId, Guid userId);
@@ -273,7 +274,7 @@ public class EmergencyService : IEmergencyService
         return result;
     }
 
-    public async Task<ResultModel> GetEmergencies(PagingParam<SortEmergencyCriteria> paginationModel, Guid userId)
+    public async Task<ResultModel> GetEmergencies(PagingParam<SortEmergencyCriteria> paginationModel, SearchModel searchModel, EmergencyFilterModel filterModel, Guid userId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -297,12 +298,36 @@ public class EmergencyService : IEmergencyService
                 result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
-            var data = _dbContext.Emergencies.OrderByDescending(_ => _.DateCreated);
+            var data = _dbContext.Emergencies.OrderByDescending(_ => _.DateCreated).AsQueryable(); ;
             if (data == null)
             {
                 result.ErrorMessage = "Emergency not exist";
                 return result;
             }
+
+            // Apply search filter
+            if (searchModel != null && !string.IsNullOrEmpty(searchModel.SearchValue))
+            {
+                data = data.Where(emergency => emergency.BookingId.ToString().Contains(searchModel.SearchValue));
+            }
+
+            // Apply additional filters
+            if (filterModel != null)
+            {
+                if (filterModel.EmergencyType != null && filterModel.EmergencyType.Any())
+                {
+                    data = data.Where(emergency => filterModel.EmergencyType.Contains(emergency.EmergencyType));
+                }
+                if (filterModel.Status != null && filterModel.Status.Any())
+                {
+                    data = data.Where(emergency => filterModel.Status.Contains(emergency.Status));
+                }
+                if (filterModel.HandlerId != null && filterModel.HandlerId.Any())
+                {
+                    data = data.Where(emergency => filterModel.HandlerId.Contains(emergency.HandlerId));
+                }
+            }
+
 
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var emergencies = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
