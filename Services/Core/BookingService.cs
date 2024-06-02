@@ -1234,7 +1234,7 @@ public class BookingService : IBookingService
                     break;
             }
 
-            result.Data = data;
+            result.Data = true;
             result.Succeed = true;
         }
         catch (Exception ex)

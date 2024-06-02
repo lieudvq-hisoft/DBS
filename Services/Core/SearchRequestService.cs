@@ -557,7 +557,7 @@ public class SearchRequestService : ISearchRequestService
             if (searchRequest == null)
             {
                 result.Succeed = true;
-                result.Data = false;
+                result.Data = null;
                 return result;
             }
 
