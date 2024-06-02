@@ -13,5 +13,6 @@ public class PriceConfiguration : BaseEntity
     public WaitingSurcharge WaitingSurcharge { get; set; } = new WaitingSurcharge { PerMinutes = 10, IsPercent = false, Price = 20000 };
     public WeatherFee WeatherFee { get; set; } = new WeatherFee { IsPercent = false, Price = 20000 };
     public CustomerCancelFee? CustomerCancelFee { get; set; } = new CustomerCancelFee { IsPercent = true, Price = 10 };
+    public SearchRadius? SearchRadius { get; set; } = new SearchRadius { Distance = 3, Unit = "Km" };
 
 }

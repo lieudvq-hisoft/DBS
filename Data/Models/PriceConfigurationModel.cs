@@ -58,6 +58,12 @@ namespace Data.Models
         public bool? IsPercent { get; set; }
     }
 
+    public class SearchRadius
+    {
+        public int? Distance { get; set; }
+        public string? Unit { get; set; }
+    }
+
     public class PriceConfigurationUpdateModel
     {
         public BaseFareFirst3km? BaseFareFirst3km { get; set; }
@@ -69,6 +75,7 @@ namespace Data.Models
         public WaitingSurcharge? WaitingSurcharge { get; set; }
         public WeatherFee? WeatherFee { get; set; }
         public CustomerCancelFee? CustomerCancelFee { get; set; }
+        public SearchRadius? SearchRadius { get; set; }
     }
 
 }
