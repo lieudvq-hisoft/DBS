@@ -144,6 +144,11 @@ public class PriceConfigurationService : IPriceConfigurationService
                 priceConfiguration.CustomerCancelFee.Price = model.CustomerCancelFee.Price != null ? model.CustomerCancelFee.Price : priceConfiguration.CustomerCancelFee.Price;
                 priceConfiguration.CustomerCancelFee.IsPercent = model.CustomerCancelFee.IsPercent != null ? model.CustomerCancelFee.IsPercent : priceConfiguration.CustomerCancelFee.IsPercent;
             }
+            if (model.SearchRadius != null)
+            {
+                priceConfiguration.SearchRadius.Distance = model.SearchRadius.Distance != null ? model.SearchRadius.Distance : priceConfiguration.SearchRadius.Distance;
+                priceConfiguration.SearchRadius.Unit = model.SearchRadius.Unit != null ? model.SearchRadius.Unit : priceConfiguration.SearchRadius.Unit;
+            }
 
             priceConfiguration.DateUpdated = DateTime.Now;
             _dbContext.PriceConfigurations.Update(priceConfiguration);

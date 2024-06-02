@@ -73,6 +73,7 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
             entity.OwnsOne(e => e.WaitingSurcharge);
             entity.OwnsOne(e => e.WeatherFee);
             entity.OwnsOne(e => e.CustomerCancelFee);
+            entity.OwnsOne(e => e.SearchRadius);
         });
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
     }
