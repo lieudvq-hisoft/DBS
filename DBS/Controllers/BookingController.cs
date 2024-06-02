@@ -141,4 +141,12 @@ public class BookingController : ControllerBase
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
+
+    [HttpGet("SendNotiBooking")]
+    public async Task<ActionResult> SendNotiBooking()
+    {
+        var result = await _bookingService.SendNotiBooking(Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
 }

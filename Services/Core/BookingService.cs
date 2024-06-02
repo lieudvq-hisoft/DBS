@@ -32,6 +32,7 @@ public interface IBookingService
     Task<ResultModel> AddBookingCheckOutNote(AddCheckOutNoteModel model, Guid DriverId);
     Task<ResultModel> ResetBooking();
     Task<ResultModel> CheckExistBookingNotComplete(Guid customerId);
+    Task<ResultModel> SendNotiBooking(Guid customerId);
 
 }
 public class BookingService : IBookingService
@@ -1187,6 +1188,35 @@ public class BookingService : IBookingService
     }
 
     public async Task<ResultModel> CheckExistBookingNotComplete(Guid customerId)
+    {
+        var result = new ResultModel();
+        result.Succeed = false;
+        try
+        {
+            var customer = _dbContext.Users.Where(_ => _.Id == customerId).FirstOrDefault();
+
+            var booking = _dbContext.Bookings
+                .Include(_ => _.SearchRequest)
+                .Where(_ => _.SearchRequest.CustomerId == customerId && _.Status != BookingStatus.Complete && _.Status != BookingStatus.Cancel)
+                .FirstOrDefault();
+            if (booking == null)
+            {
+                result.Succeed = true;
+                result.Data = false;
+                return result;
+            }
+
+            result.Data = true;
+            result.Succeed = true;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+        }
+        return result;
+    }
+
+    public async Task<ResultModel> SendNotiBooking(Guid customerId)
     {
         var result = new ResultModel();
         result.Succeed = false;
