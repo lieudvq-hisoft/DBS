@@ -37,9 +37,6 @@ namespace Services.Mapping
             CreateMap<RatingCreateModel, Rating>();
             CreateMap<Rating, RatingModel>();
 
-            CreateMap<BookingPaymentCreateModel, BookingPayment>();
-            CreateMap<BookingPayment, BookingPaymentModel>();
-
             CreateMap<BookingImageCreateModel, BookingImage>();
             CreateMap<BookingImage, BookingImageModel>();
 
