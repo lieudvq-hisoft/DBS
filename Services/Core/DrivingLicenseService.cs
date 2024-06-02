@@ -453,9 +453,10 @@ public class DrivingLicenseService : IDrivingLicenseService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
@@ -509,9 +510,10 @@ public class DrivingLicenseService : IDrivingLicenseService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var drivingLicense = _dbContext.DrivingLicenses.Where(_ => _.Id == model.DrivingLicenseId && !_.IsDeleted).FirstOrDefault();
@@ -549,9 +551,10 @@ public class DrivingLicenseService : IDrivingLicenseService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
@@ -603,9 +606,10 @@ public class DrivingLicenseService : IDrivingLicenseService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var drivingLicenseImage = _dbContext.DrivingLicenseImages.Where(_ => _.Id == DrivingLicenseImageId && !_.IsDeleted).FirstOrDefault();
@@ -643,9 +647,10 @@ public class DrivingLicenseService : IDrivingLicenseService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var drivingLicenseImage = _dbContext.DrivingLicenseImages.Where(_ => _.Id == model.Id && !_.IsDeleted).FirstOrDefault();
@@ -687,9 +692,10 @@ public class DrivingLicenseService : IDrivingLicenseService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
@@ -740,9 +746,10 @@ public class DrivingLicenseService : IDrivingLicenseService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
@@ -793,9 +800,10 @@ public class DrivingLicenseService : IDrivingLicenseService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var drivingLicenseImages = _dbContext.DrivingLicenseImages
@@ -839,9 +847,10 @@ public class DrivingLicenseService : IDrivingLicenseService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
@@ -911,9 +920,10 @@ public class DrivingLicenseService : IDrivingLicenseService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var drivingLicenseImage = _dbContext.DrivingLicenseImages
