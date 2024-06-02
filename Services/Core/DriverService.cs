@@ -123,7 +123,8 @@ public class DriverService : IDriverService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
                 result.ErrorMessage = "The user must be Admin";
                 return result;
