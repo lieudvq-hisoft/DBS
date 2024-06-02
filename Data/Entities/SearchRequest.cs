@@ -20,6 +20,7 @@ public class SearchRequest : BaseEntity
     public long Price { get; set; }
     public double Distance { get; set; }
     public string? Note { get; set; }
+    public bool? IsFemaleDriver { get; set; }
     public BookingPaymentMethod BookingPaymentMethod { get; set; }
     public BookingType BookingType { get; set; } = BookingType.MySelf;
     public SearchRequestStatus Status { get; set; } = SearchRequestStatus.Processing;
