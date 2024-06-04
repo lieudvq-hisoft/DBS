@@ -484,7 +484,7 @@ public class DriverService : IDriverService
             {
                 fsQuery =
                     $@"
-                select distinct  anu.""Id"", anu.""Email"", ds.""IsOnline"", dl.""Latitude"", dl.""Longitude""
+                select distinct  anu.""Id"", anu.""Email"", ds.""IsOnline"", dl.""Latitude"", dl.""Longitude"", anu.""Priority"", anu.""Star""
                 from
                 ""AspNetUsers"" anu 
                 join ""DriverLocations"" dl on anu.""Id"" = dl.""DriverId"" 
