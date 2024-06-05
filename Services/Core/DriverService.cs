@@ -550,19 +550,23 @@ public class DriverService : IDriverService
         ResultModel result = new ResultModel();
         try
         {
-            var driver = _dbContext.Users.Where(d => d.Id == driverId && !d.IsDeleted).FirstOrDefault();
+            var driver = await _dbContext.Users
+                .FirstOrDefaultAsync(d => d.Id == driverId && !d.IsDeleted);
+
             if (driver == null)
             {
                 result.ErrorMessage = "Driver not exists";
                 result.Succeed = false;
                 return result;
             }
+
             if (!driver.IsActive)
             {
                 result.Succeed = false;
                 result.ErrorMessage = "Driver has been deactivated";
                 return result;
             }
+
             var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
             if (!checkDriver)
             {
@@ -570,13 +574,15 @@ public class DriverService : IDriverService
                 return result;
             }
 
-            var bookings = _dbContext.Bookings.Where(_ => _.DriverId == driverId && _.DateCreated.Year == year).ToList();
+            var bookings = await _dbContext.Bookings
+                .Where(_ => _.DriverId == driverId && _.DateCreated.Year == year)
+                .ToListAsync();
 
             int totalBookings = bookings.Count;
             int canceledBookings = bookings.Count(b => b.Status == BookingStatus.Cancel);
             int completedBookings = bookings.Count(b => b.Status == BookingStatus.Complete);
 
-            DriverStatisticModel driverStatistics = new()
+            DriverStatisticModel driverStatistics = new DriverStatisticModel
             {
                 BookingAcceptanceRate = driver.TotalRequest == 0 ? "100%" : ((float)(driver.TotalRequest - driver.DeclineRequest) / driver.TotalRequest * 100).ToString("0.##") + "%",
                 BookingCancellationRate = totalBookings == 0 ? "0%" : ((float)canceledBookings / totalBookings * 100).ToString("0.##") + "%",
@@ -590,6 +596,7 @@ public class DriverService : IDriverService
         catch (Exception e)
         {
             result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+            result.Succeed = false;
         }
         return result;
     }
@@ -600,9 +607,8 @@ public class DriverService : IDriverService
         ResultModel result = new ResultModel();
         try
         {
-            var driver = _dbContext.Users
-                .Where(d => d.Id == driverId && !d.IsDeleted)
-                .FirstOrDefault();
+            var driver = await _dbContext.Users
+                .FirstOrDefaultAsync(d => d.Id == driverId && !d.IsDeleted);
 
             if (driver == null)
             {
@@ -618,10 +624,11 @@ public class DriverService : IDriverService
                 return result;
             }
 
-            var monthlyBookings = _dbContext.Bookings
+            var monthlyBookings = await _dbContext.Bookings
                 .Include(_ => _.SearchRequest)
                 .Where(b => b.DriverId == driverId && b.DateCreated.Month == month && b.DateCreated.Year == year)
-                .ToList();
+                .ToListAsync();
+
             var totalTrips = monthlyBookings.Count;
             var totalTripsCompleted = monthlyBookings.Count(_ => _.Status == BookingStatus.Complete);
 
@@ -631,24 +638,26 @@ public class DriverService : IDriverService
 
             string totalOperatingTime = $"{(int)totalOperatingTimeSpan.TotalHours} giờ {totalOperatingTimeSpan.Minutes} phút";
 
-            var wallet = _dbContext.Wallets.Where(_ => _.UserId == driver.Id).FirstOrDefault();
-            var walletTransactions = _dbContext.WalletTransactions
+            var wallet = await _dbContext.Wallets
+                .FirstOrDefaultAsync(_ => _.UserId == driver.Id);
+
+            var walletTransactions = await _dbContext.WalletTransactions
                 .Where(_ => _.WalletId == wallet.Id && _.TypeWalletTransaction == TypeWalletTransaction.Income && _.DateCreated.Month == month && _.DateCreated.Year == year)
-                .ToList();
+                .ToListAsync();
 
             long totalMoney = walletTransactions.Sum(b => b.TotalMoney);
 
             var dailyStatistics = walletTransactions
-            .GroupBy(wt => wt.DateCreated.Day)
-            .Select(g => new DriverStatisticDaylyModel
-            {
-                Day = g.Key,
-                TotalTrip = monthlyBookings.Count(b => b.DateCreated.Day == g.Key),
-                TotalTripCompleted = monthlyBookings.Count(b => b.DateCreated.Day == g.Key && b.Status == BookingStatus.Complete),
-                TotalIncome = g.Sum(wt => wt.TotalMoney),
-                TotalOperatiingTime = $"{(int)monthlyBookings.Where(b => b.DateCreated.Day == g.Key).Select(b => b.DateUpdated - b.DateCreated).Aggregate(TimeSpan.Zero, (subtotal, t) => subtotal.Add(t)).TotalHours} giờ {monthlyBookings.Where(b => b.DateCreated.Day == g.Key).Select(b => b.DateUpdated - b.DateCreated).Aggregate(TimeSpan.Zero, (subtotal, t) => subtotal.Add(t)).Minutes} phút"
-            })
-            .ToList();
+                .GroupBy(wt => wt.DateCreated.Day)
+                .Select(g => new DriverStatisticDaylyModel
+                {
+                    Day = g.Key,
+                    TotalTrip = monthlyBookings.Count(b => b.DateCreated.Day == g.Key),
+                    TotalTripCompleted = monthlyBookings.Count(b => b.DateCreated.Day == g.Key && b.Status == BookingStatus.Complete),
+                    TotalIncome = g.Sum(wt => wt.TotalMoney),
+                    TotalOperatiingTime = $"{(int)monthlyBookings.Where(b => b.DateCreated.Day == g.Key).Select(b => b.DateUpdated - b.DateCreated).Aggregate(TimeSpan.Zero, (subtotal, t) => subtotal.Add(t)).TotalHours} giờ {monthlyBookings.Where(b => b.DateCreated.Day == g.Key).Select(b => b.DateUpdated - b.DateCreated).Aggregate(TimeSpan.Zero, (subtotal, t) => subtotal.Add(t)).Minutes} phút"
+                })
+                .ToList();
 
             DriverStatisticMonthlyModel driverMonthlyStatistics = new DriverStatisticMonthlyModel
             {
@@ -666,9 +675,12 @@ public class DriverService : IDriverService
         catch (Exception e)
         {
             result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+            result.Succeed = false;
         }
         return result;
     }
+
+
 
 
 }
