@@ -1914,37 +1914,36 @@ public class AdminService : IAdminService
         ResultModel result = new ResultModel();
         try
         {
-            var admin = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            var admin = await _dbContext.Users
+                .Include(_ => _.DriverLocations)
+                .FirstOrDefaultAsync(_ => _.Id == adminId && !_.IsDeleted);
+
             if (admin == null)
             {
                 result.ErrorMessage = "Admin not exists";
                 result.Succeed = false;
                 return result;
             }
+
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
             var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+
             if (!checkAdmin && !checkStaff)
             {
                 result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 result.Succeed = false;
                 return result;
             }
-            // Tổng số tài khoản (trừ admin)
-            var totalAccounts = _dbContext.Users
+
+            var totalAccounts = await _dbContext.Users
                 .Include(_ => _.UserRoles)
-                    .ThenInclude(_ => _.Role)
-                .Count(u => !u.IsDeleted && u.UserRoles.Any(ur => ur.Role.Name != RoleNormalizedName.Admin));
+                .ThenInclude(_ => _.Role)
+                .CountAsync(u => !u.IsDeleted && u.UserRoles.Any(ur => ur.Role.Name != RoleNormalizedName.Admin));
 
-            // Số lượng chuyến đi
-            var totalTrips = _dbContext.Bookings.Count();
+            var totalTrips = await _dbContext.Bookings.CountAsync();
+            var totalSupportRequests = await _dbContext.Supports.CountAsync();
+            var totalEmergencyRequests = await _dbContext.Emergencies.CountAsync();
 
-            // Số lượng hỗ trợ
-            var totalSupportRequests = _dbContext.Supports.Count();
-
-            // Số lượng yêu cầu khẩn cấp
-            var totalEmergencyRequests = _dbContext.Emergencies.Count();
-
-            // Chi tiết số lượng tài khoản theo vai trò
             var drivers = await _userManager.GetUsersInRoleAsync(RoleNormalizedName.Driver);
             var customers = await _userManager.GetUsersInRoleAsync(RoleNormalizedName.Customer);
             var staff = await _userManager.GetUsersInRoleAsync(RoleNormalizedName.Staff);
@@ -1953,24 +1952,21 @@ public class AdminService : IAdminService
             var customerCount = customers.Count;
             var staffCount = staff.Count;
 
-            // Thống kê chuyến đi
-            var canceledTrips = _dbContext.Bookings.Count(b => b.Status == BookingStatus.Cancel);
-            var completedTrips = _dbContext.Bookings.Count(b => b.Status == BookingStatus.Complete);
+            var canceledTrips = await _dbContext.Bookings.CountAsync(b => b.Status == BookingStatus.Cancel);
+            var completedTrips = await _dbContext.Bookings.CountAsync(b => b.Status == BookingStatus.Complete);
 
             var canceledTripsRate = Math.Round(totalTrips == 0 ? 0 : ((double)canceledTrips / totalTrips * 100), 2);
             var completedTripsRate = Math.Round(totalTrips == 0 ? 0 : ((double)completedTrips / totalTrips * 100), 2);
             var orderTripsRate = Math.Round(100.00 - canceledTripsRate - completedTripsRate, 2);
 
-            // Chi tiết trạng thái hỗ trợ
-            var newSupportRequests = _dbContext.Supports.Count(s => s.SupportStatus == SupportStatus.New);
-            var inProcessSupportRequests = _dbContext.Supports.Count(s => s.SupportStatus == SupportStatus.InProcess);
-            var solvedSupportRequests = _dbContext.Supports.Count(s => s.SupportStatus == SupportStatus.Solved);
-            var pauseSupportRequests = _dbContext.Supports.Count(s => s.SupportStatus == SupportStatus.Pause);
+            var newSupportRequests = await _dbContext.Supports.CountAsync(s => s.SupportStatus == SupportStatus.New);
+            var inProcessSupportRequests = await _dbContext.Supports.CountAsync(s => s.SupportStatus == SupportStatus.InProcess);
+            var solvedSupportRequests = await _dbContext.Supports.CountAsync(s => s.SupportStatus == SupportStatus.Solved);
+            var pauseSupportRequests = await _dbContext.Supports.CountAsync(s => s.SupportStatus == SupportStatus.Pause);
 
-            // Chi tiết trạng thái khẩn cấp
-            var pendingEmergencyRequests = _dbContext.Emergencies.Count(e => e.Status == EmergencyStatus.Pending);
-            var processingEmergencyRequests = _dbContext.Emergencies.Count(e => e.Status == EmergencyStatus.Processing);
-            var solvedEmergencyRequests = _dbContext.Emergencies.Count(e => e.Status == EmergencyStatus.Solved);
+            var pendingEmergencyRequests = await _dbContext.Emergencies.CountAsync(e => e.Status == EmergencyStatus.Pending);
+            var processingEmergencyRequests = await _dbContext.Emergencies.CountAsync(e => e.Status == EmergencyStatus.Processing);
+            var solvedEmergencyRequests = await _dbContext.Emergencies.CountAsync(e => e.Status == EmergencyStatus.Solved);
 
             AdminOverviewModel adminOverview = new AdminOverviewModel
             {
@@ -1979,12 +1975,7 @@ public class AdminService : IAdminService
                 TotalSupportRequests = totalSupportRequests,
                 TotalEmergencyRequests = totalEmergencyRequests,
                 AccountDetails = new List<int> { driverCount, customerCount, staffCount },
-                TripStatistics = new List<double>
-            {
-                canceledTripsRate,
-                completedTripsRate,
-                orderTripsRate
-            },
+                TripStatistics = new List<double> { canceledTripsRate, completedTripsRate, orderTripsRate },
                 SupportStatusDetails = new List<int> { newSupportRequests, inProcessSupportRequests, solvedSupportRequests, pauseSupportRequests },
                 EmergencyStatusDetails = new List<int> { pendingEmergencyRequests, processingEmergencyRequests, solvedEmergencyRequests }
             };
@@ -1995,36 +1986,44 @@ public class AdminService : IAdminService
         catch (Exception e)
         {
             result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+            result.Succeed = false;
         }
         return result;
     }
+
 
     public async Task<ResultModel> GetAdminRevenueMonthlyIncome(Guid adminId, int year)
     {
         ResultModel result = new ResultModel();
         try
         {
-            var admin = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            var admin = await _dbContext.Users
+                .Include(_ => _.DriverLocations)
+                .FirstOrDefaultAsync(_ => _.Id == adminId && !_.IsDeleted);
+
             if (admin == null)
             {
                 result.ErrorMessage = "Admin not exists";
                 result.Succeed = false;
                 return result;
             }
+
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
             var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+
             if (!checkAdmin && !checkStaff)
             {
                 result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 result.Succeed = false;
                 return result;
             }
+
             var monthlyIncome = new List<long>(new long[12]);
 
-            var bookings = _dbContext.Bookings
+            var bookings = await _dbContext.Bookings
                 .Where(b => b.DateCreated.Year == year)
                 .Include(b => b.SearchRequest)
-                .ToList();
+                .ToListAsync();
 
             foreach (var booking in bookings)
             {
@@ -2043,37 +2042,53 @@ public class AdminService : IAdminService
         catch (Exception e)
         {
             result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+            result.Succeed = false;
         }
         return result;
     }
+
 
     public async Task<ResultModel> GetAdminProfitMonthlyIncome(Guid adminId, int year)
     {
         ResultModel result = new ResultModel();
         try
         {
-            var admin = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            var admin = await _dbContext.Users
+                .Include(_ => _.DriverLocations)
+                .FirstOrDefaultAsync(_ => _.Id == adminId && !_.IsDeleted);
+
             if (admin == null)
             {
                 result.ErrorMessage = "Admin not exists";
                 result.Succeed = false;
                 return result;
             }
+
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
             var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+
             if (!checkAdmin && !checkStaff)
             {
                 result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 result.Succeed = false;
                 return result;
             }
+
             var monthlyIncome = new List<long>(new long[12]);
 
-            var wallet = _dbContext.Wallets
-                .Where(_ => _.UserId == admin.Id).FirstOrDefault();
+            var wallet = await _dbContext.Wallets
+                .FirstOrDefaultAsync(_ => _.UserId == admin.Id);
 
-            var walletTransactions = _dbContext.WalletTransactions
-                .Where(_ => _.WalletId == wallet.Id && _.DateCreated.Year == year).ToList();
+            if (wallet == null)
+            {
+                result.ErrorMessage = "Wallet not exists";
+                result.Succeed = false;
+                return result;
+            }
+
+            var walletTransactions = await _dbContext.WalletTransactions
+                .Where(_ => _.WalletId == wallet.Id && _.DateCreated.Year == year)
+                .ToListAsync();
 
             foreach (var walletTransaction in walletTransactions)
             {
@@ -2099,6 +2114,7 @@ public class AdminService : IAdminService
         catch (Exception e)
         {
             result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+            result.Succeed = false;
         }
         return result;
     }
