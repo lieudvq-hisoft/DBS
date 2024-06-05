@@ -21,8 +21,7 @@ public interface IAdminService
     Task<ResultModel> LoginAsManager(LoginModel model);
     Task<ResultModel> BanAccount(BanAccountModel model, Guid adminId);
     Task<ResultModel> UnBanAccount(BanAccountModel model, Guid adminId);
-    Task<ResultModel> GetForAdmin(PagingParam<SortCriteria> paginationModel, Guid UserId, Guid AdminId);
-    Task<ResultModel> GetByIdForAdmin(Guid BookingCancelId, Guid AdminId);
+    Task<ResultModel> GetByIdForAdmin(Guid bookingId, Guid AdminId);
     Task<ResultModel> GetBookingsForAdmin(PagingParam<SortBookingCriteria> paginationModel, SearchModel searchModel, BookingFilterModel filterModel, Guid UserId);
     Task<ResultModel> GetUserByAdmin(PagingParam<UserSortByAdminCriteria> paginationModel, SearchModel searchModel, AccountFilterModel model, Guid AdminId);
     Task<ResultModel> RegisterDriverByAdmin(RegisterDriverByAdminModel model, Guid UserId);
@@ -238,51 +237,7 @@ public class AdminService : IAdminService
         return result;
     }
 
-    public async Task<ResultModel> GetForAdmin(PagingParam<SortCriteria> paginationModel, Guid UserId, Guid AdminId)
-    {
-        var result = new ResultModel();
-        result.Succeed = false;
-        try
-        {
-            var admin = _dbContext.Users.Where(_ => _.Id == AdminId && !_.IsDeleted).FirstOrDefault();
-            if (admin == null)
-            {
-                result.ErrorMessage = "Admin not exist";
-                return result;
-            }
-            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
-            {
-                result.ErrorMessage = "The user muse be Admin";
-                return result;
-            }
-            var data = _dbContext.BookingCancels
-                .Include(_ => _.Booking)
-                    .ThenInclude(booking => booking.SearchRequest)
-                        .ThenInclude(sr => sr.Customer)
-                .Include(_ => _.Booking)
-                    .ThenInclude(booking => booking.Driver)
-                .Include(_ => _.CancelPerson)
-                .Where(_ => _.CancelPersonId == UserId && !_.IsDeleted);
-
-            var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
-            var bookingCancels = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
-            bookingCancels = bookingCancels.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
-
-            var viewModels = _mapper.Map<List<BookingCancelModel>>(bookingCancels);
-
-            paging.Data = viewModels;
-            result.Data = paging;
-            result.Succeed = true;
-        }
-        catch (Exception ex)
-        {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-        }
-        return result;
-    }
-
-    public async Task<ResultModel> GetByIdForAdmin(Guid BookingCancelId, Guid AdminId)
+    public async Task<ResultModel> GetByIdForAdmin(Guid BookingId, Guid AdminId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -307,11 +262,13 @@ public class AdminService : IAdminService
                 .Include(_ => _.Booking)
                     .ThenInclude(booking => booking.Driver)
                 .Include(_ => _.CancelPerson)
-                .Where(_ => _.Id == BookingCancelId && !_.IsDeleted)
+                    .ThenInclude(_ => _.UserRoles)
+                        .ThenInclude(_ => _.Role)
+                .Where(_ => _.BookingId == BookingId && !_.IsDeleted)
                 .FirstOrDefault();
 
             var data = _mapper.Map<BookingCancelModel>(bookingCancel);
-
+            data.CancelPerson.Role = bookingCancel.CancelPerson.UserRoles.FirstOrDefault().Role.Name;
             result.Data = data;
             result.Succeed = true;
         }
