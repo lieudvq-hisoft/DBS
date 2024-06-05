@@ -37,17 +37,17 @@ public class DriverService : IDriverService
     private readonly IMapper _mapper;
     private readonly IMailService _mailService;
     private readonly IConfiguration _configuration;
+    private readonly SignInManager<User> _signInManager;
     private readonly IProducer<Null, string> _producer;
     private readonly UserManager<User> _userManager;
 
-    public DriverService(AppDbContext dbContext, IMapper mapper, IConfiguration configuration,
-        UserManager<User> userManager,
-        IMailService mailService, IProducer<Null, string> producer)
+    public DriverService(AppDbContext dbContext, IMapper mapper, IMailService mailService, IConfiguration configuration, SignInManager<User> signInManager, IProducer<Null, string> producer, UserManager<User> userManager)
     {
         _dbContext = dbContext;
         _mapper = mapper;
-        _configuration = configuration;
         _mailService = mailService;
+        _configuration = configuration;
+        _signInManager = signInManager;
         _producer = producer;
         _userManager = userManager;
     }
@@ -130,8 +130,8 @@ public class DriverService : IDriverService
                 return result;
             }
 
-            var checkEmailExisted = await _userManager.FindByEmailAsync(model.Email);
-            if (checkEmailExisted != null)
+            var check = await _signInManager.CheckPasswordSignInAsync(userByEmail, model.Password, false);
+            if (!check.Succeeded)
             {
                 result.Succeed = false;
                 result.ErrorMessage = "Password isn't correct";
