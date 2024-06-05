@@ -325,7 +325,8 @@ public class BookingService : IBookingService
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
-            data.DriverLocation = _mapper.Map<LocationModel>(driver.DriverLocations);
+            var driverLocation = driver.DriverLocations.FirstOrDefault();
+            data.DriverLocation = _mapper.Map<LocationModel>(driverLocation);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = data };
@@ -388,7 +389,8 @@ public class BookingService : IBookingService
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
-            data.DriverLocation = _mapper.Map<LocationModel>(driver.DriverLocations);
+            var driverLocation = driver.DriverLocations.FirstOrDefault();
+            data.DriverLocation = _mapper.Map<LocationModel>(driverLocation);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 
             var kafkaModelDriver = new KafkaModel { UserReceiveNotice = new List<Guid>() { data.Customer.Id }, Payload = data };
@@ -451,7 +453,8 @@ public class BookingService : IBookingService
             booking.PickUpTime = DateTime.Now;
             await _dbContext.SaveChangesAsync();
             var data = _mapper.Map<BookingModel>(booking);
-            data.DriverLocation = _mapper.Map<LocationModel>(driver.DriverLocations);
+            var driverLocation = driver.DriverLocations.FirstOrDefault();
+            data.DriverLocation = _mapper.Map<LocationModel>(driverLocation);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = data };
@@ -514,7 +517,8 @@ public class BookingService : IBookingService
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
-            data.DriverLocation = _mapper.Map<LocationModel>(driver.DriverLocations);
+            var driverLocation = driver.DriverLocations.FirstOrDefault();
+            data.DriverLocation = _mapper.Map<LocationModel>(driverLocation);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 
             var kafkaModelDriver = new KafkaModel { UserReceiveNotice = new List<Guid>() { data.Customer.Id }, Payload = data };
@@ -655,7 +659,8 @@ public class BookingService : IBookingService
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
-            data.DriverLocation = _mapper.Map<LocationModel>(driver.DriverLocations);
+            var driverLocation = driver.DriverLocations.FirstOrDefault();
+            data.DriverLocation = _mapper.Map<LocationModel>(driverLocation);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
             data.Status = BookingStatus.Complete;
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = data };
