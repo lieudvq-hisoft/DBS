@@ -250,9 +250,10 @@ public class AdminService : IAdminService
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user muse be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
             var bookingCancel = _dbContext.BookingCancels
