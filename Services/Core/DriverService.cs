@@ -18,7 +18,7 @@ namespace Services.Core;
 public interface IDriverService
 {
     Task<ResultModel> RegisterDriver(RegisterModel model);
-    Task<ResultModel> RegisterDriverByAdmin(RegisterDriverByAdminModel model, Guid UserId);
+    Task<ResultModel> LoginAsDriver(LoginModel model);
     Task<ResultModel> GetDriver(PagingParam<DriverSortCriteria> paginationModel, SearchModel searchModel);
     Task<ResultModel> UpdateLocation(LocationModel model, Guid driverId);
     Task<ResultModel> TrackingDriverLocation(TrackingDriverLocationModel model, Guid driverId);
@@ -110,67 +110,52 @@ public class DriverService : IDriverService
         return result;
     }
 
-    public async Task<ResultModel> RegisterDriverByAdmin(RegisterDriverByAdminModel model, Guid UserId)
+    public async Task<ResultModel> LoginAsDriver(LoginModel model)
     {
+
         var result = new ResultModel();
-        result.Succeed = false;
         try
         {
-            var admin = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
-            if (admin == null)
+            var userByEmail = await _userManager.FindByEmailAsync(model.Email);
+            if (userByEmail == null)
             {
-                result.ErrorMessage = "Admin not found";
+                result.ErrorMessage = "Email not exists";
+                result.Succeed = false;
                 return result;
             }
-            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
-            if (!checkAdmin && !checkStaff)
+            if (!userByEmail.IsActive)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.Succeed = false;
+                result.ErrorMessage = "User has been deactivated";
                 return result;
             }
 
             var checkEmailExisted = await _userManager.FindByEmailAsync(model.Email);
             if (checkEmailExisted != null)
             {
-                result.ErrorMessage = "Email already existed";
                 result.Succeed = false;
+                result.ErrorMessage = "Password isn't correct";
                 return result;
             }
-            var userRole = new UserRole { };
-
-            var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.NormalizedName == RoleNormalizedName.Driver);
-            if (role == null)
+            var userRoles = _dbContext.UserRoles.Where(ur => ur.UserId == userByEmail.Id).ToList();
+            var roles = new List<string>();
+            foreach (var userRole in userRoles)
             {
-                var newRole = new Role { Name = "Driver", NormalizedName = RoleNormalizedName.Driver };
-                _dbContext.Roles.Add(newRole);
-                userRole.RoleId = newRole.Id;
+                var role = await _dbContext.Roles.FindAsync(userRole.RoleId);
+                if (role != null) roles.Add(role.Name);
             }
-            else
+            if (!roles[0].Equals("Driver"))
             {
-                userRole.RoleId = role.Id;
-            }
-
-            var user = _mapper.Map<RegisterDriverByAdminModel, User>(model);
-
-            var checkCreateSuccess = await _userManager.CreateAsync(user, model.PhoneNumber);
-
-            if (!checkCreateSuccess.Succeeded)
-            {
-                result.ErrorMessage = checkCreateSuccess.ToString();
-                result.Succeed = false;
+                result.ErrorMessage = "You are not Driver";
                 return result;
             }
-            if (model.File != null)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Avatar", user.Id.ToString());
-                user.Avatar = await MyFunction.UploadImageAsync(model.File, dirPath);
-            }
-            userRole.UserId = user.Id;
-            _dbContext.UserRoles.Add(userRole);
-            await _dbContext.SaveChangesAsync();
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(_mapper.Map<UserModel>(userByEmail));
+            await _producer.ProduceAsync("dbs-user-create-new", new Message<Null, string> { Value = json });
+            _producer.Flush();
+
+            var token = await MyFunction.GetAccessToken(userByEmail, roles, _configuration, _dbContext);
             result.Succeed = true;
-            result.Data = _mapper.Map<UserModel>(user);
+            result.Data = token;
         }
         catch (Exception ex)
         {
@@ -615,9 +600,9 @@ public class DriverService : IDriverService
         ResultModel result = new ResultModel();
         try
         {
-            var driver = await _dbContext.Users
+            var driver = _dbContext.Users
                 .Where(d => d.Id == driverId && !d.IsDeleted)
-                .FirstOrDefaultAsync();
+                .FirstOrDefault();
 
             if (driver == null)
             {
@@ -633,10 +618,10 @@ public class DriverService : IDriverService
                 return result;
             }
 
-            var monthlyBookings = await _dbContext.Bookings
+            var monthlyBookings = _dbContext.Bookings
                 .Include(_ => _.SearchRequest)
                 .Where(b => b.DriverId == driverId && b.DateCreated.Month == month && b.DateCreated.Year == year)
-                .ToListAsync();
+                .ToList();
             var totalTrips = monthlyBookings.Count;
             var totalTripsCompleted = monthlyBookings.Count(_ => _.Status == BookingStatus.Complete);
 
@@ -647,9 +632,9 @@ public class DriverService : IDriverService
             string totalOperatingTime = $"{(int)totalOperatingTimeSpan.TotalHours} giờ {totalOperatingTimeSpan.Minutes} phút";
 
             var wallet = _dbContext.Wallets.Where(_ => _.UserId == driver.Id).FirstOrDefault();
-            var walletTransactions = await _dbContext.WalletTransactions
+            var walletTransactions = _dbContext.WalletTransactions
                 .Where(_ => _.WalletId == wallet.Id && _.TypeWalletTransaction == TypeWalletTransaction.Income && _.DateCreated.Month == month && _.DateCreated.Year == year)
-                .ToListAsync();
+                .ToList();
 
             long totalMoney = walletTransactions.Sum(b => b.TotalMoney);
 

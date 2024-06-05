@@ -17,7 +17,6 @@ public interface IVehicleService
 {
     Task<ResultModel> Add(VehicleCreateModel model, Guid customerId);
     Task<ResultModel> GetAll(Guid customerId);
-    Task<ResultModel> GetAllByAdmin(Guid AdminId, Guid customerId);
     Task<ResultModel> GetById(Guid vehicleId, Guid customerId);
     Task<ResultModel> Update(VehicleUpdateModel model, Guid vehicleId, Guid customerId);
     Task<ResultModel> Delete(Guid vehicleId, Guid customerId);
@@ -229,76 +228,6 @@ public class VehicleService : IVehicleService
         result.Succeed = false;
         try
         {
-            var customer = _dbContext.Users.Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();
-            if (customer == null)
-            {
-                result.ErrorMessage = "Customer not exist!";
-                return result;
-            }
-            var checkCustomer = await _userManager.IsInRoleAsync(customer, RoleNormalizedName.Customer);
-            if (!checkCustomer)
-            {
-                result.ErrorMessage = "The user must be a Customer";
-                return result;
-            }
-            if (!customer.IsActive)
-            {
-                result.ErrorMessage = "Customer has been deactivated";
-                return result;
-            }
-            var vehicles = _dbContext.Vehicles
-                .Include(_ => _.Customer)
-                .Where(_ => _.CustomerId == customerId && !_.IsDeleted)
-                .ToList();
-            if (vehicles == null)
-            {
-                result.ErrorMessage = "Vehicle not exist!";
-                return result;
-            }
-            var data = _mapper.Map<List<VehicleModel>>(vehicles);
-            foreach (var item in data)
-            {
-                var vehicleImage = _dbContext.VehicleImages.Where(_ => _.VehicleId == item.Id && !_.IsDeleted).FirstOrDefault();
-                if (vehicleImage != null)
-                {
-                    item.ImagePath = vehicleImage.ImageUrl;
-                    item.ImageUrl = vehicleImage.ImageUrl;
-                }
-            }
-
-            result.Data = data;
-            result.Succeed = true;
-        }
-        catch (Exception ex)
-        {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-        }
-        return result;
-    }
-
-    public async Task<ResultModel> GetAllByAdmin(Guid AdminId, Guid customerId)
-    {
-        var result = new ResultModel();
-        result.Succeed = false;
-        try
-        {
-            var admin = _dbContext.Users.Where(_ => _.Id == AdminId && !_.IsDeleted).FirstOrDefault();
-            if (admin == null)
-            {
-                result.ErrorMessage = "Admin not exist!";
-                return result;
-            }
-            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
-            {
-                result.ErrorMessage = "The user must be a Admin";
-                return result;
-            }
-            if (!admin.IsActive)
-            {
-                result.ErrorMessage = "Admin has been deactivated";
-                return result;
-            }
             var customer = _dbContext.Users.Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();
             if (customer == null)
             {

@@ -25,7 +25,6 @@ public interface IWalletService
     Task<ResultModel> RejectWithdrawFundsRequest(ResponeWithdrawFundsRequest model, Guid adminId);
     Task<ResultModel> Pay(WalletTransactionCreateModel model, Guid userId);
     Task<ResultModel> GetTransactions(PagingParam<SortWalletTransactionCriteria> paginationModel, SearchModel searchModel, TransactionFilterModel filterModel, Guid userId);
-    Task<ResultModel> GetWithdrawFundsRequest(PagingParam<SortWithdrawFundsTransactionCriteria> paginationModel, SearchModel searchModel, WithdrawFundsRequestFilterModel filterModel, Guid adminId);
     Task<ResultModel> CheckFailureWalletTransaction(Guid walletTransactionId);
 }
 
@@ -505,72 +504,6 @@ public class WalletService : IWalletService
                 if (filterModel.Status != null && filterModel.Status.Any())
                 {
                     data = data.Where(transaction => filterModel.Status.Contains(transaction.Status));
-                }
-            }
-
-            var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
-            var walletTransactions = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
-            walletTransactions = walletTransactions.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
-            var viewModels = _mapper.Map<List<WalletTransactionModel>>(walletTransactions);
-
-            if (walletTransactions == null)
-            {
-                result.ErrorMessage = "Wallet Transactions not exist";
-                return result;
-            }
-
-            paging.Data = viewModels;
-            result.Data = paging;
-
-            result.Succeed = true;
-        }
-        catch (Exception ex)
-        {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-        }
-
-        return result;
-    }
-
-    public async Task<ResultModel> GetWithdrawFundsRequest(PagingParam<SortWithdrawFundsTransactionCriteria> paginationModel, SearchModel searchModel, WithdrawFundsRequestFilterModel filterModel, Guid adminId)
-    {
-        var result = new ResultModel();
-        result.Succeed = false;
-        try
-        {
-            var admin = _dbContext.Users.Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
-            if (admin == null)
-            {
-                result.ErrorMessage = "Admin not exist";
-                return result;
-            }
-            if (!admin.IsActive)
-            {
-                result.ErrorMessage = "Admin has been deactivated";
-                return result;
-            }
-            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
-            {
-                result.ErrorMessage = "The user must be Admin";
-                return result;
-            }
-            var data = _dbContext.WalletTransactions
-                .Include(_ => _.LinkedAccount)
-                .Where(_ => _.TypeWalletTransaction == TypeWalletTransaction.WithdrawFunds);
-
-            // Apply search filter
-            if (searchModel != null && !string.IsNullOrEmpty(searchModel.SearchValue))
-            {
-                data = data.Where(request => request.Id.ToString().Contains(searchModel.SearchValue));
-            }
-
-            // Apply additional filters
-            if (filterModel != null)
-            {
-                if (filterModel.Status != null && filterModel.Status.Any())
-                {
-                    data = data.Where(request => filterModel.Status.Contains(request.Status));
                 }
             }
 

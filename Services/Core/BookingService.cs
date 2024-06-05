@@ -18,7 +18,6 @@ public interface IBookingService
 {
     Task<ResultModel> CreateBooking(BookingCreateModel model);
     Task<ResultModel> GetBooking(Guid BookingId);
-    Task<ResultModel> GetBookingsForAdmin(PagingParam<SortBookingCriteria> paginationModel, SearchModel searchModel, BookingFilterModel filterModel, Guid UserId);
     Task<ResultModel> GetBookingForCustomer(PagingParam<SortBookingCriteria> paginationModel, Guid CustomerId);
     Task<ResultModel> GetBookingForDriver(PagingParam<SortBookingCriteria> paginationModel, Guid DriverId);
     Task<ResultModel> ChangeStatusToArrived(ChangeBookingStatusModel model, Guid DriverId);
@@ -164,61 +163,6 @@ public class BookingService : IBookingService
         return result;
     }
 
-    public async Task<ResultModel> GetBookingsForAdmin(PagingParam<SortBookingCriteria> paginationModel, SearchModel searchModel, BookingFilterModel filterModel, Guid UserId)
-    {
-        ResultModel result = new ResultModel();
-        result.Succeed = false;
-        try
-        {
-            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
-            if (user == null)
-            {
-                result.ErrorMessage = "User not exist";
-                return result;
-            }
-            var checkAdmin = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Admin);
-            var checkStaff = await _userManager.IsInRoleAsync(user, RoleNormalizedName.Staff);
-            if (!checkAdmin && !checkStaff)
-            {
-                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
-                return result;
-            }
-            var data = _dbContext.Bookings
-                    .Where(_ => !_.IsDeleted)
-                    .AsQueryable();
-
-            // Apply search filter
-            if (searchModel != null && !string.IsNullOrEmpty(searchModel.SearchValue))
-            {
-                data = data.Where(booking => booking.Id.ToString().Contains(searchModel.SearchValue));
-            }
-
-            // Apply additional filters
-            if (filterModel != null)
-            {
-                if (filterModel.Status != null && filterModel.Status.Any())
-                {
-                    data = data.Where(booking => filterModel.Status.Contains(booking.Status));
-                }
-            }
-
-            var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
-            var bookings = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
-            bookings = bookings.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
-            var viewModels = _mapper.ProjectTo<BookingModel>(bookings);
-
-            paging.Data = viewModels;
-            result.Data = paging;
-            result.Succeed = true;
-        }
-        catch (Exception e)
-        {
-            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
-        }
-        return result;
-    }
-
-
     public async Task<ResultModel> GetBookingForCustomer(PagingParam<SortBookingCriteria> paginationModel, Guid CustomerId)
     {
         var result = new ResultModel();
@@ -342,7 +286,9 @@ public class BookingService : IBookingService
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
+            var driver = _dbContext.Users
+                .Include(_ => _.DriverLocations)
+                .Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
             {
                 result.ErrorMessage = "Driver not found";
@@ -379,6 +325,7 @@ public class BookingService : IBookingService
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
+            data.DriverLocation = _mapper.Map<LocationModel>(driver.DriverLocations);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = data };
@@ -402,7 +349,9 @@ public class BookingService : IBookingService
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
+            var driver = _dbContext.Users
+                .Include(_ => _.DriverLocations)
+                .Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
             {
                 result.ErrorMessage = "Driver not found";
@@ -439,6 +388,7 @@ public class BookingService : IBookingService
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
+            data.DriverLocation = _mapper.Map<LocationModel>(driver.DriverLocations);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 
             var kafkaModelDriver = new KafkaModel { UserReceiveNotice = new List<Guid>() { data.Customer.Id }, Payload = data };
@@ -462,7 +412,9 @@ public class BookingService : IBookingService
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
+            var driver = _dbContext.Users
+                .Include(_ => _.DriverLocations)
+                .Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
             {
                 result.ErrorMessage = "Driver not found";
@@ -499,6 +451,7 @@ public class BookingService : IBookingService
             booking.PickUpTime = DateTime.Now;
             await _dbContext.SaveChangesAsync();
             var data = _mapper.Map<BookingModel>(booking);
+            data.DriverLocation = _mapper.Map<LocationModel>(driver.DriverLocations);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = data };
@@ -522,7 +475,9 @@ public class BookingService : IBookingService
         result.Succeed = false;
         try
         {
-            var driver = _dbContext.Users.Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
+            var driver = _dbContext.Users
+                .Include(_ => _.DriverLocations)
+                .Where(_ => _.Id == DriverId && !_.IsDeleted).FirstOrDefault();
             if (driver == null)
             {
                 result.ErrorMessage = "Driver not found";
@@ -559,6 +514,7 @@ public class BookingService : IBookingService
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
+            data.DriverLocation = _mapper.Map<LocationModel>(driver.DriverLocations);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
 
             var kafkaModelDriver = new KafkaModel { UserReceiveNotice = new List<Guid>() { data.Customer.Id }, Payload = data };
@@ -699,6 +655,7 @@ public class BookingService : IBookingService
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<BookingModel>(booking);
+            data.DriverLocation = _mapper.Map<LocationModel>(driver.DriverLocations);
             data.Customer = _mapper.Map<UserModel>(booking.SearchRequest.Customer);
             data.Status = BookingStatus.Complete;
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { booking.SearchRequest.CustomerId }, Payload = data };
