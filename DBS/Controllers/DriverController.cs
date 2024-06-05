@@ -15,20 +15,18 @@ namespace UserController.Controllers;
 public class DriverController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly IExternalAuthService _externalAuthService;
     private readonly IDriverService _driverService;
 
-    public DriverController(IUserService userService, IExternalAuthService externalAuthService, IDriverService driverService)
+    public DriverController(IUserService userService, IDriverService driverService)
     {
         _userService = userService;
-        _externalAuthService = externalAuthService;
         _driverService = driverService;
     }
 
     [HttpPost("Login")]
     public async Task<ActionResult> LoginAsDriver([FromBody] LoginModel model)
     {
-        var result = await _userService.LoginAsDriver(model);
+        var result = await _driverService.LoginAsDriver(model);
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

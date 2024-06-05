@@ -24,8 +24,6 @@ public interface IBookingCancelService
     Task<ResultModel> DriverCancel(BookingCancelCreateModel model, Guid DriverId);
     Task<ResultModel> Get(PagingParam<SortCriteria> paginationModel, Guid UserId);
     Task<ResultModel> GetByID(Guid BookingCancelId, Guid UserId);
-    Task<ResultModel> GetForAdmin(PagingParam<SortCriteria> paginationModel, Guid UserId, Guid AdminId);
-    Task<ResultModel> GetByIdForAdmin(Guid BookingCancelId, Guid AdminId);
 }
 
 public class BookingCancelService : IBookingCancelService
@@ -480,90 +478,6 @@ public class BookingCancelService : IBookingCancelService
                 result.ErrorMessage = "Booking Cancel not exist";
                 return result;
             }
-            var data = _mapper.Map<BookingCancelModel>(bookingCancel);
-
-            result.Data = data;
-            result.Succeed = true;
-        }
-        catch (Exception ex)
-        {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-        }
-        return result;
-    }
-
-    public async Task<ResultModel> GetForAdmin(PagingParam<SortCriteria> paginationModel, Guid UserId, Guid AdminId)
-    {
-        var result = new ResultModel();
-        result.Succeed = false;
-        try
-        {
-            var admin = _dbContext.Users.Where(_ => _.Id == AdminId && !_.IsDeleted).FirstOrDefault();
-            if (admin == null)
-            {
-                result.ErrorMessage = "Admin not exist";
-                return result;
-            }
-            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
-            {
-                result.ErrorMessage = "The user muse be Admin";
-                return result;
-            }
-            var data = _dbContext.BookingCancels
-                .Include(_ => _.Booking)
-                    .ThenInclude(booking => booking.SearchRequest)
-                        .ThenInclude(sr => sr.Customer)
-                .Include(_ => _.Booking)
-                    .ThenInclude(booking => booking.Driver)
-                .Include(_ => _.CancelPerson)
-                .Where(_ => _.CancelPersonId == UserId && !_.IsDeleted);
-
-            var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
-            var bookingCancels = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
-            bookingCancels = bookingCancels.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
-
-            var viewModels = _mapper.Map<List<BookingCancelModel>>(bookingCancels);
-
-            paging.Data = viewModels;
-            result.Data = paging;
-            result.Succeed = true;
-        }
-        catch (Exception ex)
-        {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-        }
-        return result;
-    }
-
-    public async Task<ResultModel> GetByIdForAdmin(Guid BookingCancelId, Guid AdminId)
-    {
-        var result = new ResultModel();
-        result.Succeed = false;
-        try
-        {
-            var admin = _dbContext.Users.Where(_ => _.Id == AdminId && !_.IsDeleted).FirstOrDefault();
-            if (admin == null)
-            {
-                result.ErrorMessage = "Admin not exist";
-                return result;
-            }
-            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
-            if (!checkAdmin)
-            {
-                result.ErrorMessage = "The user muse be Admin";
-                return result;
-            }
-            var bookingCancel = _dbContext.BookingCancels
-                .Include(_ => _.Booking)
-                    .ThenInclude(booking => booking.SearchRequest)
-                        .ThenInclude(sr => sr.Customer)
-                .Include(_ => _.Booking)
-                    .ThenInclude(booking => booking.Driver)
-                .Include(_ => _.CancelPerson)
-                .Where(_ => _.Id == BookingCancelId && !_.IsDeleted)
-                .FirstOrDefault();
-
             var data = _mapper.Map<BookingCancelModel>(bookingCancel);
 
             result.Data = data;
