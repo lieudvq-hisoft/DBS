@@ -26,6 +26,7 @@ namespace Data.Model
         public DateOnly? Dob { get; set; }
         public bool IsPublicGender { get; set; }
         public bool IsActive { get; set; }
+        public string? Role { get; set; }
     }
 
     public class RegisterModel

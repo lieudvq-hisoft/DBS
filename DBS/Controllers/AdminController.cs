@@ -48,19 +48,10 @@ public class AdminController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "Bearer")]
-    [HttpGet("BookingCancel/All/{UserId}")]
-    public async Task<ActionResult> GetByAdmin([FromQuery] PagingParam<SortCriteria> paginationModel, Guid UserId)
+    [HttpGet("BookingCancel/{BookingId}")]
+    public async Task<ActionResult> GetByIdByAdmin(Guid BookingId)
     {
-        var result = await _adminService.GetForAdmin(paginationModel, UserId, Guid.Parse(User.GetId()));
-        if (result.Succeed) return Ok(result.Data);
-        return BadRequest(result.ErrorMessage);
-    }
-
-    [Authorize(AuthenticationSchemes = "Bearer")]
-    [HttpGet("BookingCancel/{BookingCancelId}")]
-    public async Task<ActionResult> GetByIdByAdmin(Guid BookingCancelId)
-    {
-        var result = await _adminService.GetByIdForAdmin(BookingCancelId, Guid.Parse(User.GetId()));
+        var result = await _adminService.GetByIdForAdmin(BookingId, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
@@ -212,7 +203,7 @@ public class AdminController : ControllerBase
     [HttpGet("IdentityCard/{DriverId}")]
     public async Task<ActionResult> GetIdentitCardByAdmin(Guid DriverId)
     {
-        var result = await _adminService.GetByAdmin(DriverId, Guid.Parse(User.GetId()));
+        var result = await _adminService.GetIdentitCardByAdmin(DriverId, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
