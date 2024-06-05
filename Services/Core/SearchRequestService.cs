@@ -51,70 +51,78 @@ public class SearchRequestService : ISearchRequestService
 
     public async Task<ResultModel> Add(SearchRequestCreateModel model, Guid customerId)
     {
-        var result = new ResultModel();
-        result.Succeed = false;
+        var result = new ResultModel { Succeed = false };
         try
         {
-            var customer = _dbContext.Users.Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();
+            var customer = await _dbContext.Users
+                .FirstOrDefaultAsync(_ => _.Id == customerId && !_.IsDeleted);
+
             if (customer == null)
             {
                 result.ErrorMessage = "User not exists";
-                result.Succeed = false;
                 return result;
             }
+
             var checkCustomer = await _userManager.IsInRoleAsync(customer, RoleNormalizedName.Customer);
             if (!checkCustomer)
             {
                 result.ErrorMessage = "The user must be a customer";
-                result.Succeed = false;
                 return result;
             }
-            var driver = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == model.DriverId && !_.IsDeleted).FirstOrDefault();
+
+            var driver = await _dbContext.Users
+                .Include(_ => _.DriverLocations)
+                .FirstOrDefaultAsync(_ => _.Id == model.DriverId && !_.IsDeleted);
+
             if (driver == null)
             {
                 result.ErrorMessage = "User not exists";
-                result.Succeed = false;
                 return result;
             }
+
             var checkDriver = await _userManager.IsInRoleAsync(driver, RoleNormalizedName.Driver);
             if (!checkDriver)
             {
                 result.ErrorMessage = "The user must be a driver";
-                result.Succeed = false;
                 return result;
             }
+
             var searchRequest = _mapper.Map<SearchRequestCreateModel, SearchRequest>(model);
             searchRequest.CustomerId = customer.Id;
 
             var bookingVehicle = _mapper.Map<BookingVehicleModel, BookingVehicle>(model.BookingVehicle);
-            _dbContext.BookingVehicles.Add(bookingVehicle);
+            await _dbContext.BookingVehicles.AddAsync(bookingVehicle);
             searchRequest.BookingVehicle = bookingVehicle;
 
-            if (model.BookingType != null && model.BookingType == BookingType.Someone && model.CustomerBookedOnBehalf == null)
+            if (model.BookingType == BookingType.Someone)
             {
-                result.ErrorMessage = "Booking for Someone is required CustomerBookedOnBehalf";
-                return result;
-            }
+                if (model.CustomerBookedOnBehalf == null)
+                {
+                    result.ErrorMessage = "Booking for Someone requires CustomerBookedOnBehalf";
+                    return result;
+                }
 
-            if (model.BookingType != null && model.BookingType == BookingType.Someone)
-            {
                 var customerBookedOnBehalf = _mapper.Map<CustomerBookedOnBehalfModel, CustomerBookedOnBehalf>(model.CustomerBookedOnBehalf);
-                _dbContext.CustomerBookedOnBehalves.Add(customerBookedOnBehalf);
+                await _dbContext.CustomerBookedOnBehalves.AddAsync(customerBookedOnBehalf);
                 searchRequest.CustomerBookedOnBehalf = customerBookedOnBehalf;
             }
 
-            _dbContext.SearchRequests.Add(searchRequest);
+            await _dbContext.SearchRequests.AddAsync(searchRequest);
             await _dbContext.SaveChangesAsync();
 
             var data = _mapper.Map<SearchRequestModel>(searchRequest);
             data.Customer = _mapper.Map<UserModel>(customer);
-
             data.BookingVehicle = _mapper.Map<BookingVehicleModel>(searchRequest.BookingVehicle);
             data.CustomerBookedOnBehalf = _mapper.Map<CustomerBookedOnBehalfModel>(searchRequest.CustomerBookedOnBehalf);
             data.DriverId = driver.Id;
 
-            var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { driver.Id }, Payload = data };
+            var kafkaModel = new KafkaModel
+            {
+                UserReceiveNotice = new List<Guid> { driver.Id },
+                Payload = data
+            };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
+
             await _producer.ProduceAsync("dbs-search-request-create", new Message<Null, string> { Value = json });
             _producer.Flush();
 
@@ -123,10 +131,11 @@ public class SearchRequestService : ISearchRequestService
         }
         catch (Exception ex)
         {
-            result.ErrorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+            result.ErrorMessage = ex.InnerException?.Message ?? ex.Message;
         }
         return result;
     }
+
 
     public async Task<ResultModel> GetOfCustomer(PagingParam<SortCriteria> paginationModel, Guid customerId)
     {
