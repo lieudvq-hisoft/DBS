@@ -55,6 +55,7 @@ public interface IAdminService
     Task<ResultModel> GetAdminRevenueMonthlyIncome(Guid adminId, int year);
     Task<ResultModel> GetAdminProfitMonthlyIncome(Guid adminId, int year);
     Task<ResultModel> GetStaffList(Guid adminId);
+    Task<ResultModel> GetLinkedAccountByUserId(Guid userId, Guid adminId);
 }
 
 public class AdminService : IAdminService
@@ -523,6 +524,18 @@ public class AdminService : IAdminService
                 PlaceResidence = model.PlaceResidence
             };
             _dbContext.IdentityCards.Add(identityCard);
+
+            //Linked Account
+            var linkedAccount = new LinkedAccount
+            {
+                AccountNumber = model.AccountNumber,
+                Brand = model.Brand,
+                LinkedImgUrl = model.LinkedImgUrl,
+                Type = model.LinkedAccountTypeType,
+                UserId = user.Id
+            };
+            _dbContext.LinkedAccounts.Add(linkedAccount);
+
             await _dbContext.SaveChangesAsync();
 
             result.Succeed = true;
@@ -2209,6 +2222,53 @@ public class AdminService : IAdminService
         {
             result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
         }
+        return result;
+    }
+
+    public async Task<ResultModel> GetLinkedAccountByUserId(Guid userId, Guid adminId)
+    {
+        var result = new ResultModel
+        {
+            Succeed = false
+        };
+        try
+        {
+            var admin = _dbContext.Users.Include(_ => _.DriverLocations).Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            if (admin == null)
+            {
+                result.ErrorMessage = "Admin not exists";
+                result.Succeed = false;
+                return result;
+            }
+            var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
+            var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
+            if (!checkAdmin && !checkStaff)
+            {
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
+                result.Succeed = false;
+                return result;
+            }
+            var user = await _dbContext.Users.FirstOrDefaultAsync(_ => _.Id == userId && !_.IsDeleted);
+            if (user == null)
+            {
+                result.ErrorMessage = "User not exist";
+                return result;
+            }
+            var linkedAccount = await _dbContext.LinkedAccounts.FirstOrDefaultAsync(_ => _.UserId == userId);
+            if (linkedAccount == null)
+            {
+                result.ErrorMessage = "Linked Account not exist";
+                return result;
+            }
+
+            result.Data = _mapper.Map<LinkedAccountModel>(linkedAccount);
+            result.Succeed = true;
+        }
+        catch (Exception e)
+        {
+            result.ErrorMessage = e.InnerException != null ? e.InnerException.Message : e.Message;
+        }
+
         return result;
     }
 }

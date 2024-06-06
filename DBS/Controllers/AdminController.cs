@@ -365,4 +365,13 @@ public class AdminController : ControllerBase
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }
+
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpGet("User/GetLinkedAccount/{UserId}")]
+    public async Task<ActionResult> GetLinkedAccountByUserId(Guid UserId)
+    {
+        var result = await _adminService.GetLinkedAccountByUserId(UserId, Guid.Parse(User.GetId()));
+        if (result.Succeed) return Ok(result.Data);
+        return BadRequest(result.ErrorMessage);
+    }
 }
