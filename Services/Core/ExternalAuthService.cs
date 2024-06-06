@@ -8,6 +8,7 @@ using Data.Utils;
 using FirebaseAdmin;
 using FirebaseAdmin.Auth;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Services.Utils;
 
@@ -68,12 +69,15 @@ public class ExternalAuthService : IExternalAuthService
                         {
                             user = new User { UserName = phone, PhoneNumber = phone, Email = phone + "@gmail.com" };
                             await _userManager.CreateAsync(user);
-                            await _userManager.AddToRoleAsync(user, RoleNormalizedName.Customer);
-                            //await _userManager.AddLoginAsync(user, info);
-                        }
-                        else
-                        {
-                            //await _userManager.AddLoginAsync(user, info);
+                            var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.NormalizedName == RoleNormalizedName.Customer);
+                            if (role == null)
+                            {
+                                role = new Role { Name = "Customer", NormalizedName = RoleNormalizedName.Customer };
+                                _dbContext.Roles.Add(role);
+                            }
+                            var userRole = new UserRole { UserId = user.Id, RoleId = role.Id };
+                            _dbContext.UserRoles.Add(userRole);
+                            await _dbContext.SaveChangesAsync();
                         }
                         break;
                     default:
@@ -85,12 +89,15 @@ public class ExternalAuthService : IExternalAuthService
                             {
                                 user = new User { Email = email.ToString(), UserName = email.ToString() };
                                 await _userManager.CreateAsync(user);
-                                await _userManager.AddToRoleAsync(user, RoleNormalizedName.Customer);
-                                //await _userManager.AddLoginAsync(user, info);
-                            }
-                            else
-                            {
-                                //await _userManager.AddLoginAsync(user, info);
+                                var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.NormalizedName == RoleNormalizedName.Customer);
+                                if (role == null)
+                                {
+                                    role = new Role { Name = "Customer", NormalizedName = RoleNormalizedName.Customer };
+                                    _dbContext.Roles.Add(role);
+                                }
+                                var userRole = new UserRole { UserId = user.Id, RoleId = role.Id };
+                                _dbContext.UserRoles.Add(userRole);
+                                await _dbContext.SaveChangesAsync();
                             }
                         }
                         break;
