@@ -179,7 +179,7 @@ public class BookingService : IBookingService
                 .Include(_ => _.Driver)
                 .Include(_ => _.SearchRequest)
                     .ThenInclude(sr => sr.Customer)
-                .Where(_ => _.SearchRequest.CustomerId == CustomerId && !_.IsDeleted);
+                .Where(_ => _.SearchRequest.CustomerId == CustomerId && !_.IsDeleted).AsQueryable();
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var bookings = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
             bookings = bookings.GetWithPaging(paginationModel.PageIndex, paginationModel.PageSize);
@@ -214,8 +214,12 @@ public class BookingService : IBookingService
             var data = _dbContext.Bookings
                 .Include(_ => _.Driver)
                 .Include(_ => _.SearchRequest)
-                 .ThenInclude(sr => sr.Customer)
-                .Where(_ => _.DriverId == DriverId && !_.IsDeleted);
+                    .ThenInclude(sr => sr.Customer)
+                .Include(_ => _.SearchRequest)
+                    .ThenInclude(_ => _.CustomerBookedOnBehalf)
+                .Include(_ => _.SearchRequest)
+                    .ThenInclude(_ => _.BookingVehicle)
+                .Where(_ => _.DriverId == DriverId && !_.IsDeleted).AsQueryable();
 
             var paging = new PagingModel(paginationModel.PageIndex, paginationModel.PageSize, data.Count());
             var bookings = data.GetWithSorting(paginationModel.SortKey.ToString(), paginationModel.SortOrder);
