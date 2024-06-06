@@ -358,20 +358,20 @@ public class AdminService : IAdminService
                     .Where(_ => !_.IsDeleted)
                     .Select(user => new UserModelByAdmin
                     {
-                        Id = user.Id,
-                        Name = user.Name,
-                        PhoneNumber = user.PhoneNumber,
-                        UserName = user.UserName,
-                        Email = user.Email,
-                        Address = user.Address,
-                        Star = user.Star,
-                        Avatar = user.Avatar,
-                        Gender = user.Gender,
-                        Dob = user.Dob,
-                        DateCreated = user.DateCreated,
-                        Role = user.UserRoles.FirstOrDefault().Role.Name,
-                        IsActive = user.IsActive,
-                        IsPublicGender = user.IsPublicGender
+                        Id = user.Id!,
+                        Name = user.Name!,
+                        PhoneNumber = user.PhoneNumber!,
+                        UserName = user.UserName!,
+                        Email = user.Email!,
+                        Address = user.Address!,
+                        Star = user.Star!,
+                        Avatar = user.Avatar!,
+                        Gender = user.Gender!,
+                        Dob = user.Dob!,
+                        DateCreated = user.DateCreated!,
+                        Role = user.UserRoles.FirstOrDefault().Role.Name!,
+                        IsActive = user.IsActive!,
+                        IsPublicGender = user.IsPublicGender!
                     })
                     .AsQueryable();
 
@@ -416,21 +416,23 @@ public class AdminService : IAdminService
 
     public async Task<ResultModel> RegisterDriverByAdmin(RegisterDriverByAdminModel model, Guid UserId)
     {
-        var result = new ResultModel();
-        result.Succeed = false;
+        var result = new ResultModel
+        {
+            Succeed = false
+        };
         try
         {
-            var admin = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            var admin = await _dbContext.Users.FirstOrDefaultAsync(_ => _.Id == UserId && !_.IsDeleted);
             if (admin == null)
             {
-                result.ErrorMessage = "Admin not found";
+                result.ErrorMessage = "User not found";
                 return result;
             }
             var checkAdmin = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Admin);
             var checkStaff = await _userManager.IsInRoleAsync(admin, RoleNormalizedName.Staff);
             if (!checkAdmin && !checkStaff)
             {
-                result.ErrorMessage = "The user must be Admin";
+                result.ErrorMessage = "Chỉ có Quản trị viên và nhân viên có quyền thực hiện";
                 return result;
             }
 
@@ -438,21 +440,30 @@ public class AdminService : IAdminService
             if (checkEmailExisted != null)
             {
                 result.ErrorMessage = "Email already existed";
-                result.Succeed = false;
                 return result;
             }
-            var userRole = new UserRole { };
+
+            //Check driver greater than 18 years old
+            DateOnly currentDate = DateOnly.FromDateTime(DateTime.Today);
+            DateOnly dob = new DateOnly(model.Dob.Value.Year, model.Dob.Value.Month, model.Dob.Value.Day);
+
+            int ageDifferenceInYears = currentDate.Year - dob.Year;
+
+            if (dob > currentDate.AddYears(-ageDifferenceInYears))
+            {
+                ageDifferenceInYears--;
+            }
+            if (ageDifferenceInYears < 18)
+            {
+                result.ErrorMessage = "Driver must be at least 18 years old!";
+                return result;
+            }
 
             var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.NormalizedName == RoleNormalizedName.Driver);
             if (role == null)
             {
-                var newRole = new Role { Name = "Driver", NormalizedName = RoleNormalizedName.Driver };
-                _dbContext.Roles.Add(newRole);
-                userRole.RoleId = newRole.Id;
-            }
-            else
-            {
-                userRole.RoleId = role.Id;
+                role = new Role { Name = "Driver", NormalizedName = RoleNormalizedName.Driver };
+                _dbContext.Roles.Add(role);
             }
 
             var user = _mapper.Map<RegisterDriverByAdminModel, User>(model);
@@ -462,17 +473,58 @@ public class AdminService : IAdminService
             if (!checkCreateSuccess.Succeeded)
             {
                 result.ErrorMessage = checkCreateSuccess.ToString();
-                result.Succeed = false;
                 return result;
             }
-            if (model.File != null)
-            {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Avatar", user.Id.ToString());
-                user.Avatar = await MyFunction.UploadImageAsync(model.File, dirPath);
-            }
-            userRole.UserId = user.Id;
+
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Avatar", user.Id.ToString());
+            user.Avatar = await MyFunction.UploadImageAsync(model.File, dirPath);
+
+            var userRole = new UserRole { UserId = user.Id, RoleId = role.Id };
             _dbContext.UserRoles.Add(userRole);
+
+            //Add Driving License
+            var checkExistDrivingLicenseNumber = await _dbContext.DrivingLicenses
+                .FirstOrDefaultAsync(_ => _.DrivingLicenseNumber == model.DrivingLicenseNumber && !_.IsDeleted);
+            if (checkExistDrivingLicenseNumber != null)
+            {
+                result.ErrorMessage = $"Driving License with Number {model.DrivingLicenseNumber} already exists";
+                return result;
+            }
+            var drivingLicense = new DrivingLicense
+            {
+                DriverId = user.Id,
+                DrivingLicenseNumber = model.DrivingLicenseNumber,
+                IssueDate = model.IssueDate,
+                ExpiredDate = model.DrivingLicenseExpiredDate,
+                Type = model.Type
+            };
+            _dbContext.DrivingLicenses.Add(drivingLicense);
+
+            //Add Identity Card
+            var checkExistCardNumber = await _dbContext.IdentityCards
+                .FirstOrDefaultAsync(_ => _.IdentityCardNumber == model.IdentityCardNumber && !_.IsDeleted);
+            if (checkExistCardNumber != null)
+            {
+                result.ErrorMessage = "Identity Card Number already exists";
+                return result;
+            }
+
+            var identityCard = new IdentityCard
+            {
+                UserId = user.Id,
+                Dob = model.Dob,
+                ExpiredDate = model.IdentityCardExpiredDate,
+                FullName = model.Name,
+                Gender = model.Gender,
+                IdentityCardNumber = model.IdentityCardNumber,
+                Nationality = model.Nationality,
+                PersonalIdentification = model.PersonalIdentification,
+                PlaceOrigin = model.PlaceOrigin,
+                PlaceResidence = model.PlaceResidence
+            };
+            _dbContext.IdentityCards.Add(identityCard);
             await _dbContext.SaveChangesAsync();
+
             result.Succeed = true;
             result.Data = _mapper.Map<UserModel>(user);
         }
