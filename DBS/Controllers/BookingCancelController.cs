@@ -44,10 +44,10 @@ public class BookingCancelController : ControllerBase
         return BadRequest(result.ErrorMessage);
     }
 
-    [HttpGet("{BookingCancelId}")]
-    public async Task<ActionResult> GetById(Guid BookingCancelId)
+    [HttpGet("{BookingId}")]
+    public async Task<ActionResult> GetByBookingId(Guid BookingId)
     {
-        var result = await _bookingCancelService.GetByID(BookingCancelId, Guid.Parse(User.GetId()));
+        var result = await _bookingCancelService.GetByBookingID(BookingId, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
         return BadRequest(result.ErrorMessage);
     }

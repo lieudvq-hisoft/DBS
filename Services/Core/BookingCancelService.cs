@@ -23,7 +23,7 @@ public interface IBookingCancelService
     Task<ResultModel> CustomerCancel(BookingCancelCreateModel model, Guid CustomerId);
     Task<ResultModel> DriverCancel(BookingCancelCreateModel model, Guid DriverId);
     Task<ResultModel> Get(PagingParam<SortCriteria> paginationModel, Guid UserId);
-    Task<ResultModel> GetByID(Guid BookingCancelId, Guid UserId);
+    Task<ResultModel> GetByBookingID(Guid bookingId, Guid UserId);
 }
 
 public class BookingCancelService : IBookingCancelService
@@ -453,7 +453,7 @@ public class BookingCancelService : IBookingCancelService
         return result;
     }
 
-    public async Task<ResultModel> GetByID(Guid BookingCancelId, Guid UserId)
+    public async Task<ResultModel> GetByBookingID(Guid bookingId, Guid UserId)
     {
         var result = new ResultModel();
         result.Succeed = false;
@@ -472,14 +472,16 @@ public class BookingCancelService : IBookingCancelService
                 .Include(_ => _.Booking)
                     .ThenInclude(booking => booking.Driver)
                 .Include(_ => _.CancelPerson)
-                .Where(_ => _.Id == BookingCancelId && !_.IsDeleted).FirstOrDefault();
+                    .ThenInclude(_ => _.UserRoles)
+                        .ThenInclude(_ => _.Role)
+                .Where(_ => _.BookingId == bookingId && !_.IsDeleted).FirstOrDefault();
             if (bookingCancel == null)
             {
                 result.ErrorMessage = "Booking Cancel not exist";
                 return result;
             }
             var data = _mapper.Map<BookingCancelModel>(bookingCancel);
-
+            data.CancelPerson.Role = bookingCancel.CancelPerson.UserRoles.FirstOrDefault().Role.Name;
             result.Data = data;
             result.Succeed = true;
         }
