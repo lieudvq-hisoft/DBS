@@ -50,6 +50,12 @@ namespace Data.Models
         public string PersonalIdentification { get; set; }
         public string IdentityCardNumber { get; set; }
         public DateOnly IdentityCardExpiredDate { get; set; }
+
+        //Linked Account
+        public string AccountNumber { get; set; }
+        public LinkedAccountType LinkedAccountTypeType { get; set; }
+        public string Brand { get; set; }
+        public string LinkedImgUrl { get; set; }
     }
 
     public class RegisterStaffByAdminModel
