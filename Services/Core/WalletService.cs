@@ -471,7 +471,7 @@ public class WalletService : IWalletService
         result.Succeed = false;
         try
         {
-            var user = _dbContext.Users.Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
+            var user = await _dbContext.Users.FirstOrDefaultAsync(_ => _.Id == userId && !_.IsDeleted);
             if (user == null)
             {
                 result.ErrorMessage = "User not exist";
@@ -482,7 +482,7 @@ public class WalletService : IWalletService
                 result.ErrorMessage = "User has been deactivated";
                 return result;
             }
-            var wallet = _dbContext.Wallets.Where(_ => _.UserId == userId).FirstOrDefault();
+            var wallet = await _dbContext.Wallets.FirstOrDefaultAsync(_ => _.UserId == userId);
             if (wallet == null)
             {
                 result.ErrorMessage = "Wallet not exist";
@@ -490,7 +490,7 @@ public class WalletService : IWalletService
             }
             var data = _dbContext.WalletTransactions
                 .Include(_ => _.LinkedAccount)
-                .Where(_ => _.WalletId == wallet.Id);
+                .Where(_ => _.WalletId == wallet.Id).AsQueryable();
 
             // Apply search filter
             if (searchModel != null && !string.IsNullOrEmpty(searchModel.SearchValue))

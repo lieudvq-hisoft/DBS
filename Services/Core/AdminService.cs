@@ -287,7 +287,7 @@ public class AdminService : IAdminService
         result.Succeed = false;
         try
         {
-            var user = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            var user = await _dbContext.Users.FirstOrDefaultAsync(_ => _.Id == UserId && !_.IsDeleted);
             if (user == null)
             {
                 result.ErrorMessage = "User not exist";
@@ -341,7 +341,7 @@ public class AdminService : IAdminService
         result.Succeed = false;
         try
         {
-            var admin = _dbContext.Users.Where(_ => _.Id == AdminId && !_.IsDeleted).FirstOrDefault();
+            var admin = await _dbContext.Users.FirstOrDefaultAsync(_ => _.Id == AdminId && !_.IsDeleted);
             if (admin == null)
             {
                 result.ErrorMessage = "Admin not found";
@@ -372,7 +372,8 @@ public class AdminService : IAdminService
                         DateCreated = user.DateCreated!,
                         Role = user.UserRoles.FirstOrDefault().Role.Name!,
                         IsActive = user.IsActive!,
-                        IsPublicGender = user.IsPublicGender!
+                        IsPublicGender = user.IsPublicGender!,
+                        Priority = user.Priority!
                     })
                     .AsQueryable();
 
@@ -531,7 +532,7 @@ public class AdminService : IAdminService
                 AccountNumber = model.AccountNumber,
                 Brand = model.Brand,
                 LinkedImgUrl = model.LinkedImgUrl,
-                Type = model.LinkedAccountTypeType,
+                Type = model.LinkedAccountType,
                 UserId = user.Id
             };
             _dbContext.LinkedAccounts.Add(linkedAccount);
@@ -1617,7 +1618,7 @@ public class AdminService : IAdminService
         result.Succeed = false;
         try
         {
-            var admin = _dbContext.Users.Where(_ => _.Id == AdminId && !_.IsDeleted).FirstOrDefault();
+            var admin = await _dbContext.Users.FirstOrDefaultAsync(_ => _.Id == AdminId && !_.IsDeleted);
             if (admin == null)
             {
                 result.ErrorMessage = "Admin not exist!";
@@ -1634,7 +1635,7 @@ public class AdminService : IAdminService
                 result.ErrorMessage = "Admin has been deactivated";
                 return result;
             }
-            var customer = _dbContext.Users.Where(_ => _.Id == customerId && !_.IsDeleted).FirstOrDefault();
+            var customer = await _dbContext.Users.FirstOrDefaultAsync(_ => _.Id == customerId && !_.IsDeleted);
             if (customer == null)
             {
                 result.ErrorMessage = "Customer not exist!";
@@ -1651,10 +1652,10 @@ public class AdminService : IAdminService
                 result.ErrorMessage = "Customer has been deactivated";
                 return result;
             }
-            var vehicles = _dbContext.Vehicles
+            var vehicles = await _dbContext.Vehicles
                 .Include(_ => _.Customer)
                 .Where(_ => _.CustomerId == customerId && !_.IsDeleted)
-                .ToList();
+                .ToListAsync();
             if (vehicles == null)
             {
                 result.ErrorMessage = "Vehicle not exist!";
@@ -1663,7 +1664,7 @@ public class AdminService : IAdminService
             var data = _mapper.Map<List<VehicleModel>>(vehicles);
             foreach (var item in data)
             {
-                var vehicleImage = _dbContext.VehicleImages.Where(_ => _.VehicleId == item.Id && !_.IsDeleted).FirstOrDefault();
+                var vehicleImage = await _dbContext.VehicleImages.FirstOrDefaultAsync(_ => _.VehicleId == item.Id && !_.IsDeleted);
                 if (vehicleImage != null)
                 {
                     item.ImagePath = vehicleImage.ImageUrl;
@@ -1688,7 +1689,7 @@ public class AdminService : IAdminService
 
         try
         {
-            var admin = _dbContext.Users.Where(_ => _.Id == AdminId && !_.IsDeleted).FirstOrDefault();
+            var admin = await _dbContext.Users.FirstOrDefaultAsync(_ => _.Id == AdminId && !_.IsDeleted);
             if (admin == null)
             {
                 result.ErrorMessage = "Admin not exist!";
@@ -1787,7 +1788,7 @@ public class AdminService : IAdminService
         result.Succeed = false;
         try
         {
-            var admin = _dbContext.Users.Where(_ => _.Id == adminId && !_.IsDeleted).FirstOrDefault();
+            var admin = await _dbContext.Users.FirstOrDefaultAsync(_ => _.Id == adminId && !_.IsDeleted);
             if (admin == null)
             {
                 result.ErrorMessage = "Admin not exist";
@@ -1806,7 +1807,7 @@ public class AdminService : IAdminService
             }
             var data = _dbContext.WalletTransactions
                 .Include(_ => _.LinkedAccount)
-                .Where(_ => _.TypeWalletTransaction == TypeWalletTransaction.WithdrawFunds);
+                .Where(_ => _.TypeWalletTransaction == TypeWalletTransaction.WithdrawFunds).AsQueryable();
 
             // Apply search filter
             if (searchModel != null && !string.IsNullOrEmpty(searchModel.SearchValue))
@@ -2112,7 +2113,6 @@ public class AdminService : IAdminService
         }
         return result;
     }
-
 
     public async Task<ResultModel> GetAdminProfitMonthlyIncome(Guid adminId, int year)
     {

@@ -6,6 +6,7 @@ using Data.Model;
 using Data.Models;
 using Data.Utils;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -46,7 +47,7 @@ public class PriceConfigurationService : IPriceConfigurationService
 
         try
         {
-            var priceConfiguration = _dbContext.PriceConfigurations.FirstOrDefault();
+            var priceConfiguration = await _dbContext.PriceConfigurations.FirstOrDefaultAsync();
             if (priceConfiguration == null)
             {
                 result.ErrorMessage = "Price Configuration not exist";

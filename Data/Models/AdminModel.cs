@@ -53,7 +53,7 @@ namespace Data.Models
 
         //Linked Account
         public string AccountNumber { get; set; }
-        public LinkedAccountType LinkedAccountTypeType { get; set; }
+        public LinkedAccountType LinkedAccountType { get; set; }
         public string Brand { get; set; }
         public string LinkedImgUrl { get; set; }
     }
