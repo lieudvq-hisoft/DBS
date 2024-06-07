@@ -132,7 +132,7 @@ public class SupportService : ISupportService
         result.Succeed = false;
         try
         {
-            var handler = _dbContext.Users.Where(_ => _.Id == UserId && !_.IsDeleted).FirstOrDefault();
+            var handler = await _dbContext.Users.FirstOrDefaultAsync(_ => _.Id == UserId && !_.IsDeleted);
             if (handler == null)
             {
                 result.ErrorMessage = "Handler not exist";

@@ -280,7 +280,7 @@ public class EmergencyService : IEmergencyService
         result.Succeed = false;
         try
         {
-            var user = _dbContext.Users.Where(_ => _.Id == userId && !_.IsDeleted).FirstOrDefault();
+            var user = await _dbContext.Users.FirstOrDefaultAsync(_ => _.Id == userId && !_.IsDeleted);
             if (user == null)
             {
                 result.ErrorMessage = "User not exist";

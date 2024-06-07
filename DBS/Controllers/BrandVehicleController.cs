@@ -19,7 +19,7 @@ public class BrandVehicleController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult> AddBrandVehicle([FromBody] BrandVehicleCreateModel model)
+    public async Task<ActionResult> AddBrandVehicle([FromForm] BrandVehicleCreateModel model)
     {
         var result = await _brandVehicleService.AddBrandVehicle(model, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);
@@ -43,7 +43,7 @@ public class BrandVehicleController : ControllerBase
     }
 
     [HttpPut]
-    public async Task<ActionResult> UpdateBrandVehicle([FromBody] BrandVehicleUpdateModel model)
+    public async Task<ActionResult> UpdateBrandVehicle([FromForm] BrandVehicleUpdateModel model)
     {
         var result = await _brandVehicleService.UpdateBrandVehicle(model, Guid.Parse(User.GetId()));
         if (result.Succeed) return Ok(result.Data);

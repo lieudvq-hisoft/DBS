@@ -8,6 +8,7 @@ using Data.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Services.Utils;
 
 namespace Services.Core;
 
@@ -71,6 +72,8 @@ public class BrandVehicleService : IBrandVehicleService
             }
             var brandVehicle = _mapper.Map<BrandVehicleCreateModel, BrandVehicle>(model);
             _dbContext.BrandVehicles.Add(brandVehicle);
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "BrandVehicleImage", brandVehicle.Id.ToString());
+            brandVehicle.BrandImg = await MyFunction.UploadImageAsync(model.File, dirPath);
             await _dbContext.SaveChangesAsync();
 
             result.Data = _mapper.Map<BrandVehicleModel>(brandVehicle);
@@ -207,8 +210,15 @@ public class BrandVehicleService : IBrandVehicleService
                 result.ErrorMessage = "Brand Vehicle not exist";
                 return result;
             }
-
+            var checkExist = _dbContext.BrandVehicles.Where(_ => _.BrandName == model.BrandName).FirstOrDefault();
+            if (checkExist != null)
+            {
+                result.ErrorMessage = $"Brand with Name {model.BrandName} is exist";
+                return result;
+            }
             brandVehicle.BrandName = model.BrandName;
+            string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "BrandVehicleImage", brandVehicle.Id.ToString());
+            brandVehicle.BrandImg = await MyFunction.UploadImageAsync(model.File, dirPath);
             brandVehicle.DateUpdated = DateTime.Now;
             await _dbContext.SaveChangesAsync();
 

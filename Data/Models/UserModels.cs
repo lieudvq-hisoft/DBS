@@ -52,6 +52,7 @@ namespace Data.Model
         public DateTime? DateCreated { get; set; }
         public bool IsPublicGender { get; set; }
         public bool IsActive { get; set; }
+        public float Priority { get; set; }
     }
 
     public class ProfileUpdateModel
