@@ -1,0 +1,29 @@
+name: Build-Push Docker Image
+
+on:
+  push:
+    branches:
+      - "develop"
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Create ca.crt docker
+        run: |
+          sudo mkdir -p /etc/docker/certs.d/harbor.hisoft.vn
+          sudo cp ca.crt /etc/docker/certs.d/harbor.hisoft.vn/ca.crt
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          registry: https://harbor.hisoft.vn
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: harbor.hisoft.vn/ims-backend/backend:latest

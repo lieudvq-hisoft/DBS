@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  dbs:
+    image: ${DOCKER_REGISTRY-}dbs
+    build:
+      context: .
+      dockerfile: DBS/Dockerfile
