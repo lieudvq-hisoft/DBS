@@ -64,7 +64,7 @@ public class ExternalAuthService : IExternalAuthService
                 {
                     case "phone":
                         var phone = decodedToken.Claims.FirstOrDefault(x => x.Key == "phone_number").Value.ToString();
-                        user = _dbContext.Users.FirstOrDefault(_ => _.PhoneNumber == phone);
+                        user = await _dbContext.Users.FirstOrDefaultAsync(_ => _.PhoneNumber == phone);
                         if (user == null)
                         {
                             user = new User { UserName = phone, PhoneNumber = phone, Email = phone + "@gmail.com" };
@@ -73,10 +73,10 @@ public class ExternalAuthService : IExternalAuthService
                             if (role == null)
                             {
                                 role = new Role { Name = "Customer", NormalizedName = RoleNormalizedName.Customer };
-                                _dbContext.Roles.Add(role);
+                                await _dbContext.Roles.AddAsync(role);
                             }
                             var userRole = new UserRole { UserId = user.Id, RoleId = role.Id };
-                            _dbContext.UserRoles.Add(userRole);
+                            await _dbContext.UserRoles.AddAsync(userRole);
                             await _dbContext.SaveChangesAsync();
                         }
                         break;
@@ -93,10 +93,10 @@ public class ExternalAuthService : IExternalAuthService
                                 if (role == null)
                                 {
                                     role = new Role { Name = "Customer", NormalizedName = RoleNormalizedName.Customer };
-                                    _dbContext.Roles.Add(role);
+                                    await _dbContext.Roles.AddAsync(role);
                                 }
                                 var userRole = new UserRole { UserId = user.Id, RoleId = role.Id };
-                                _dbContext.UserRoles.Add(userRole);
+                                await _dbContext.UserRoles.AddAsync(userRole);
                                 await _dbContext.SaveChangesAsync();
                             }
                         }
@@ -111,7 +111,7 @@ public class ExternalAuthService : IExternalAuthService
                 result.ErrorMessage = "User has been deactivated";
                 return result;
             }
-            var userRoles = _dbContext.UserRoles.Where(ur => ur.UserId == user.Id).ToList();
+            var userRoles = await _dbContext.UserRoles.Where(ur => ur.UserId == user.Id).ToListAsync();
             var roles = new List<string>();
             foreach (var userRole in userRoles)
             {
