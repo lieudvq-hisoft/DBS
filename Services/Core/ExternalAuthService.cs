@@ -69,6 +69,7 @@ public class ExternalAuthService : IExternalAuthService
                         {
                             user = new User { UserName = phone, PhoneNumber = phone, Email = phone + "@gmail.com" };
                             await _userManager.CreateAsync(user);
+                            await _userManager.AddToRoleAsync(user, RoleNormalizedName.Customer);
                             var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.NormalizedName == RoleNormalizedName.Customer);
                             if (role == null)
                             {
@@ -89,6 +90,7 @@ public class ExternalAuthService : IExternalAuthService
                             {
                                 user = new User { Email = email.ToString(), UserName = email.ToString() };
                                 await _userManager.CreateAsync(user);
+                                await _userManager.AddToRoleAsync(user, RoleNormalizedName.Customer);
                                 var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.NormalizedName == RoleNormalizedName.Customer);
                                 if (role == null)
                                 {
