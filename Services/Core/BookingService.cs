@@ -1192,6 +1192,7 @@ public class BookingService : IBookingService
 
             var booking = _dbContext.Bookings
                 .Include(_ => _.Driver)
+                    .ThenInclude(_ => _.DriverLocations)
                 .Include(_ => _.SearchRequest)
                  .ThenInclude(sr => sr.Customer)
                 .Where(_ => _.SearchRequest.CustomerId == customerId && _.Status != BookingStatus.Complete && _.Status != BookingStatus.Cancel)
@@ -1204,6 +1205,8 @@ public class BookingService : IBookingService
                 return result;
             }
             var data = _mapper.Map<BookingModel>(booking);
+            var driverLocation = booking.Driver.DriverLocations.FirstOrDefault();
+            data.DriverLocation = _mapper.Map<LocationModel>(driverLocation);
             var kafkaModel = new KafkaModel { UserReceiveNotice = new List<Guid>() { customerId }, Payload = data };
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(kafkaModel);
             switch (booking.Status)
